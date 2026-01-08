@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { OptimizedImage } from "@/components/ui/optimized-image";
+import { FounderVideoModal } from "@/components/FounderVideoModal";
 import { ArrowRight, Users, Building2, Compass, Zap, Target, Brain, MessageCircle, TrendingUp } from "lucide-react";
 
 const pillars = [
@@ -40,6 +41,7 @@ const categories = [
 export default function Index() {
   return (
     <Layout>
+      <FounderVideoModal />
       {/* Hero Section */}
       <section className="relative min-h-[90vh] flex items-center overflow-hidden">
         {/* Background Image */}
