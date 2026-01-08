@@ -78,8 +78,12 @@ export default function WhyCoaching() {
   return (
     <Layout>
       {/* Hero Section */}
-      <section className="relative pt-32 pb-20 hero-gradient overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,hsl(var(--primary)/0.15),transparent_50%)]" />
+      <section className="relative pt-32 pb-20 overflow-hidden">
+        <div 
+          className="absolute inset-0 bg-cover bg-center"
+          style={{ backgroundImage: "url('https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=2000&q=80')" }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-background/95 via-background/85 to-background" />
         
         <div className="container-wide relative z-10">
           <div className="max-w-3xl mx-auto text-center">
@@ -296,8 +300,13 @@ export default function WhyCoaching() {
       </section>
 
       {/* CTA Section */}
-      <section className="section-padding hero-gradient">
-        <div className="container-wide text-center">
+      <section className="relative section-padding overflow-hidden">
+        <div 
+          className="absolute inset-0 bg-cover bg-center"
+          style={{ backgroundImage: "url('https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=2000&q=80')" }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-background/95 via-background/90 to-background/95" />
+        <div className="container-wide text-center relative z-10">
           <h2 className="text-3xl md:text-4xl font-display font-bold mb-4">
             Ready to Invest in Yourself?
           </h2>
