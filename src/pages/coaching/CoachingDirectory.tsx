@@ -36,32 +36,68 @@ const categoryIcons: Record<string, typeof Target> = {
   transitions: Compass,
 };
 
-const categories = [
-  { id: "all", name: "Show All", slug: "all" },
-  { id: "coach", name: "Coach", slug: "coach" },
-  { id: "leadership", name: "Leadership", slug: "leadership" },
-  { id: "career", name: "Career", slug: "career" },
-  { id: "performance", name: "Performance", slug: "performance" },
-  { id: "mindset", name: "Mindset", slug: "mindset" },
-  { id: "communication", name: "Communication", slug: "communication" },
-];
-
 export default function CoachingDirectory() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState("");
   const selectedCategory = searchParams.get("category") || "all";
 
+  // Fetch categories from database
+  const { data: categories } = useQuery({
+    queryKey: ["categories"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("categories")
+        .select("*")
+        .order("display_order");
+      
+      if (error) throw error;
+      return [{ id: "all", name: "Show All", slug: "all" }, ...(data || [])];
+    },
+  });
+
+  // Fetch coaches with category filtering
   const { data: coaches, isLoading } = useQuery({
     queryKey: ["coaches", selectedCategory],
     queryFn: async () => {
-      const { data: coachData, error: coachError } = await supabase
+      if (selectedCategory === "all") {
+        const { data, error } = await supabase
+          .from("coaches")
+          .select("*")
+          .eq("status", "approved")
+          .order("is_featured", { ascending: false });
+        
+        if (error) throw error;
+        return data || [];
+      }
+      
+      // Get coach IDs for the selected category
+      const { data: categoryData } = await supabase
+        .from("categories")
+        .select("id")
+        .eq("slug", selectedCategory)
+        .single();
+      
+      if (!categoryData) return [];
+      
+      const { data: coachCategories, error: ccError } = await supabase
+        .from("coach_categories")
+        .select("coach_id")
+        .eq("category_id", categoryData.id);
+      
+      if (ccError) throw ccError;
+      
+      const coachIds = coachCategories?.map(cc => cc.coach_id) || [];
+      if (coachIds.length === 0) return [];
+      
+      const { data, error } = await supabase
         .from("coaches")
         .select("*")
         .eq("status", "approved")
+        .in("id", coachIds)
         .order("is_featured", { ascending: false });
       
-      if (coachError) throw coachError;
-      return coachData || [];
+      if (error) throw error;
+      return data || [];
     },
   });
 
@@ -148,8 +184,9 @@ export default function CoachingDirectory() {
       <section className="py-6 bg-muted/30 border-b border-border">
         <div className="container-wide">
           <div className="flex flex-wrap justify-center gap-2">
-            {categories.slice(0, 2).map((category) => {
+            {categories?.map((category) => {
               const isActive = selectedCategory === category.slug;
+              const IconComponent = categoryIcons[category.slug];
               return (
                 <button
                   key={category.slug}
@@ -160,6 +197,7 @@ export default function CoachingDirectory() {
                       : "bg-card border border-border hover:border-primary/50 text-foreground"
                   }`}
                 >
+                  {IconComponent && <IconComponent className="h-4 w-4" />}
                   {category.name}
                 </button>
               );
