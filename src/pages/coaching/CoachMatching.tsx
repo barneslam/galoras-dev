@@ -218,8 +218,13 @@ export default function CoachMatching() {
 
   return (
     <Layout>
-      <div className="min-h-[80vh] pt-32 pb-16">
-        <div className="container-wide max-w-3xl">
+      <div className="relative min-h-[80vh] pt-32 pb-16">
+        <div 
+          className="absolute inset-0 bg-cover bg-center opacity-10"
+          style={{ backgroundImage: "url('https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=2000&q=80')" }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-background via-background/98 to-background" />
+        <div className="container-wide max-w-3xl relative z-10">
           {/* Header */}
           <div className="text-center mb-12">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-medium mb-6">
