@@ -13,6 +13,7 @@ export function FounderVideoModal() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isThumbnail, setIsThumbnail] = useState(false);
   const [hasSeenBefore, setHasSeenBefore] = useState(false);
+  const [progress, setProgress] = useState(0);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
@@ -33,6 +34,17 @@ export function FounderVideoModal() {
       setIsThumbnail(false);
     }
   }, [isPlaying, isExpanded, isOpen]);
+
+  // Track video progress
+  const handleTimeUpdate = () => {
+    if (videoRef.current) {
+      const { currentTime, duration } = videoRef.current;
+      if (duration > 0) {
+        setProgress((currentTime / duration) * 100);
+      }
+    }
+  };
+
 
   const handleVideoEnd = () => {
     localStorage.setItem(STORAGE_KEY, "true");
@@ -112,10 +124,35 @@ export function FounderVideoModal() {
             }`}
             onClick={isThumbnail ? handleThumbnailClick : undefined}
           >
-            {/* Thumbnail Mode */}
+            {/* Thumbnail Mode with Progress Ring */}
             {isThumbnail && !isExpanded && (
               <div className="absolute inset-0 flex items-center justify-center bg-primary/90 rounded-lg">
-                <Play className="h-8 w-8 text-primary-foreground animate-pulse" />
+                {/* SVG Progress Ring */}
+                <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 64 64">
+                  {/* Background circle */}
+                  <circle
+                    cx="32"
+                    cy="32"
+                    r="30"
+                    fill="none"
+                    stroke="hsl(var(--primary-foreground) / 0.3)"
+                    strokeWidth="3"
+                  />
+                  {/* Progress circle */}
+                  <circle
+                    cx="32"
+                    cy="32"
+                    r="30"
+                    fill="none"
+                    stroke="hsl(var(--primary-foreground))"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                    strokeDasharray={`${2 * Math.PI * 30}`}
+                    strokeDashoffset={`${2 * Math.PI * 30 * (1 - progress / 100)}`}
+                    className="transition-all duration-300"
+                  />
+                </svg>
+                <Play className="h-6 w-6 text-primary-foreground z-10" />
               </div>
             )}
 
@@ -152,6 +189,7 @@ export function FounderVideoModal() {
               autoPlay
               onPlay={handlePlay}
               onPause={handlePause}
+              onTimeUpdate={handleTimeUpdate}
               onEnded={handleVideoEnd}
               className={`w-full aspect-video transition-opacity duration-300 ${
                 isThumbnail ? "opacity-0" : "opacity-100"
