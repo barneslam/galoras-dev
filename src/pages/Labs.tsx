@@ -1,17 +1,16 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
+import { useEffect } from "react";
 import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { CourseCard } from "@/components/labs/CourseCard";
 import { 
   ArrowRight, 
   FlaskConical, 
-  Brain, 
   Target, 
-  Zap,
   BarChart3,
   Users,
-  Lightbulb,
-  Rocket
+  Rocket,
+  Calendar
 } from "lucide-react";
 
 // Sample courses data
@@ -126,6 +125,20 @@ const methodology = [
 ];
 
 export default function Labs() {
+  const location = useLocation();
+
+  // Scroll to hash section on load or hash change
+  useEffect(() => {
+    if (location.hash) {
+      const element = document.querySelector(location.hash);
+      if (element) {
+        setTimeout(() => {
+          element.scrollIntoView({ behavior: "smooth", block: "start" });
+        }, 100);
+      }
+    }
+  }, [location.hash]);
+
   return (
     <Layout>
       {/* Hero Section */}
@@ -154,8 +167,8 @@ export default function Labs() {
         </div>
       </section>
 
-      {/* Courses Grid */}
-      <section id="courses" className="section-padding bg-background">
+      {/* Events Section */}
+      <section id="events" className="section-padding bg-background">
         <div className="container-wide">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-display font-bold mb-4">
