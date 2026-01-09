@@ -17,6 +17,7 @@ import Apply from "./pages/Apply";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import ImageGenerator from "./pages/admin/ImageGenerator";
+import CoachCutoutManager from "./pages/admin/CoachCutoutManager";
 
 const queryClient = new QueryClient();
 
@@ -53,6 +54,7 @@ const App = () => (
           <Route path="/coach-dashboard/edit" element={<CoachProfileEdit />} />
           {/* Admin Routes */}
           <Route path="/admin/images" element={<ImageGenerator />} />
+          <Route path="/admin/coach-cutouts" element={<CoachCutoutManager />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
