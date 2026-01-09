@@ -169,7 +169,7 @@ export function FeaturedCoaches() {
                       <img
                         src={
                           coach.cutout_url.startsWith("/")
-                            ? `${coach.cutout_url}?v=3`
+                            ? `${coach.cutout_url}?v=4`
                             : coach.cutout_url
                         }
                         alt={coach.display_name || "Coach"}
