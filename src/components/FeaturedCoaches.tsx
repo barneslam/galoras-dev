@@ -156,43 +156,27 @@ export function FeaturedCoaches() {
           viewport={{ once: true, margin: "-50px" }}
           variants={containerVariants}
         >
-          {featuredCoaches.map((coach, index) => {
-            const isCenter = index === Math.floor(featuredCoaches.length / 2);
-            const isEdge = index === 0 || index === featuredCoaches.length - 1;
-            
+          {featuredCoaches.map((coach) => {
             return (
               <motion.div key={coach.id} variants={itemVariants}>
                 <TiltCard maxTilt={12} scale={1.05}>
                   <Link
                     to={`/coaching/${coach.id}`}
-                    className={cn(
-                      "group relative block transition-all duration-500",
-                      isCenter 
-                        ? "w-48 h-72 sm:w-56 sm:h-80 md:w-72 md:h-[420px] lg:w-80 lg:h-[480px] z-20" 
-                        : isEdge
-                        ? "w-36 h-56 sm:w-44 sm:h-64 md:w-56 md:h-80 lg:w-64 lg:h-96 z-10"
-                        : "w-40 h-60 sm:w-48 sm:h-72 md:w-60 md:h-96 lg:w-72 lg:h-[420px] z-10"
-                    )}
+                    className="group relative block transition-all duration-500 w-44 h-64 sm:w-52 sm:h-80 md:w-64 md:h-96 lg:w-72 lg:h-[420px] z-10"
                   >
                     {/* Coach Cutout or Avatar */}
                     {coach.cutout_url ? (
                       <img
                         src={coach.cutout_url}
                         alt={coach.display_name || "Coach"}
-                        className={cn(
-                          "w-full h-full object-contain object-bottom transition-all duration-500 drop-shadow-[0_10px_30px_rgba(0,0,0,0.5)]",
-                          !isCenter && "grayscale group-hover:grayscale-0"
-                        )}
+                        className="w-full h-full object-contain object-bottom transition-all duration-500 drop-shadow-[0_10px_30px_rgba(0,0,0,0.5)] group-hover:scale-105"
                       />
                     ) : coach.avatar_url ? (
                       <div className="absolute inset-0 rounded-t-full overflow-hidden">
                         <img
                           src={coach.avatar_url}
                           alt={coach.display_name || "Coach"}
-                          className={cn(
-                            "w-full h-full object-cover object-top transition-all duration-500",
-                            !isCenter && "grayscale group-hover:grayscale-0"
-                          )}
+                          className="w-full h-full object-cover object-top transition-all duration-500"
                         />
                       </div>
                     ) : (
