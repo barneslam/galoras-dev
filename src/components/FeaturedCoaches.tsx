@@ -168,41 +168,59 @@ export function FeaturedCoaches() {
         </motion.h2>
 
         <motion.div
-          className="flex items-end gap-4 px-4 -mx-4 overflow-x-auto overflow-y-visible scroll-smooth snap-x snap-mandatory pb-4 scrollbar-none cursor-grab active:cursor-grabbing"
+          className="flex items-end justify-center -mx-4 overflow-x-auto overflow-y-visible scroll-smooth snap-x snap-mandatory pb-4 scrollbar-none cursor-grab active:cursor-grabbing"
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: "-50px" }}
           variants={containerVariants}
         >
-          {featuredCoaches.map((coach) => {
+          {featuredCoaches.map((coach, index) => {
+            const totalCoaches = featuredCoaches.length;
+            const middleIndex = Math.floor(totalCoaches / 2);
+            const isCenter = index === middleIndex;
+            const distanceFromCenter = Math.abs(index - middleIndex);
+
             return (
-              <motion.div key={coach.id} variants={itemVariants} className="shrink-0 snap-center">
-                <TiltCard maxTilt={12} scale={1.05}>
+              <motion.div
+                key={coach.id}
+                variants={itemVariants}
+                className="shrink-0 snap-center"
+                style={{
+                  marginLeft: index === 0 ? 0 : "-2rem",
+                  zIndex: totalCoaches - distanceFromCenter,
+                }}
+              >
+                <TiltCard maxTilt={8} scale={1.03}>
                   <Link
                     to={`/coaching/${coach.id}`}
-                    className="group relative flex items-end justify-center transition-all duration-500 w-44 h-64 sm:w-52 sm:h-80 md:w-64 md:h-96 lg:w-72 lg:h-[420px] z-10 overflow-hidden"
+                    className={cn(
+                      "group relative flex items-end justify-center transition-all duration-500 overflow-hidden",
+                      isCenter
+                        ? "w-52 h-80 sm:w-64 sm:h-96 md:w-80 md:h-[480px] lg:w-96 lg:h-[520px]"
+                        : "w-40 h-64 sm:w-48 sm:h-80 md:w-56 md:h-96 lg:w-64 lg:h-[420px]"
+                    )}
                   >
-                    {/* Coach Cutout or Avatar */}
+                    {/* Coach Cutout or Avatar - grayscale, color on hover */}
                     {coach.cutout_url ? (
                       <img
                         src={
                           coach.cutout_url.startsWith("/")
-                            ? `${coach.cutout_url}?v=6`
+                            ? `${coach.cutout_url}?v=7`
                             : coach.cutout_url
                         }
                         alt={coach.display_name || "Coach"}
-                        className="max-w-[90%] max-h-[95%] object-contain object-bottom transition-all duration-500 drop-shadow-[0_10px_30px_rgba(0,0,0,0.5)] group-hover:scale-105"
+                        className="w-full h-full object-contain object-bottom transition-all duration-500 drop-shadow-[0_10px_40px_rgba(0,0,0,0.6)] grayscale group-hover:grayscale-0 group-hover:scale-105"
                       />
                     ) : coach.avatar_url ? (
-                      <div className="absolute inset-0 rounded-t-full overflow-hidden">
+                      <div className="absolute inset-0 overflow-hidden">
                         <img
                           src={coach.avatar_url}
                           alt={coach.display_name || "Coach"}
-                          className="w-full h-full object-cover object-top transition-all duration-500"
+                          className="w-full h-full object-cover object-top transition-all duration-500 grayscale group-hover:grayscale-0"
                         />
                       </div>
                     ) : (
-                      <div className="absolute inset-0 rounded-t-full overflow-hidden bg-gradient-to-b from-muted/40 to-muted/20 flex items-center justify-center">
+                      <div className="absolute inset-0 overflow-hidden bg-gradient-to-b from-muted/40 to-muted/20 flex items-center justify-center">
                         <span className="text-4xl font-bold text-white/50">
                           {coach.display_name?.charAt(0) || "C"}
                         </span>
@@ -210,7 +228,7 @@ export function FeaturedCoaches() {
                     )}
 
                     {/* Name tooltip on hover */}
-                    <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 group-hover:bottom-4 transition-all duration-300 whitespace-nowrap">
+                    <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 group-hover:bottom-4 transition-all duration-300 whitespace-nowrap z-20">
                       <span className="px-3 py-1.5 bg-white text-black text-xs font-medium rounded-full shadow-lg">
                         {coach.display_name || "Coach"}
                       </span>
