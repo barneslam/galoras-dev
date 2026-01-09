@@ -12,28 +12,33 @@ serve(async (req) => {
   }
 
   try {
-    const { imageUrl, coachId } = await req.json();
+    const { imageUrl, imageBase64, coachId } = await req.json();
 
-    if (!imageUrl || !coachId) {
-      throw new Error("imageUrl and coachId are required");
+    if ((!imageUrl && !imageBase64) || !coachId) {
+      throw new Error("imageUrl or imageBase64, and coachId are required");
     }
 
     console.log("Processing background removal for coach:", coachId);
 
-    // Fetch the image and convert to base64
-    let imageBase64: string;
+    // Use provided base64 or fetch the image
+    let base64Data: string;
     
-    if (imageUrl.startsWith("data:")) {
-      imageBase64 = imageUrl;
+    if (imageBase64) {
+      // Base64 data was provided directly
+      console.log("Using provided base64 image data");
+      base64Data = imageBase64;
+    } else if (imageUrl.startsWith("data:")) {
+      // Already a data URL
+      base64Data = imageUrl;
     } else {
-      // Construct full URL if it's a relative path
-      const fullUrl = imageUrl.startsWith("http") 
-        ? imageUrl 
-        : `${Deno.env.get("SUPABASE_URL")?.replace("/rest/v1", "")}${imageUrl}`;
+      // Fetch from URL - must be a full HTTP URL
+      if (!imageUrl.startsWith("http")) {
+        throw new Error("imageUrl must be a full HTTP(S) URL or use imageBase64 for local images");
+      }
       
-      console.log("Fetching image from:", fullUrl);
+      console.log("Fetching image from:", imageUrl);
       
-      const imageResponse = await fetch(fullUrl);
+      const imageResponse = await fetch(imageUrl);
       if (!imageResponse.ok) {
         throw new Error(`Failed to fetch image: ${imageResponse.statusText}`);
       }
@@ -47,12 +52,12 @@ serve(async (req) => {
       }
       const base64 = btoa(binary);
       const contentType = imageResponse.headers.get("content-type") || "image/jpeg";
-      imageBase64 = `data:${contentType};base64,${base64}`;
+      base64Data = `data:${contentType};base64,${base64}`;
     }
 
-    console.log("Image fetched, sending to AI for background removal...");
+    console.log("Image ready, sending to AI for background removal...");
 
-    // Use Lovable AI to remove background
+    // Use Lovable AI to remove background with improved prompt
     const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -86,7 +91,7 @@ The output MUST have a fully transparent background - this is essential for comp
               {
                 type: "image_url",
                 image_url: {
-                  url: imageBase64,
+                  url: base64Data,
                 },
               },
             ],
@@ -119,8 +124,8 @@ The output MUST have a fully transparent background - this is essential for comp
     );
 
     // Convert base64 to blob
-    const base64Data = cutoutBase64.replace(/^data:image\/\w+;base64,/, "");
-    const binaryData = Uint8Array.from(atob(base64Data), (c) => c.charCodeAt(0));
+    const base64Content = cutoutBase64.replace(/^data:image\/\w+;base64,/, "");
+    const binaryData = Uint8Array.from(atob(base64Content), (c) => c.charCodeAt(0));
 
     const fileName = `cutouts/${coachId}-cutout.png`;
 

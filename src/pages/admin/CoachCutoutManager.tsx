@@ -34,6 +34,18 @@ export default function CoachCutoutManager() {
     },
   });
 
+  // Convert image URL to base64 for local images
+  const imageToBase64 = async (url: string): Promise<string> => {
+    const response = await fetch(url);
+    const blob = await response.blob();
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  };
+
   const regenerateCutout = async (coach: Coach) => {
     if (!coach.avatar_url) {
       toast.error(`${coach.display_name || "Coach"} has no avatar image to process`);
@@ -45,11 +57,27 @@ export default function CoachCutoutManager() {
     try {
       console.log("Regenerating cutout for:", coach.display_name);
       
-      const { data, error } = await supabase.functions.invoke("remove-background", {
-        body: {
+      // Determine if we need to convert to base64
+      const isLocalImage = coach.avatar_url.startsWith("/");
+      let requestBody: { coachId: string; imageUrl?: string; imageBase64?: string };
+      
+      if (isLocalImage) {
+        // Convert local image to base64
+        const base64 = await imageToBase64(coach.avatar_url);
+        requestBody = {
+          imageBase64: base64,
+          coachId: coach.id,
+        };
+      } else {
+        // Use full URL directly
+        requestBody = {
           imageUrl: coach.avatar_url,
           coachId: coach.id,
-        },
+        };
+      }
+      
+      const { data, error } = await supabase.functions.invoke("remove-background", {
+        body: requestBody,
       });
 
       if (error) throw error;
