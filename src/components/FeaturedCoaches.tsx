@@ -47,16 +47,34 @@ export function FeaturedCoaches() {
   const { data: featuredCoaches, isLoading } = useQuery({
     queryKey: ["featured-coaches"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // Prefer featured coaches, but always return 7 cards by filling with other approved coaches.
+      const baseSelect = "id, display_name, avatar_url, cutout_url, headline, specialties, is_featured";
+
+      const { data: featured, error: featuredError } = await supabase
         .from("coaches")
-        .select("id, display_name, avatar_url, cutout_url, headline, specialties")
+        .select(baseSelect)
         .eq("status", "approved")
         .eq("is_featured", true)
         .order("created_at", { ascending: true })
-        .limit(5);
+        .limit(7);
 
-      if (error) throw error;
-      return data || [];
+      if (featuredError) throw featuredError;
+
+      if ((featured?.length ?? 0) >= 7) return featured || [];
+
+      const { data: approved, error: approvedError } = await supabase
+        .from("coaches")
+        .select(baseSelect)
+        .eq("status", "approved")
+        .order("created_at", { ascending: true })
+        .limit(25);
+
+      if (approvedError) throw approvedError;
+
+      const featuredIds = new Set((featured || []).map((c) => c.id));
+      const fillers = (approved || []).filter((c) => !featuredIds.has(c.id));
+
+      return [...(featured || []), ...fillers].slice(0, 7);
     },
   });
 
@@ -68,12 +86,12 @@ export function FeaturedCoaches() {
             Featured Coaches
           </h2>
           <div className="flex justify-center items-end gap-4 md:gap-6">
-            {[...Array(5)].map((_, i) => (
+            {[...Array(7)].map((_, i) => (
               <div
                 key={i}
                 className={cn(
                   "rounded-t-full bg-muted/20 animate-pulse",
-                  i === 2 ? "w-40 h-64 md:w-52 md:h-80" : "w-32 h-52 md:w-44 md:h-72"
+                  i === 3 ? "w-40 h-64 md:w-52 md:h-80" : "w-32 h-52 md:w-44 md:h-72"
                 )}
               />
             ))}
@@ -169,7 +187,7 @@ export function FeaturedCoaches() {
                       <img
                         src={
                           coach.cutout_url.startsWith("/")
-                            ? `${coach.cutout_url}?v=4`
+                            ? `${coach.cutout_url}?v=5`
                             : coach.cutout_url
                         }
                         alt={coach.display_name || "Coach"}
