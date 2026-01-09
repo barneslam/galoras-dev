@@ -5,9 +5,132 @@ env.allowLocalModels = false;
 env.useBrowserCache = true;
 
 const MAX_IMAGE_DIMENSION = 1024;
+// Standard output dimensions for coach cutouts (3:4 aspect ratio)
+const NORMALIZED_WIDTH = 600;
+const NORMALIZED_HEIGHT = 800;
+// Padding percentage around the subject
+const PADDING_PERCENT = 0.08;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let segmenter: any = null;
+
+/**
+ * Finds the bounding box of non-transparent pixels in a canvas
+ */
+function findSubjectBounds(
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number
+): { top: number; bottom: number; left: number; right: number } | null {
+  const imageData = ctx.getImageData(0, 0, width, height);
+  const data = imageData.data;
+
+  let top = height;
+  let bottom = 0;
+  let left = width;
+  let right = 0;
+
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const alpha = data[(y * width + x) * 4 + 3];
+      // Consider pixel as part of subject if alpha > 10
+      if (alpha > 10) {
+        if (y < top) top = y;
+        if (y > bottom) bottom = y;
+        if (x < left) left = x;
+        if (x > right) right = x;
+      }
+    }
+  }
+
+  if (top >= bottom || left >= right) {
+    return null;
+  }
+
+  return { top, bottom, left, right };
+}
+
+/**
+ * Normalizes a coach cutout to a standard size with consistent padding.
+ * Crops to subject bounds and adds uniform padding, then scales to standard dimensions.
+ */
+function normalizeCoachCutout(sourceCanvas: HTMLCanvasElement): HTMLCanvasElement {
+  const sourceCtx = sourceCanvas.getContext('2d');
+  if (!sourceCtx) return sourceCanvas;
+
+  const bounds = findSubjectBounds(sourceCtx, sourceCanvas.width, sourceCanvas.height);
+  if (!bounds) {
+    console.log('Could not find subject bounds, returning original');
+    return sourceCanvas;
+  }
+
+  const subjectWidth = bounds.right - bounds.left;
+  const subjectHeight = bounds.bottom - bounds.top;
+
+  // Calculate padding based on subject size
+  const paddingX = Math.round(subjectWidth * PADDING_PERCENT);
+  const paddingY = Math.round(subjectHeight * PADDING_PERCENT);
+
+  // Calculate cropped dimensions with padding
+  const cropX = Math.max(0, bounds.left - paddingX);
+  const cropY = Math.max(0, bounds.top - paddingY);
+  const cropWidth = Math.min(sourceCanvas.width - cropX, subjectWidth + paddingX * 2);
+  const cropHeight = Math.min(sourceCanvas.height - cropY, subjectHeight + paddingY * 2);
+
+  // Create intermediate canvas for the cropped content
+  const croppedCanvas = document.createElement('canvas');
+  croppedCanvas.width = cropWidth;
+  croppedCanvas.height = cropHeight;
+  const croppedCtx = croppedCanvas.getContext('2d');
+  if (!croppedCtx) return sourceCanvas;
+
+  croppedCtx.drawImage(
+    sourceCanvas,
+    cropX, cropY, cropWidth, cropHeight,
+    0, 0, cropWidth, cropHeight
+  );
+
+  // Create final canvas with standard dimensions
+  const outputCanvas = document.createElement('canvas');
+  outputCanvas.width = NORMALIZED_WIDTH;
+  outputCanvas.height = NORMALIZED_HEIGHT;
+  const outputCtx = outputCanvas.getContext('2d');
+  if (!outputCtx) return sourceCanvas;
+
+  // Calculate scaling to fit within standard dimensions while preserving aspect ratio
+  const cropAspect = cropWidth / cropHeight;
+  const targetAspect = NORMALIZED_WIDTH / NORMALIZED_HEIGHT;
+
+  let drawWidth: number;
+  let drawHeight: number;
+  let drawX: number;
+  let drawY: number;
+
+  if (cropAspect > targetAspect) {
+    // Source is wider - fit to width
+    drawWidth = NORMALIZED_WIDTH;
+    drawHeight = NORMALIZED_WIDTH / cropAspect;
+    drawX = 0;
+    drawY = NORMALIZED_HEIGHT - drawHeight; // Align to bottom
+  } else {
+    // Source is taller - fit to height
+    drawHeight = NORMALIZED_HEIGHT;
+    drawWidth = NORMALIZED_HEIGHT * cropAspect;
+    drawX = (NORMALIZED_WIDTH - drawWidth) / 2; // Center horizontally
+    drawY = 0;
+  }
+
+  // Draw the cropped content scaled to fit, aligned to bottom
+  outputCtx.drawImage(
+    croppedCanvas,
+    0, 0, cropWidth, cropHeight,
+    drawX, drawY, drawWidth, drawHeight
+  );
+
+  console.log(`Normalized cutout: cropped ${cropWidth}x${cropHeight} -> ${NORMALIZED_WIDTH}x${NORMALIZED_HEIGHT}`);
+
+  return outputCanvas;
+}
 
 function resizeImageIfNeeded(
   canvas: HTMLCanvasElement,
@@ -157,9 +280,13 @@ export const removeBackground = async (
     outputCtx.putImageData(outputImageData, 0, 0);
     console.log('Mask applied successfully');
 
+    // Normalize the cutout (crop to subject + consistent padding)
+    const normalizedCanvas = normalizeCoachCutout(outputCanvas);
+    console.log('Cutout normalized to standard framing');
+
     // Convert canvas to blob
     return new Promise((resolve, reject) => {
-      outputCanvas.toBlob(
+      normalizedCanvas.toBlob(
         (blob) => {
           if (blob) {
             console.log('Successfully created final blob');

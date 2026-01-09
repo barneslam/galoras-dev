@@ -61,7 +61,15 @@ serve(async (req) => {
             content: [
               {
                 type: "text",
-                text: "Remove the background from this image completely. Make the background fully transparent. Keep only the person/subject with clean edges. Output a PNG with transparent background.",
+                text: `Remove the background from this image completely. Make the background fully transparent. Keep only the person/subject with clean edges.
+                
+After removing the background:
+1. Crop tightly to the subject with about 8% padding around all edges
+2. Scale the result to a 3:4 aspect ratio (600x800 pixels)
+3. Center the subject horizontally and align to the bottom of the frame
+4. Output as a PNG with transparent background.
+
+This ensures all coach photos have consistent framing.`,
               },
               {
                 type: "image_url",
