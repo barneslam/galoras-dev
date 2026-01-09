@@ -52,6 +52,7 @@ export function FeaturedCoaches() {
         .select("id, display_name, avatar_url, cutout_url, headline, specialties")
         .eq("status", "approved")
         .eq("is_featured", true)
+        .order("created_at", { ascending: true })
         .limit(5);
 
       if (error) throw error;
