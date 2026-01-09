@@ -60,22 +60,28 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash-image-preview",
+        model: "google/gemini-3-pro-image-preview",
         messages: [
           {
             role: "user",
             content: [
               {
                 type: "text",
-                text: `Remove the background from this image completely. Make the background fully transparent. Keep only the person/subject with clean edges.
-                
-After removing the background:
-1. Crop tightly to the subject with about 8% padding around all edges
-2. Scale the result to a 3:4 aspect ratio (600x800 pixels)
-3. Center the subject horizontally and align to the bottom of the frame
-4. Output as a PNG with transparent background.
+                text: `Remove the background from this portrait photo completely. Create a PNG with TRUE TRANSPARENCY (alpha channel).
 
-This ensures all coach photos have consistent framing.`,
+CRITICAL REQUIREMENTS:
+1. The background MUST be completely transparent (alpha = 0), NOT black, NOT white, NOT any solid color
+2. Keep only the person with clean, anti-aliased edges
+3. Preserve natural shadows only if they are part of the subject
+4. Output format: PNG with alpha transparency channel
+
+After removing the background:
+1. Crop tightly to the subject with about 10% padding around all edges
+2. Scale the result to approximately 600x800 pixels (3:4 aspect ratio)
+3. Center the subject horizontally
+4. Align the subject to the bottom of the frame (head near top, body fills frame)
+
+The output MUST have a fully transparent background - this is essential for compositing over colored backgrounds.`,
               },
               {
                 type: "image_url",
