@@ -61,8 +61,8 @@ export default function Index() {
         <div className="container-wide relative z-10 py-20">
           <div className="max-w-4xl mx-auto text-center stagger-children">
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-display font-bold text-foreground leading-tight mb-6">
-              Where Coaching Is Evaluated by{" "}
-              <span className="text-gradient">Performance</span> Rather Than Reputation
+              Remove the Shackles. Unlock{" "}
+              <span className="text-gradient">Performance</span>
             </h1>
             
             <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto mb-10">
