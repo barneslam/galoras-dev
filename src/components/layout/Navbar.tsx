@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Menu, X, ChevronDown, User, LogOut } from "lucide-react";
+import { Menu, X, ChevronDown, User, LogOut, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -56,20 +57,40 @@ const navItems = [
 export function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setIsLoggedIn(!!session?.user);
+      if (session?.user) {
+        checkAdminRole(session.user.id);
+      } else {
+        setIsAdmin(false);
+      }
     });
 
     supabase.auth.getSession().then(({ data: { session } }) => {
       setIsLoggedIn(!!session?.user);
+      if (session?.user) {
+        checkAdminRole(session.user.id);
+      }
     });
 
     return () => subscription.unsubscribe();
   }, []);
+
+  const checkAdminRole = async (userId: string) => {
+    const { data } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId)
+      .eq("role", "admin")
+      .maybeSingle();
+    
+    setIsAdmin(!!data);
+  };
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -159,6 +180,18 @@ export function Navbar() {
                         Dashboard
                       </Link>
                     </DropdownMenuItem>
+                    {isAdmin && (
+                      <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem asChild>
+                          <Link to="/admin/applicants">
+                            <ShieldCheck className="mr-2 h-4 w-4" />
+                            Applicants
+                          </Link>
+                        </DropdownMenuItem>
+                      </>
+                    )}
+                    <DropdownMenuSeparator />
                     <DropdownMenuItem onSelect={(e) => {
                       e.preventDefault();
                       handleSignOut();
@@ -246,6 +279,16 @@ export function Navbar() {
                     >
                       Dashboard
                     </Link>
+                    {isAdmin && (
+                      <Link
+                        to="/admin/applicants"
+                        className="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md hover:bg-muted text-primary"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
+                        <ShieldCheck className="h-4 w-4" />
+                        Applicants
+                      </Link>
+                    )}
                     <button
                       type="button"
                       className="w-full text-left px-3 py-2 text-sm font-medium rounded-md hover:bg-muted"
