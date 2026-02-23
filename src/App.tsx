@@ -9,6 +9,7 @@ import { CoachingDirectory, CoachProfile, CoachMatching, WhyCoaching } from "./p
 import CoachDashboard from "./pages/coaching/CoachDashboard";
 import CoachProfileEdit from "./pages/coaching/CoachProfileEdit";
 import CoachOnboarding from "./pages/coaching/CoachOnboarding";
+import OnboardRedirect from "./pages/coaching/OnboardRedirect";
 import { Business, SportOfBusiness, LeadershipCircles, Workshops, Diagnostics } from "./pages/business";
 import Compass from "./pages/Compass";
 import Labs from "./pages/Labs";
@@ -36,7 +37,9 @@ const App = () => (
           <Route path="/coaching/:coachId" element={<CoachProfile />} />
           <Route path="/coaching/matching" element={<CoachMatching />} />
           <Route path="/coaching/why" element={<WhyCoaching />} />
+          <Route path="/coaching/onboarding" element={<CoachOnboarding />} />
           <Route path="/coach/onboarding" element={<CoachOnboarding />} />
+          <Route path="/onboard/:shortId" element={<OnboardRedirect />} />
           {/* B2B Routes */}
           <Route path="/business" element={<Business />} />
           <Route path="/business/sport-of-business" element={<SportOfBusiness />} />

@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   CheckCircle, XCircle, Clock, Loader2, ShieldAlert, ShieldX,
-  Copy, Eye, Send, AlertTriangle,
+  Copy, Eye, Send, AlertTriangle, ExternalLink,
 } from "lucide-react";
 import { format } from "date-fns";
 import { ApplicationDetailDialog } from "@/components/admin/ApplicationDetailDialog";
@@ -34,6 +34,7 @@ interface CoachApplication {
   avatar_url: string | null;
   onboarding_token: string | null;
   onboarding_status: string | null;
+  onboarding_short_id: string | null;
   reviewed_at: string | null;
   reviewer_notes: string | null;
   // New structured fields
@@ -96,14 +97,24 @@ export default function Applicants() {
   const generateToken = () =>
     crypto.randomUUID().replace(/-/g, "") + crypto.randomUUID().replace(/-/g, "");
 
+  const BASE62 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  const generateShortId = (length = 12) => {
+    const bytes = crypto.getRandomValues(new Uint8Array(length));
+    return Array.from(bytes, (b) => BASE62[b % 62]).join("");
+  };
+
   const approveApplication = async (id: string) => {
     setUpdatingId(id);
+    const token = generateToken();
+    const shortId = generateShortId();
+
     const { data, error } = await supabase
       .from("coach_applications")
       .update({
         status: "approved" as const,
-        onboarding_token: generateToken(),
+        onboarding_token: token,
         onboarding_status: "pending",
+        onboarding_short_id: shortId,
         reviewed_at: new Date().toISOString(),
       })
       .eq("id", id)
@@ -112,10 +123,27 @@ export default function Applicants() {
 
     if (error) {
       toast({ title: "Approve failed", description: error.message, variant: "destructive" });
-    } else {
-      toast({ title: "Application approved", description: "Onboarding link is now available." });
-      setApplications((prev) => prev.map((a) => (a.id === id ? { ...a, ...data } : a)));
+      setUpdatingId(null);
+      return;
     }
+
+    // Insert into onboarding_links (service-role table, but admin can insert via RLS bypass if needed)
+    // We use the supabase client here; if RLS blocks, the edge function handles it
+    const { error: linkError } = await supabase
+      .from("onboarding_links")
+      .insert({
+        short_id: shortId,
+        application_id: id,
+        onboarding_token: token,
+      });
+
+    if (linkError) {
+      console.error("Failed to create onboarding link:", linkError);
+      // Still proceed — the approval succeeded, link can be created later
+    }
+
+    toast({ title: "Application approved", description: "Onboarding link is now available." });
+    setApplications((prev) => prev.map((a) => (a.id === id ? { ...a, ...data } : a)));
     setUpdatingId(null);
   };
 
@@ -186,10 +214,25 @@ export default function Applicants() {
     setChangesTarget(null);
   };
 
-  const copyOnboardingLink = (token: string) => {
-    const link = `${window.location.origin}/coach/onboarding?token=${token}`;
-    navigator.clipboard.writeText(link);
-    toast({ title: "Link copied!", description: "Onboarding link copied to clipboard." });
+  const getOnboardingUrl = (app: CoachApplication) => {
+    if (app.onboarding_short_id) {
+      return `${window.location.origin}/onboard/${app.onboarding_short_id}`;
+    }
+    // Fallback for legacy approved applications without short_id
+    return app.onboarding_token ? `${window.location.origin}/coaching/onboarding?token=${app.onboarding_token}` : null;
+  };
+
+  const openOnboardingLink = (app: CoachApplication) => {
+    const url = getOnboardingUrl(app);
+    if (url) window.open(url, "_blank");
+  };
+
+  const copyOnboardingLink = (app: CoachApplication) => {
+    const url = getOnboardingUrl(app);
+    if (url) {
+      navigator.clipboard.writeText(url);
+      toast({ title: "Link copied!", description: "Onboarding link copied to clipboard." });
+    }
   };
 
   // Status badges
@@ -389,10 +432,15 @@ export default function Applicants() {
                               <TableCell>{onboardingBadge(app.onboarding_status)}</TableCell>
                               <TableCell className="text-right">
                                 <div className="flex justify-end gap-2">
-                                  {app.status === "approved" && app.onboarding_token && app.onboarding_status === "pending" && (
-                                    <Button size="sm" variant="outline" onClick={() => copyOnboardingLink(app.onboarding_token!)}>
-                                      <Copy className="h-4 w-4 mr-1" />Copy Link
-                                    </Button>
+                                  {app.status === "approved" && (app.onboarding_short_id || app.onboarding_token) && app.onboarding_status === "pending" && (
+                                    <>
+                                      <Button size="sm" onClick={() => openOnboardingLink(app)}>
+                                        <ExternalLink className="h-4 w-4 mr-1" />Open Onboarding
+                                      </Button>
+                                      <Button size="sm" variant="ghost" onClick={() => copyOnboardingLink(app)}>
+                                        <Copy className="h-4 w-4 mr-1" />Copy
+                                      </Button>
+                                    </>
                                   )}
                                   <Button size="sm" variant="outline" onClick={() => setDetailApp(app)}>
                                     <Eye className="h-4 w-4 mr-1" />View

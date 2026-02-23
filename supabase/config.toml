@@ -2,3 +2,6 @@ project_id = "dajlrvyqcyvgdzkzbjwk"
 
 [functions.publish-coach]
 verify_jwt = false
+
+[functions.resolve-onboarding-link]
+verify_jwt = false

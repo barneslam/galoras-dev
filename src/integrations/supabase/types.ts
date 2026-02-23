@@ -146,6 +146,7 @@ export type Database = {
           id: string
           leadership_experience_years: string | null
           linkedin_url: string | null
+          onboarding_short_id: string | null
           onboarding_status: string | null
           onboarding_token: string | null
           phone: string | null
@@ -180,6 +181,7 @@ export type Database = {
           id?: string
           leadership_experience_years?: string | null
           linkedin_url?: string | null
+          onboarding_short_id?: string | null
           onboarding_status?: string | null
           onboarding_token?: string | null
           phone?: string | null
@@ -214,6 +216,7 @@ export type Database = {
           id?: string
           leadership_experience_years?: string | null
           linkedin_url?: string | null
+          onboarding_short_id?: string | null
           onboarding_status?: string | null
           onboarding_token?: string | null
           phone?: string | null
@@ -546,6 +549,44 @@ export type Database = {
           subject?: string | null
         }
         Relationships: []
+      }
+      onboarding_links: {
+        Row: {
+          application_id: string
+          created_at: string
+          expires_at: string
+          id: string
+          onboarding_token: string
+          short_id: string
+          used_at: string | null
+        }
+        Insert: {
+          application_id: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          onboarding_token: string
+          short_id: string
+          used_at?: string | null
+        }
+        Update: {
+          application_id?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          onboarding_token?: string
+          short_id?: string
+          used_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onboarding_links_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "coach_applications"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
