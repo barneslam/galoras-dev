@@ -83,6 +83,12 @@ serve(async (req) => {
       );
     }
 
+    // Mark onboarding link as used after successful completion
+    await supabase
+      .from("onboarding_links")
+      .update({ used_at: new Date().toISOString() })
+      .eq("onboarding_token", token);
+
     return new Response(
       JSON.stringify({ success: true }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
