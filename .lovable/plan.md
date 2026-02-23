@@ -1,140 +1,139 @@
 
 
-# Phase 1 Adjustments -- Revised Implementation Plan
+# Phase A + Phase B: Masked Onboarding Links
 
-## Summary of 4 Adjustments
+## Phase A -- Immediate UI Fix
 
-1. **Add Coaching Philosophy** -- new optional short text field (max 300 chars) end-to-end
-2. **Fix Years of Coaching Experience** -- correct dropdown options and make required
-3. **Conditional field logic** -- enforce mutual exclusivity of `coach_background_detail` vs `certification_interest`
-4. **Seed existing test profiles** -- backfill Barnes Lam and Mitesh Kapadia with structured data
+### File: `src/pages/admin/Applicants.tsx`
 
----
+**"All" tab (lines 391-396):** Replace the "Copy Link" button block with two buttons:
 
-## Current State
+1. **"Open Onboarding"** (primary) -- opens `/coaching/onboarding?token=...` in a new tab using `window.open()`. Note: uses `/coaching/onboarding` (not `/coach/onboarding`).
+2. **"Copy Link"** (secondary/ghost, smaller) -- keeps existing clipboard copy behavior but also uses the corrected `/coaching/onboarding` route.
 
-### Database columns (coach_applications)
-Existing: `id, full_name, email, phone, linkedin_url, website_url, experience_years (integer), specialties (array), bio, why_galoras, certifications, status, reviewed_at, reviewer_notes, created_at, avatar_url, onboarding_token, onboarding_status, user_id`
+**Also fix `copyOnboardingLink` function (line 189-193):** Update the URL from `/coach/onboarding` to `/coaching/onboarding`.
 
-New columns from the approved Phase 1 plan (not yet created): `coach_background, coach_background_detail, certification_interest, coaching_experience_years, leadership_experience_years, current_role, coaching_experience_level, primary_join_reason, commitment_level, start_timeline, excitement_note, pillar_specialties`
+**Add `openOnboardingLink` function:** Opens the onboarding URL in a new tab.
 
-### Database columns (coaches)
-Existing: `id, user_id, headline, bio, specialties, coaching_style, signature_framework, experience_years, hourly_rate, location, timezone, languages, linkedin_url, website_url, status, is_featured, is_enterprise_ready, total_sessions, rating, created_at, updated_at, display_name, avatar_url, cutout_url`
+**Route fix in `App.tsx` (line 39):** Change `/coach/onboarding` to `/coaching/onboarding` for route consistency. Keep old route as a redirect or alias to avoid breaking any existing links.
 
-New columns from the approved plan (not yet created): `coach_background, coaching_experience_level, leadership_experience_years, pillar_specialties, current_role`
-
-### Existing test data
-- **Barnes Lam** -- `coach_applications` (approved, no onboarding_status) + `coaches` record
-- **Mitesh Kapadia** -- `coach_applications` (approved, onboarding_status: needs_changes) + `coaches` record
-- **Conor McGowan** -- `coach_applications` (pending, no onboarding)
+No other tabs (Queue A, Queue B) are affected -- they don't show Copy Link buttons.
 
 ---
 
-## Adjustment Details
+## Phase B -- Masked Onboarding Route
 
-### 1. Add `coaching_philosophy` field
+### Step 1: Database Migration
 
-**Schema:**
-- Add `coaching_philosophy text` (nullable) to both `coach_applications` and `coaches` tables
-- No max-length constraint at DB level; enforced in UI with `maxLength={300}`
+**New table `onboarding_links`:**
 
-**Touchpoints:**
-- `Apply.tsx` -- add optional textarea in "About You" section, max 300 chars, with character counter
-- `CoachOnboarding.tsx` -- add same field
-- `complete-onboarding/index.ts` -- accept and write `coachingPhilosophy`
-- `publish-coach/index.ts` -- copy `coaching_philosophy` from application to coaches record
-- `ApplicationDetailDialog.tsx` -- display if present
-- `CoachProfile.tsx` -- display in a new card section between "About" and "Specialties"
-
-### 2. Fix Years of Coaching Experience dropdown
-
-The original plan reused the leadership experience scale (`0-3, 3-7, 7-15, 15+`) for coaching years. This adjustment provides a distinct, coaching-appropriate scale.
-
-**Corrected dropdown options for `coaching_experience_years`:**
-- Less than 1 year
-- 1--3 years
-- 3--5 years
-- 5--10 years
-- 10+ years
-
-**Field is required** (was optional in original plan).
-
-The column name `coaching_experience_years` is already distinct from `leadership_experience_years`, so no rename needed.
-
-### 3. Conditional field enforcement
-
-The fields `coach_background_detail` and `certification_interest` share a single conditional slot based on the `coach_background` dropdown value:
-
-| Coach Background | Visible Field | Label |
+| Column | Type | Notes |
 |---|---|---|
-| Certified Professional Coach | `coach_background_detail` | "List Certifications" |
-| Executive / Business Leader | `coach_background_detail` | "Most Recent Senior Role" |
-| Athlete / Elite Performer | `coach_background_detail` | "Highest Level Competed" |
-| Emerging Coach | `certification_interest` | "Interest in Galoras Certification Track" (Yes/No/Maybe) |
-| Other Relevant Professional Background | Neither | -- |
+| id | uuid (PK) | Default gen_random_uuid() |
+| short_id | text (unique, not null) | 10-12 char base62 random string |
+| application_id | uuid (FK) | References coach_applications.id |
+| onboarding_token | text (not null) | The real token (plaintext initially, service-role-only access) |
+| created_at | timestamptz | Default now() |
+| expires_at | timestamptz | Default now() + 30 days |
+| used_at | timestamptz | NULL until onboarding is completed |
 
-**Implementation logic in Apply.tsx and CoachOnboarding.tsx:**
-- When `coach_background` changes, clear both `coach_background_detail` and `certification_interest`
-- Only render the relevant conditional sub-field
-- On form submit, explicitly set the irrelevant field to `null` so stale values are never persisted
+RLS: Enable RLS on the table with NO public policies. Only the edge function (service role) accesses this table, so no RLS policies are needed for anon/authenticated roles.
 
-### 4. Seed/backfill existing test profiles
+**New column on `coach_applications`:**
+- `onboarding_short_id text` (nullable) -- stores the short ID for quick admin reference
 
-A data migration (UPDATE statements) will populate the new structured fields for the two existing coaches so the UI renders complete profiles during demos.
+### Step 2: New Edge Function -- `resolve-onboarding-link`
 
-**Barnes Lam** (applications + coaches):
-- `coach_background`: "Executive / Business Leader (Operator-Coach)"
-- `coach_background_detail`: "Founder & CEO, The Strategy Pitch"
-- `coaching_experience_years`: "5--10 years"
-- `leadership_experience_years`: "15+ years"
-- `current_role`: "Founder & CEO, The Strategy Pitch"
-- `coaching_experience_level`: "Executive / Operator Coach"
-- `pillar_specialties`: ["Executive Leadership", "Founder & Entrepreneur Coaching", "Sport of Business Coaching"]
-- `primary_join_reason`: "Expand my existing coaching business"
-- `commitment_level`: "Building full-time coaching practice"
-- `start_timeline`: "Immediately"
-- `coaching_philosophy`: "Strategy meets execution -- helping leaders close the gap between vision and results."
+- **Config:** `verify_jwt = false` in `supabase/config.toml`
+- **Runs with service role** (uses `SUPABASE_SERVICE_ROLE_KEY`)
+- Accepts `{ shortId }` in request body
+- Looks up `onboarding_links` by `short_id`
+- Validates: `expires_at > now()` (not expired)
+- Does **NOT** mark `used_at` on resolve (allows retries and device switches)
+- Returns `{ token }` to the client
+- Returns 404 if expired or not found
 
-**Mitesh Kapadia** (applications + coaches):
-- `coach_background`: "Certified Professional Coach"
-- `coach_background_detail`: "ICF PCC, CTI CPCC"
-- `coaching_experience_years`: "10+ years"
-- `leadership_experience_years`: "15+ years"
-- `current_role`: "Executive Coach"
-- `coaching_experience_level`: "Executive / Operator Coach"
-- `pillar_specialties`: ["Executive Leadership", "Peak Performance & Execution", "Mindset & Resilience", "Career Transitions"]
-- `primary_join_reason`: "Join a high-performance coaching network"
-- `commitment_level`: "Already coaching professionally"
-- `start_timeline`: "Immediately"
-- `coaching_philosophy`: "Unlocking human potential through deep self-awareness and purposeful action."
+**Single-use marking:** `used_at` is set only when `complete-onboarding` edge function runs successfully. A small update to `complete-onboarding/index.ts` will add: after marking the application as completed, also update `onboarding_links` SET `used_at = now()` WHERE `onboarding_token = token`.
+
+### Step 3: Short ID Generation
+
+Use a URL-safe base62 alphabet (A-Z, a-z, 0-9), generating a 12-character random string. Implementation in the edge function or in `Applicants.tsx`:
+
+```text
+const BASE62 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+function generateShortId(length = 12) {
+  const bytes = crypto.getRandomValues(new Uint8Array(length));
+  return Array.from(bytes, b => BASE62[b % 62]).join('');
+}
+```
+
+### Step 4: New Frontend Route -- `/onboard/:shortId`
+
+**New file: `src/pages/coaching/OnboardRedirect.tsx`**
+- Reads `shortId` from URL params
+- Calls `resolve-onboarding-link` edge function
+- On success: navigates to `/coaching/onboarding?token={token}` (internal redirect via `useNavigate`)
+- On failure: shows "Invalid or expired link" error page
+- Shows loading spinner during resolution
+
+**Update `App.tsx`:**
+- Add route: `<Route path="/onboard/:shortId" element={<OnboardRedirect />} />`
+- Keep `/coaching/onboarding` route (still accepts `?token=` for the redirect target)
+
+### Step 5: Update `approveApplication` in `Applicants.tsx`
+
+After generating the `onboarding_token` and saving it to `coach_applications`:
+1. Generate a 12-char base62 `shortId`
+2. Insert into `onboarding_links` table: `{ short_id, application_id, onboarding_token, expires_at }`
+3. Update `coach_applications` with `onboarding_short_id = shortId`
+4. Update local state with the short ID
+
+### Step 6: Update Admin UI Buttons (replaces Phase A raw-token buttons)
+
+- **"Open Onboarding"** now opens `/onboard/{shortId}` (not the raw token URL)
+- **"Copy Link"** copies the `/onboard/{shortId}` URL
+- Both functions check: if `onboarding_short_id` exists, use masked URL; otherwise fall back to raw token URL (backward compatibility for existing approved applications)
+
+### Step 7: Update `complete-onboarding/index.ts`
+
+After successfully marking `onboarding_status = 'completed'`, also:
+```sql
+UPDATE onboarding_links SET used_at = now() WHERE onboarding_token = token
+```
+This marks the link as used only after successful completion.
 
 ---
 
-## Implementation Steps
+## Token Storage Security Note
 
-| Step | Description | Files |
+The `onboarding_token` is stored as plaintext in `onboarding_links` for this phase. This is acceptable because:
+- The table has RLS enabled with zero public policies
+- Only the edge function accesses it via `SUPABASE_SERVICE_ROLE_KEY`
+- The token is never exposed in admin UI (admin only sees/shares the `shortId`)
+- Hashing can be added in a future phase if needed
+
+---
+
+## Masking Scope Confirmation
+
+- Raw onboarding token is never shown in Admin UI buttons or text
+- Admin copies/shares only `/onboard/{shortId}`
+- Token appears in the final onboarding URL (`/coaching/onboarding?token=...`) after the redirect -- this is acceptable per requirements
+
+---
+
+## Files Changed Summary
+
+| File | Phase | Change |
 |---|---|---|
-| 1 | **Database migration** -- add all new columns to `coach_applications` and `coaches` (including `coaching_philosophy`). Backfill Barnes Lam and Mitesh Kapadia with seed data. Single migration. | SQL migration |
-| 2 | **Shared constants** -- create `src/lib/coaching-constants.ts` with all dropdown options, pillar taxonomy, and type definitions | New file |
-| 3 | **Apply.tsx** -- replace Professional Background, Specialties, and "Why Galoras?" sections with structured dropdowns, conditional fields, pillar multi-select, motivation section, and coaching philosophy textarea | `src/pages/Apply.tsx` |
-| 4 | **CoachOnboarding.tsx** -- add same structured fields with conditional logic | `src/pages/coaching/CoachOnboarding.tsx` |
-| 5 | **complete-onboarding edge function** -- accept and persist new fields | `supabase/functions/complete-onboarding/index.ts` |
-| 6 | **publish-coach edge function** -- copy new fields including `coaching_philosophy` to coaches record | `supabase/functions/publish-coach/index.ts` |
-| 7 | **ApplicationDetailDialog** -- display new structured fields with pillar badges | `src/components/admin/ApplicationDetailDialog.tsx` |
-| 8 | **Applicants.tsx** -- replace "Copy Link" with "View Profile" in Queue B | `src/pages/admin/Applicants.tsx` |
-| 9 | **CoachProfile.tsx** -- display Coach Background, Experience Level, Leadership Experience, Pillar Specialties (grouped), Sport of Business tag, and Coaching Philosophy | `src/pages/coaching/CoachProfile.tsx` |
-| 10 | **End-to-end verification** | Manual testing |
+| `src/App.tsx` | A+B | Fix route `/coach/onboarding` to `/coaching/onboarding`, add `/onboard/:shortId` route |
+| `src/pages/admin/Applicants.tsx` | A+B | Add "Open Onboarding" button, generate shortId on approve, use masked URLs |
+| SQL migration | B | Create `onboarding_links` table, add `onboarding_short_id` to `coach_applications` |
+| `supabase/functions/resolve-onboarding-link/index.ts` | B | New edge function |
+| `supabase/config.toml` | B | Add `verify_jwt = false` for resolve-onboarding-link |
+| `src/pages/coaching/OnboardRedirect.tsx` | B | New redirect page component |
+| `supabase/functions/complete-onboarding/index.ts` | B | Mark `used_at` on onboarding_links after completion |
 
----
+## No Blockers
 
-## Breaking Changes
-
-None. Old columns (`certifications`, `why_galoras`, `specialties`, `experience_years`) are preserved. Existing data is backfilled. New submissions write to new columns.
-
-## Technical Notes
-
-- The seed data for coaches records will be matched by `display_name` since that is how the existing records are identified
-- `coaching_philosophy` has a 300-char UI limit but no DB constraint (text type)
-- Conditional field clearing happens on the client side before submission
-- The `experience_years` integer column on `coach_applications` remains for backward compatibility; the new `coaching_experience_years` text column stores the dropdown range value
-
+All adjustments are straightforward. Phase A and B will be implemented together in a single pass.
