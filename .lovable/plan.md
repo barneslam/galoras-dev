@@ -1,78 +1,80 @@
 
 
-## Unify Coach Card Design to Match Reference Site
+## Remove Featured Duplication: Image-Only Gallery + Popup
 
 ### Overview
-Replace the current CoachCard (circular avatar, centered layout) and FeaturedCoaches (cinematic gallery with TiltCard, grayscale, negative margins) with a single unified card design matching galoras-feature-coaches.lovable.app. This is a UI-only change -- no data, logic, routing, or database modifications.
+The top "Featured Coaches" section currently renders full `CoachCard` components -- identical to the directory list below -- creating visual duplication. This change converts the featured section into a clean **image-only gallery** where clicking a tile opens a **modal preview** of the coach.
 
-### Reference Design (per card)
-- Full-width hero image (h-56 / md:h-64) with gradient overlay
-- "Verified Galoras Coach" badge (top-left, primary-colored pill)
-- Small circular portrait + name + role overlaid at bottom-left of image
-- Content area with headline (primary color), bio (2-line clamp), credential icons (specialty + location), and "View Profile" text with arrow
-- Entire card is a single `<Link>` -- "View Profile" is a styled `<span>`, not a nested link
-- Hover: border-primary/50, shadow-lg, image scale-105
+No data, logic, routing, or database changes.
 
 ### Files to Change
 
-**1. `src/components/coaching/CoachCard.tsx` -- Full Rewrite**
+**1. `src/components/coaching/CoachCard.tsx` -- Add `variant` prop**
 
-Replace entire component with the reference card design:
-- Wrap in `<Link to={/coaching/${id}}>` (react-router-dom, not next/link)
-- Hero image section: h-56 md:h-64, object-cover, group-hover:scale-105
-- Gradient overlay: from-black/70 via-black/20 to-transparent
-- "Verified Galoras Coach" badge top-left (always shown since all listed coaches are approved)
-- Portrait circle (w-14 h-14) + display_name + current_role (fallback: first specialty) at bottom-left of image
-- Content: headline in primary, bio with line-clamp-2, Award icon + first specialty, MapPin icon + location, "View Profile" span + ArrowRight icon
-- Updated props: add `bio`, `location`, `currentRole` (all optional/nullable strings)
-- Remove old imports: Button, Badge. Add: MapPin, ArrowRight from lucide-react. Keep Award.
+Add `variant?: "default" | "static"` to the props interface. When `variant="static"`, the outer wrapper becomes a `<div>` instead of a `<Link>` (prevents nested anchors when used inside the modal). All styling and layout remain identical -- only the wrapper element changes.
 
-**2. `src/components/FeaturedCoaches.tsx` -- Replace with Simple Grid**
+**2. `src/components/FeaturedCoaches.tsx` -- Full UI rewrite (query logic untouched)**
 
-Remove entirely:
-- TiltCard import and usage
-- framer-motion (motion, variants)
-- Cinematic overlapping gallery layout
-- Grayscale treatment
-- EXTERNAL_COACH_IMAGES map and getExternalImage helper
-- Placeholder image import and fallback section
-- "View All Coaches" link
-- cn import
+Remove:
+- `CoachCard` usage in the featured grid
+- Subtitle paragraph
+- Card-style loading skeletons
 
 Replace with:
-- Section: `py-20 bg-secondary/30`
-- Title: "Meet Our **Verified Coaches**" (primary color on "Verified Coaches")
-- Subtitle text
-- 3-column responsive grid using CoachCard component
-- Same fetch query (queryKey `["featured-coaches"]`) and logic unchanged
-- Also select `bio, location, current_role` in the query's baseSelect string
-- Pass new props (bio, location, currentRole) to each CoachCard
+- `selectedCoach` state (coach object or null)
+- 3-column responsive grid of **image-only tiles** (no text, no badge, no overlay)
+- Each tile: `aspect-[4/3]`, `rounded-2xl`, `overflow-hidden`, `cursor-pointer`, hover `scale-105`
+- Clicking a tile sets `selectedCoach` and opens a Radix `Dialog`
+- Modal contains `CoachCard variant="static"` plus a separate "View Full Profile" link button below (outside the card, avoids nested anchors)
+- Loading skeletons become simple `aspect-[4/3] rounded-2xl bg-muted animate-pulse` rectangles
 
-**3. `src/pages/coaching/CoachingDirectory.tsx` -- Pass New Props**
+**3. `src/pages/coaching/CoachingDirectory.tsx` -- No changes**
 
-Update the CoachCard usage in the lower coaches grid to pass additional fields:
-- Add `bio={coach.bio}`, `location={coach.location}`, `currentRole={coach.current_role}`
-- Also add `bio, location, current_role` to the select in the coaches query (currently selects `*` so this is already covered)
-- No other changes -- search, filter, category pills, routing all stay the same
+The lower directory list stays exactly as-is.
 
-### Layout on /coaching After Change
+### Technical Details
 
+**CoachCard wrapper logic:**
 ```text
-[Hero + Search]
-[Category Pills]
-[Featured Coaches - "Meet Our Verified Coaches"]
-  -> 3-col responsive grid of CoachCard
-[All Coaches Section]
-  -> 3-col responsive grid of CoachCard (includes featured)
-[CTA Section]
+if variant === "static":
+  <div className="group block">{cardContent}</div>
+else:
+  <Link to={/coaching/${id}} className="group block">{cardContent}</Link>
 ```
 
-### What Is NOT Changing
-- Database schema
-- Featured flag logic / queries
-- Admin logic
-- Routing (`/coaching/:id`)
-- Search/filter logic
-- Category pills
+**Modal structure:**
+```text
+<Dialog open={selectedCoach !== null} onOpenChange={...}>
+  <DialogContent className="max-w-lg">
+    <DialogTitle className="sr-only">{coach name}</DialogTitle>
+    <CoachCard variant="static" ...props />
+    <Link to={/coaching/${id}}>
+      <Button>View Full Profile</Button>
+    </Link>
+  </DialogContent>
+</Dialog>
+```
+
+### Visual Result
+```text
+/coaching page:
+  [Hero + Search]
+  [Category Pills]
+  [Featured Coaches - "Meet Our Verified Coaches"]
+    -> 3-col grid of IMAGE-ONLY tiles (no text anywhere on tiles)
+    -> Click tile -> popup with CoachCard preview + "View Full Profile" button
+  [All Coaches Section]
+    -> 3-col grid of full CoachCard (unchanged, includes featured)
+  [CTA Section]
+```
+
+### Acceptance Criteria
+- Featured tiles show ONLY images (no badge, no bio, no name, no "View Profile")
+- Clicking a tile opens a centered modal with the full card design
+- Modal uses `variant="static"` CoachCard (no nested anchor tags)
+- "View Full Profile" button is outside the card, links to `/coaching/{id}`
+- Bottom directory list is completely unchanged
 - Featured coaches appear in both sections
-- Query keys and data fetching logic (except adding fields to FeaturedCoaches select)
+- Mobile: tiles stack to 1 column; modal fits viewport
+- No data, logic, routing, or database changes
+
