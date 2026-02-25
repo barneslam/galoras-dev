@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -24,6 +24,28 @@ type FeaturedCoach = {
 
 export function FeaturedCoaches() {
   const [selectedCoach, setSelectedCoach] = useState<FeaturedCoach | null>(null);
+  const [startIndex, setStartIndex] = useState(0);
+  const [visibleCount, setVisibleCount] = useState(2);
+
+  // Responsive visible count
+  useEffect(() => {
+    const lgQuery = window.matchMedia("(min-width: 1024px)");
+    const mdQuery = window.matchMedia("(min-width: 768px)");
+
+    const update = () => {
+      if (lgQuery.matches) setVisibleCount(4);
+      else if (mdQuery.matches) setVisibleCount(3);
+      else setVisibleCount(2);
+    };
+
+    update();
+    lgQuery.addEventListener("change", update);
+    mdQuery.addEventListener("change", update);
+    return () => {
+      lgQuery.removeEventListener("change", update);
+      mdQuery.removeEventListener("change", update);
+    };
+  }, []);
 
   const { data: featuredCoaches, isLoading } = useQuery({
     queryKey: ["featured-coaches"],
@@ -44,6 +66,18 @@ export function FeaturedCoaches() {
     },
   });
 
+  // Auto-rotate timer
+  useEffect(() => {
+    if (!featuredCoaches || featuredCoaches.length === 0) return;
+    if (selectedCoach !== null) return;
+
+    const interval = setInterval(() => {
+      setStartIndex((prev) => (prev + visibleCount) % featuredCoaches.length);
+    }, 4000);
+
+    return () => clearInterval(interval);
+  }, [selectedCoach, visibleCount, featuredCoaches]);
+
   if (isLoading) {
     return (
       <section className="py-20 bg-secondary/30">
@@ -51,11 +85,11 @@ export function FeaturedCoaches() {
           <h2 className="text-3xl md:text-4xl font-display font-bold text-center mb-12">
             Meet Our <span className="text-primary">Verified Coaches</span>
           </h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[...Array(6)].map((_, i) => (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {[...Array(4)].map((_, i) => (
               <div
                 key={i}
-                className="aspect-[4/3] rounded-2xl bg-muted animate-pulse"
+                className="aspect-[16/9] rounded-2xl bg-muted animate-pulse"
               />
             ))}
           </div>
@@ -68,6 +102,11 @@ export function FeaturedCoaches() {
     return null;
   }
 
+  const visibleCoaches: FeaturedCoach[] = [];
+  for (let i = 0; i < visibleCount; i++) {
+    visibleCoaches.push(featuredCoaches[(startIndex + i) % featuredCoaches.length]);
+  }
+
   return (
     <section className="py-20 bg-secondary/30">
       <div className="container mx-auto px-6">
@@ -75,11 +114,11 @@ export function FeaturedCoaches() {
           Meet Our <span className="text-primary">Verified Coaches</span>
         </h2>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {featuredCoaches.map((coach) => (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          {visibleCoaches.map((coach, idx) => (
             <div
-              key={coach.id}
-              className="group relative aspect-[4/3] overflow-hidden rounded-2xl cursor-pointer"
+              key={`${coach.id}-${idx}`}
+              className="group relative aspect-[16/9] overflow-hidden rounded-2xl cursor-pointer"
               onClick={() => setSelectedCoach(coach)}
             >
               {coach.avatar_url ? (
