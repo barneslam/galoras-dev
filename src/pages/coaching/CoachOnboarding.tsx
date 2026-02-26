@@ -16,14 +16,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2, CheckCircle, AlertCircle, User, FileText, Linkedin, Image, Calendar } from "lucide-react";
+import { Loader2, CheckCircle, AlertCircle, Linkedin, Image, Calendar } from "lucide-react";
 import {
-  COACH_BACKGROUND_OPTIONS,
-  BACKGROUND_DETAIL_CONFIG,
-  CERTIFICATION_INTEREST_OPTIONS,
-  COACHING_EXPERIENCE_OPTIONS,
-  LEADERSHIP_EXPERIENCE_OPTIONS,
-  COACHING_LEVEL_OPTIONS,
   JOIN_REASON_OPTIONS,
   COMMITMENT_LEVEL_OPTIONS,
   START_TIMELINE_OPTIONS,
@@ -49,6 +43,13 @@ interface CoachApplication {
   specialties: string[] | null;
   linkedin_url: string | null;
   avatar_url: string | null;
+  coach_background: string | null;
+  coach_background_detail: string | null;
+  coaching_experience_years: string | null;
+  coaching_experience_level: string | null;
+  leadership_experience_years: string | null;
+  current_role: string | null;
+  coaching_philosophy: string | null;
 }
 
 export default function CoachOnboarding() {
@@ -60,27 +61,21 @@ export default function CoachOnboarding() {
   const [state, setState] = useState<"loading" | "invalid" | "form" | "submitting" | "success">("loading");
   const [application, setApplication] = useState<CoachApplication | null>(null);
 
+  // Read-only from Step 1
   const [fullName, setFullName] = useState("");
   const [bio, setBio] = useState("");
+
+  // Editable profile fields
   const [linkedinUrl, setLinkedinUrl] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
-  const [coachingPhilosophy, setCoachingPhilosophy] = useState("");
+  const [bookingUrl, setBookingUrl] = useState("");
 
-  // Structured fields
-  const [coachBackground, setCoachBackground] = useState("");
-  const [coachBackgroundDetail, setCoachBackgroundDetail] = useState("");
-  const [certificationInterest, setCertificationInterest] = useState("");
-  const [coachingExperienceYears, setCoachingExperienceYears] = useState("");
-  const [leadershipExperienceYears, setLeadershipExperienceYears] = useState("");
-  const [currentRole, setCurrentRole] = useState("");
-  const [coachingExperienceLevel, setCoachingExperienceLevel] = useState("");
+  // Step-2 fields
   const [pillarSpecialties, setPillarSpecialties] = useState<string[]>([]);
   const [primaryJoinReason, setPrimaryJoinReason] = useState("");
   const [commitmentLevel, setCommitmentLevel] = useState("");
   const [startTimeline, setStartTimeline] = useState("");
   const [excitementNote, setExcitementNote] = useState("");
-
-  // New structured intake fields
   const [primaryPillar, setPrimaryPillar] = useState("");
   const [secondaryPillars, setSecondaryPillars] = useState<string[]>([]);
   const [industryFocus, setIndustryFocus] = useState<string[]>([]);
@@ -91,19 +86,6 @@ export default function CoachOnboarding() {
   const [founderFunctionStrength, setFounderFunctionStrength] = useState<string[]>([]);
   const [execLevel, setExecLevel] = useState("");
   const [execFunction, setExecFunction] = useState<string[]>([]);
-  const [bookingUrl, setBookingUrl] = useState("");
-
-  const backgroundConfig = coachBackground ? BACKGROUND_DETAIL_CONFIG[coachBackground] : null;
-
-  const handleBackgroundChange = (value: string) => {
-    setCoachBackground(value);
-    setCoachBackgroundDetail("");
-    setCertificationInterest("");
-    setFounderStageFocus([]);
-    setFounderFunctionStrength([]);
-    setExecLevel("");
-    setExecFunction([]);
-  };
 
   const handlePillarChange = (specialty: string, checked: boolean) => {
     setPillarSpecialties(prev => checked ? [...prev, specialty] : prev.filter(s => s !== specialty));
@@ -136,13 +118,14 @@ export default function CoachOnboarding() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!fullName.trim() || !bio.trim() || !coachBackground || !coachingExperienceYears || !leadershipExperienceYears || !coachingExperienceLevel || !primaryPillar || !primaryJoinReason || !commitmentLevel || !startTimeline) {
+    if (!primaryPillar || !primaryJoinReason || !commitmentLevel || !startTimeline) {
       toast({ title: "Missing required fields", description: "Please fill in all required fields.", variant: "destructive" });
       return;
     }
 
     setState("submitting");
     try {
+      const coachBackground = application?.coach_background || "";
       const { data, error } = await supabase.functions.invoke("complete-onboarding", {
         body: {
           token,
@@ -151,20 +134,11 @@ export default function CoachOnboarding() {
           coachingFocus: pillarSpecialties.join(", "),
           linkedinUrl: linkedinUrl.trim() || null,
           avatarUrl: avatarUrl.trim() || null,
-          coachingPhilosophy: coachingPhilosophy.trim() || null,
-          coachBackground,
-          coachBackgroundDetail: backgroundConfig?.field === "detail" ? coachBackgroundDetail : null,
-          certificationInterest: backgroundConfig?.field === "certification" ? certificationInterest : null,
-          coachingExperienceYears,
-          leadershipExperienceYears,
-          currentRole: currentRole.trim() || null,
-          coachingExperienceLevel,
           pillarSpecialties,
           primaryJoinReason,
           commitmentLevel,
           startTimeline,
           excitementNote: excitementNote.trim() || null,
-          // New structured intake fields
           primaryPillar,
           secondaryPillars: secondaryPillars.length > 0 ? secondaryPillars : null,
           industryFocus: industryFocus.length > 0 ? industryFocus : null,
@@ -251,178 +225,124 @@ export default function CoachOnboarding() {
     );
   }
 
+  const coachBackground = application?.coach_background || "";
+
   return (
     <Layout>
       <section className="py-16">
         <div className="container-wide max-w-2xl mx-auto">
           <div className="mb-8 text-center">
             <h1 className="text-3xl font-bold">Complete Your Coach Profile</h1>
-            <p className="text-muted-foreground mt-2">Welcome, {application?.full_name}! Please complete your profile to get started.</p>
+            <p className="text-muted-foreground mt-2">Step 2 of 2: Complete your coach profile (pillars, preferences, motivation).</p>
           </div>
+
+          {/* Read-only Step 1 Summary */}
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="text-lg">Your Application Summary</CardTitle>
+              <CardDescription>This information was submitted in Step 1 and cannot be edited here.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-3 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Name</span>
+                  <span className="font-medium">{application?.full_name}</span>
+                </div>
+                {application?.bio && (
+                  <div>
+                    <span className="text-muted-foreground">Bio</span>
+                    <p className="mt-1 text-foreground">{application.bio}</p>
+                  </div>
+                )}
+                {application?.coach_background && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Background</span>
+                    <span className="font-medium">{application.coach_background}</span>
+                  </div>
+                )}
+                {application?.coaching_experience_years && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Coaching Experience</span>
+                    <span className="font-medium">{application.coaching_experience_years}</span>
+                  </div>
+                )}
+                {application?.coaching_experience_level && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Experience Level</span>
+                    <span className="font-medium">{application.coaching_experience_level}</span>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
 
           <Card>
             <CardHeader>
-              <CardTitle>Profile Information</CardTitle>
-              <CardDescription>This information will be visible on your public coach profile.</CardDescription>
+              <CardTitle>Profile Details</CardTitle>
+              <CardDescription>Complete your coaching profile to get started with Galoras.</CardDescription>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Full Name */}
-                <div className="space-y-2">
-                  <Label htmlFor="fullName" className="flex items-center gap-2"><User className="h-4 w-4" />Full Name *</Label>
-                  <Input id="fullName" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Your full name" required />
-                </div>
 
-                {/* Bio */}
-                <div className="space-y-2">
-                  <Label htmlFor="bio" className="flex items-center gap-2"><FileText className="h-4 w-4" />Bio *</Label>
-                  <Textarea id="bio" value={bio} onChange={(e) => setBio(e.target.value)} placeholder="Tell clients about yourself..." rows={5} required />
-                </div>
-
-                {/* Coaching Philosophy */}
-                <div className="space-y-2">
-                  <Label htmlFor="philosophy">Coaching Philosophy</Label>
-                  <Textarea id="philosophy" rows={2} maxLength={300} value={coachingPhilosophy} onChange={(e) => setCoachingPhilosophy(e.target.value)} placeholder="Your coaching philosophy in a sentence or two..." />
-                  <p className="text-xs text-muted-foreground text-right">{coachingPhilosophy.length}/300</p>
-                </div>
-
-                {/* Professional Background */}
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">Professional Background</h3>
-                  <div className="grid md:grid-cols-2 gap-4">
+                {/* Conditional Founder fields (based on Step 1 background) */}
+                {isFounderBackground(coachBackground) && (
+                  <div className="space-y-4 p-4 rounded-lg border border-border bg-muted/30">
+                    <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Founder Details</h4>
                     <div className="space-y-2">
-                      <Label>Coach Background *</Label>
-                      <Select value={coachBackground} onValueChange={handleBackgroundChange}>
-                        <SelectTrigger><SelectValue placeholder="Select background" /></SelectTrigger>
-                        <SelectContent>
-                          {COACH_BACKGROUND_OPTIONS.map((opt) => (
-                            <SelectItem key={opt} value={opt}>{opt}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Years of Coaching Experience *</Label>
-                      <Select value={coachingExperienceYears} onValueChange={setCoachingExperienceYears}>
-                        <SelectTrigger><SelectValue placeholder="Select range" /></SelectTrigger>
-                        <SelectContent>
-                          {COACHING_EXPERIENCE_OPTIONS.map((opt) => (
-                            <SelectItem key={opt} value={opt}>{opt}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-
-                  {backgroundConfig?.field === "detail" && (
-                    <div className="space-y-2">
-                      <Label>{backgroundConfig.label} *</Label>
-                      <Input required value={coachBackgroundDetail} onChange={(e) => setCoachBackgroundDetail(e.target.value)} placeholder={backgroundConfig.label} />
-                    </div>
-                  )}
-                  {backgroundConfig?.field === "certification" && (
-                    <div className="space-y-2">
-                      <Label>{backgroundConfig.label} *</Label>
-                      <Select value={certificationInterest} onValueChange={setCertificationInterest}>
-                        <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
-                        <SelectContent>
-                          {CERTIFICATION_INTEREST_OPTIONS.map((opt) => (
-                            <SelectItem key={opt} value={opt}>{opt}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  )}
-
-                  {/* Conditional Founder fields */}
-                  {isFounderBackground(coachBackground) && (
-                    <div className="space-y-4 p-4 rounded-lg border border-border bg-muted/30">
-                      <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Founder Details</h4>
-                      <div className="space-y-2">
-                        <Label>Founder Stage Focus</Label>
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                          {FOUNDER_STAGE_OPTIONS.map((opt) => (
-                            <div key={opt} className="flex items-center space-x-2">
-                              <Checkbox id={`onb-fs-${opt}`} checked={founderStageFocus.includes(opt)} onCheckedChange={(c) => toggleArray(setFounderStageFocus, opt, c as boolean)} />
-                              <Label htmlFor={`onb-fs-${opt}`} className="text-sm cursor-pointer">{opt}</Label>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Functional Strengths</Label>
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                          {FOUNDER_FUNCTION_OPTIONS.map((opt) => (
-                            <div key={opt} className="flex items-center space-x-2">
-                              <Checkbox id={`onb-ff-${opt}`} checked={founderFunctionStrength.includes(opt)} onCheckedChange={(c) => toggleArray(setFounderFunctionStrength, opt, c as boolean)} />
-                              <Label htmlFor={`onb-ff-${opt}`} className="text-sm cursor-pointer">{opt}</Label>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Conditional Executive fields */}
-                  {isExecutiveBackground(coachBackground) && (
-                    <div className="space-y-4 p-4 rounded-lg border border-border bg-muted/30">
-                      <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Executive Details</h4>
-                      <div className="grid md:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label>Executive Level</Label>
-                          <Select value={execLevel} onValueChange={setExecLevel}>
-                            <SelectTrigger><SelectValue placeholder="Select level" /></SelectTrigger>
-                            <SelectContent>
-                              {EXEC_LEVEL_OPTIONS.map((opt) => (
-                                <SelectItem key={opt} value={opt}>{opt}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Executive Functions</Label>
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                          {EXEC_FUNCTION_OPTIONS.map((opt) => (
-                            <div key={opt} className="flex items-center space-x-2">
-                              <Checkbox id={`onb-ef-${opt}`} checked={execFunction.includes(opt)} onCheckedChange={(c) => toggleArray(setExecFunction, opt, c as boolean)} />
-                              <Label htmlFor={`onb-ef-${opt}`} className="text-sm cursor-pointer">{opt}</Label>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="space-y-2">
-                    <Label>Years of Leadership / Professional Experience *</Label>
-                    <Select value={leadershipExperienceYears} onValueChange={setLeadershipExperienceYears}>
-                      <SelectTrigger><SelectValue placeholder="Select range" /></SelectTrigger>
-                      <SelectContent>
-                        {LEADERSHIP_EXPERIENCE_OPTIONS.map((opt) => (
-                          <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                      <Label>Founder Stage Focus</Label>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                        {FOUNDER_STAGE_OPTIONS.map((opt) => (
+                          <div key={opt} className="flex items-center space-x-2">
+                            <Checkbox id={`onb-fs-${opt}`} checked={founderStageFocus.includes(opt)} onCheckedChange={(c) => toggleArray(setFounderStageFocus, opt, c as boolean)} />
+                            <Label htmlFor={`onb-fs-${opt}`} className="text-sm cursor-pointer">{opt}</Label>
+                          </div>
                         ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="currentRole">Current / Most Recent Role</Label>
-                    <Input id="currentRole" value={currentRole} onChange={(e) => setCurrentRole(e.target.value)} placeholder="e.g., VP of Operations" />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Coaching Experience Level *</Label>
-                    <Select value={coachingExperienceLevel} onValueChange={setCoachingExperienceLevel}>
-                      <SelectTrigger><SelectValue placeholder="Select level" /></SelectTrigger>
-                      <SelectContent>
-                        {COACHING_LEVEL_OPTIONS.map((opt) => (
-                          <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Functional Strengths</Label>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                        {FOUNDER_FUNCTION_OPTIONS.map((opt) => (
+                          <div key={opt} className="flex items-center space-x-2">
+                            <Checkbox id={`onb-ff-${opt}`} checked={founderFunctionStrength.includes(opt)} onCheckedChange={(c) => toggleArray(setFounderFunctionStrength, opt, c as boolean)} />
+                            <Label htmlFor={`onb-ff-${opt}`} className="text-sm cursor-pointer">{opt}</Label>
+                          </div>
                         ))}
-                      </SelectContent>
-                    </Select>
+                      </div>
+                    </div>
                   </div>
-                </div>
+                )}
+
+                {/* Conditional Executive fields */}
+                {isExecutiveBackground(coachBackground) && (
+                  <div className="space-y-4 p-4 rounded-lg border border-border bg-muted/30">
+                    <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Executive Details</h4>
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Executive Level</Label>
+                        <Select value={execLevel} onValueChange={setExecLevel}>
+                          <SelectTrigger><SelectValue placeholder="Select level" /></SelectTrigger>
+                          <SelectContent>
+                            {EXEC_LEVEL_OPTIONS.map((opt) => (
+                              <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Executive Functions</Label>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                        {EXEC_FUNCTION_OPTIONS.map((opt) => (
+                          <div key={opt} className="flex items-center space-x-2">
+                            <Checkbox id={`onb-ef-${opt}`} checked={execFunction.includes(opt)} onCheckedChange={(c) => toggleArray(setExecFunction, opt, c as boolean)} />
+                            <Label htmlFor={`onb-ef-${opt}`} className="text-sm cursor-pointer">{opt}</Label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {/* Primary Pillar Taxonomy */}
                 <div className="space-y-4">
@@ -503,10 +423,10 @@ export default function CoachOnboarding() {
                   </div>
                 </div>
 
-                {/* Detailed Specialties (legacy/optional) */}
+                {/* Detailed Specialties */}
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold">Detailed Specialties (Optional)</h3>
-                  <p className="text-sm text-muted-foreground">Select specific areas of expertise *</p>
+                  <p className="text-sm text-muted-foreground">Select specific areas of expertise</p>
                   <div className="space-y-4">
                     {Object.entries(PILLAR_SPECIALTIES).map(([pillar, specialties]) => (
                       <div key={pillar}>
