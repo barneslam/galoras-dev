@@ -5,7 +5,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { 
@@ -31,21 +30,6 @@ import {
   COACHING_EXPERIENCE_OPTIONS,
   LEADERSHIP_EXPERIENCE_OPTIONS,
   COACHING_LEVEL_OPTIONS,
-  JOIN_REASON_OPTIONS,
-  COMMITMENT_LEVEL_OPTIONS,
-  START_TIMELINE_OPTIONS,
-  PILLAR_SPECIALTIES,
-  PRIMARY_PILLAR_OPTIONS,
-  INDUSTRY_FOCUS_OPTIONS,
-  COACHING_STYLE_OPTIONS,
-  ENGAGEMENT_MODEL_OPTIONS,
-  AVAILABILITY_STATUS_OPTIONS,
-  FOUNDER_STAGE_OPTIONS,
-  FOUNDER_FUNCTION_OPTIONS,
-  EXEC_LEVEL_OPTIONS,
-  EXEC_FUNCTION_OPTIONS,
-  isFounderBackground,
-  isExecutiveBackground,
 } from "@/lib/coaching-constants";
 
 const benefits = [
@@ -85,7 +69,6 @@ export default function Apply() {
     website_url: "",
     bio: "",
     coaching_philosophy: "",
-    // Structured fields
     coach_background: "",
     coach_background_detail: "",
     certification_interest: "",
@@ -93,23 +76,6 @@ export default function Apply() {
     leadership_experience_years: "",
     current_role: "",
     coaching_experience_level: "",
-    pillar_specialties: [] as string[],
-    // Motivation
-    primary_join_reason: "",
-    commitment_level: "",
-    start_timeline: "",
-    excitement_note: "",
-    // New structured intake fields
-    primary_pillar: "",
-    secondary_pillars: [] as string[],
-    industry_focus: [] as string[],
-    coaching_style: [] as string[],
-    engagement_model: "",
-    availability_status: "",
-    founder_stage_focus: [] as string[],
-    founder_function_strength: [] as string[],
-    exec_level: "",
-    exec_function: [] as string[],
     booking_url: "",
   });
 
@@ -123,26 +89,7 @@ export default function Apply() {
       coach_background: value,
       coach_background_detail: "",
       certification_interest: "",
-      // Reset conditional fields
-      founder_stage_focus: [],
-      founder_function_strength: [],
-      exec_level: "",
-      exec_function: [],
     });
-  };
-
-  const handlePillarChange = (specialty: string, checked: boolean) => {
-    if (checked) {
-      setFormData({ ...formData, pillar_specialties: [...formData.pillar_specialties, specialty] });
-    } else {
-      setFormData({ ...formData, pillar_specialties: formData.pillar_specialties.filter(s => s !== specialty) });
-    }
-  };
-
-  const handleArrayToggle = (field: "secondary_pillars" | "industry_focus" | "coaching_style" | "founder_stage_focus" | "founder_function_strength" | "exec_function", value: string, checked: boolean) => {
-    const current = formData[field];
-    const updated = checked ? [...current, value] : current.filter(v => v !== value);
-    setFormData({ ...formData, [field]: updated });
   };
 
   const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -202,7 +149,6 @@ export default function Apply() {
         avatarUrl = publicUrl;
       }
 
-      // Clear irrelevant conditional fields
       const coach_background_detail = backgroundConfig?.field === "detail" ? formData.coach_background_detail : null;
       const certification_interest = backgroundConfig?.field === "certification" ? formData.certification_interest : null;
 
@@ -214,7 +160,6 @@ export default function Apply() {
         website_url: formData.website_url || null,
         bio: formData.bio,
         avatar_url: avatarUrl,
-        // Structured fields
         coach_background: formData.coach_background,
         coach_background_detail,
         certification_interest,
@@ -222,23 +167,7 @@ export default function Apply() {
         leadership_experience_years: formData.leadership_experience_years,
         current_role: formData.current_role || null,
         coaching_experience_level: formData.coaching_experience_level,
-        pillar_specialties: formData.pillar_specialties,
-        primary_join_reason: formData.primary_join_reason,
-        commitment_level: formData.commitment_level,
-        start_timeline: formData.start_timeline,
-        excitement_note: formData.excitement_note || null,
         coaching_philosophy: formData.coaching_philosophy || null,
-        // New structured intake fields
-        primary_pillar: formData.primary_pillar || null,
-        secondary_pillars: formData.secondary_pillars.length > 0 ? formData.secondary_pillars : null,
-        industry_focus: formData.industry_focus.length > 0 ? formData.industry_focus : null,
-        coaching_style: formData.coaching_style.length > 0 ? formData.coaching_style : null,
-        engagement_model: formData.engagement_model || null,
-        availability_status: formData.availability_status || null,
-        founder_stage_focus: isFounderBackground(formData.coach_background) && formData.founder_stage_focus.length > 0 ? formData.founder_stage_focus : null,
-        founder_function_strength: isFounderBackground(formData.coach_background) && formData.founder_function_strength.length > 0 ? formData.founder_function_strength : null,
-        exec_level: isExecutiveBackground(formData.coach_background) ? formData.exec_level || null : null,
-        exec_function: isExecutiveBackground(formData.coach_background) && formData.exec_function.length > 0 ? formData.exec_function : null,
         booking_url: formData.booking_url || null,
       } as any);
 
@@ -253,12 +182,7 @@ export default function Apply() {
         full_name: "", email: "", phone: "", linkedin_url: "", website_url: "", bio: "",
         coaching_philosophy: "", coach_background: "", coach_background_detail: "",
         certification_interest: "", coaching_experience_years: "", leadership_experience_years: "",
-        current_role: "", coaching_experience_level: "", pillar_specialties: [],
-        primary_join_reason: "", commitment_level: "", start_timeline: "", excitement_note: "",
-        primary_pillar: "", secondary_pillars: [], industry_focus: [], coaching_style: [],
-        engagement_model: "", availability_status: "",
-        founder_stage_focus: [], founder_function_strength: [], exec_level: "", exec_function: [],
-        booking_url: "",
+        current_role: "", coaching_experience_level: "", booking_url: "",
       });
       removePhoto();
     } catch (error) {
@@ -323,7 +247,7 @@ export default function Apply() {
               <CardContent className="p-8">
                 <h2 className="text-2xl font-display font-bold mb-2">Coach Application</h2>
                 <p className="text-muted-foreground mb-8">
-                  Tell us about yourself and your coaching practice. Applications are reviewed within 5 business days.
+                  Step 1 of 2: Submit your background for initial review. If approved, you'll receive a link to complete your full coach profile.
                 </p>
                 
                 <form onSubmit={handleSubmit} className="space-y-8">
@@ -397,6 +321,27 @@ export default function Apply() {
                     </div>
                   </div>
 
+                  {/* About You */}
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-display font-semibold">About You</h3>
+                    <div className="space-y-2">
+                      <Label htmlFor="bio">Professional Bio *</Label>
+                      <Textarea id="bio" required rows={4} value={formData.bio} onChange={(e) => setFormData({ ...formData, bio: e.target.value })} placeholder="Tell us about your coaching background and what makes you unique..." />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="philosophy">Coaching Philosophy</Label>
+                      <Textarea
+                        id="philosophy"
+                        rows={2}
+                        maxLength={300}
+                        value={formData.coaching_philosophy}
+                        onChange={(e) => setFormData({ ...formData, coaching_philosophy: e.target.value })}
+                        placeholder="Your coaching philosophy in a sentence or two..."
+                      />
+                      <p className="text-xs text-muted-foreground text-right">{formData.coaching_philosophy.length}/300</p>
+                    </div>
+                  </div>
+
                   {/* Professional Background */}
                   <div className="space-y-4">
                     <h3 className="text-lg font-display font-semibold">Professional Background</h3>
@@ -451,66 +396,6 @@ export default function Apply() {
                       </div>
                     )}
 
-                    {/* Conditional Founder fields */}
-                    {isFounderBackground(formData.coach_background) && (
-                      <div className="space-y-4 p-4 rounded-lg border border-border bg-muted/30">
-                        <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Founder Details</h4>
-                        <div className="space-y-2">
-                          <Label>Founder Stage Focus</Label>
-                          <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                            {FOUNDER_STAGE_OPTIONS.map((opt) => (
-                              <div key={opt} className="flex items-center space-x-2">
-                                <Checkbox id={`fs-${opt}`} checked={formData.founder_stage_focus.includes(opt)} onCheckedChange={(c) => handleArrayToggle("founder_stage_focus", opt, c as boolean)} />
-                                <Label htmlFor={`fs-${opt}`} className="text-sm cursor-pointer">{opt}</Label>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                        <div className="space-y-2">
-                          <Label>Functional Strengths</Label>
-                          <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                            {FOUNDER_FUNCTION_OPTIONS.map((opt) => (
-                              <div key={opt} className="flex items-center space-x-2">
-                                <Checkbox id={`ff-${opt}`} checked={formData.founder_function_strength.includes(opt)} onCheckedChange={(c) => handleArrayToggle("founder_function_strength", opt, c as boolean)} />
-                                <Label htmlFor={`ff-${opt}`} className="text-sm cursor-pointer">{opt}</Label>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Conditional Executive fields */}
-                    {isExecutiveBackground(formData.coach_background) && (
-                      <div className="space-y-4 p-4 rounded-lg border border-border bg-muted/30">
-                        <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Executive Details</h4>
-                        <div className="grid md:grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                            <Label>Executive Level</Label>
-                            <Select value={formData.exec_level} onValueChange={(v) => setFormData({ ...formData, exec_level: v })}>
-                              <SelectTrigger><SelectValue placeholder="Select level" /></SelectTrigger>
-                              <SelectContent>
-                                {EXEC_LEVEL_OPTIONS.map((opt) => (
-                                  <SelectItem key={opt} value={opt}>{opt}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        </div>
-                        <div className="space-y-2">
-                          <Label>Executive Functions</Label>
-                          <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                            {EXEC_FUNCTION_OPTIONS.map((opt) => (
-                              <div key={opt} className="flex items-center space-x-2">
-                                <Checkbox id={`ef-${opt}`} checked={formData.exec_function.includes(opt)} onCheckedChange={(c) => handleArrayToggle("exec_function", opt, c as boolean)} />
-                                <Label htmlFor={`ef-${opt}`} className="text-sm cursor-pointer">{opt}</Label>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
                     <div className="space-y-2">
                       <Label>Years of Leadership / Professional Experience *</Label>
                       <Select value={formData.leadership_experience_years} onValueChange={(v) => setFormData({ ...formData, leadership_experience_years: v })} required>
@@ -541,181 +426,6 @@ export default function Apply() {
                     </div>
                   </div>
 
-                  {/* Primary Pillar Taxonomy */}
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-display font-semibold">Coaching Pillar</h3>
-                    <p className="text-sm text-muted-foreground">Select your primary coaching pillar and any secondary areas.</p>
-                    <div className="space-y-2">
-                      <Label>Primary Pillar *</Label>
-                      <Select value={formData.primary_pillar} onValueChange={(v) => setFormData({ ...formData, primary_pillar: v, secondary_pillars: formData.secondary_pillars.filter(p => p !== v) })} required>
-                        <SelectTrigger><SelectValue placeholder="Select primary pillar" /></SelectTrigger>
-                        <SelectContent>
-                          {PRIMARY_PILLAR_OPTIONS.map((opt) => (
-                            <SelectItem key={opt} value={opt}>{opt}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Secondary Pillars</Label>
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                        {PRIMARY_PILLAR_OPTIONS.filter(p => p !== formData.primary_pillar).map((opt) => (
-                          <div key={opt} className="flex items-center space-x-2">
-                            <Checkbox id={`sp-${opt}`} checked={formData.secondary_pillars.includes(opt)} onCheckedChange={(c) => handleArrayToggle("secondary_pillars", opt, c as boolean)} />
-                            <Label htmlFor={`sp-${opt}`} className="text-sm cursor-pointer">{opt}</Label>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Industry, Style, Engagement, Availability */}
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-display font-semibold">Coaching Preferences</h3>
-                    <div className="space-y-2">
-                      <Label>Industry Focus</Label>
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                        {INDUSTRY_FOCUS_OPTIONS.map((opt) => (
-                          <div key={opt} className="flex items-center space-x-2">
-                            <Checkbox id={`if-${opt}`} checked={formData.industry_focus.includes(opt)} onCheckedChange={(c) => handleArrayToggle("industry_focus", opt, c as boolean)} />
-                            <Label htmlFor={`if-${opt}`} className="text-sm cursor-pointer">{opt}</Label>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Coaching Style</Label>
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                        {COACHING_STYLE_OPTIONS.map((opt) => (
-                          <div key={opt} className="flex items-center space-x-2">
-                            <Checkbox id={`cs-${opt}`} checked={formData.coaching_style.includes(opt)} onCheckedChange={(c) => handleArrayToggle("coaching_style", opt, c as boolean)} />
-                            <Label htmlFor={`cs-${opt}`} className="text-sm cursor-pointer">{opt}</Label>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label>Engagement Model</Label>
-                        <Select value={formData.engagement_model} onValueChange={(v) => setFormData({ ...formData, engagement_model: v })}>
-                          <SelectTrigger><SelectValue placeholder="Select model" /></SelectTrigger>
-                          <SelectContent>
-                            {ENGAGEMENT_MODEL_OPTIONS.map((opt) => (
-                              <SelectItem key={opt} value={opt}>{opt}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Availability</Label>
-                        <Select value={formData.availability_status} onValueChange={(v) => setFormData({ ...formData, availability_status: v })}>
-                          <SelectTrigger><SelectValue placeholder="Select availability" /></SelectTrigger>
-                          <SelectContent>
-                            {AVAILABILITY_STATUS_OPTIONS.map((opt) => (
-                              <SelectItem key={opt} value={opt}>{opt}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Detailed Specialties (Legacy/Optional) */}
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-display font-semibold">Detailed Specialties (Optional)</h3>
-                    <p className="text-sm text-muted-foreground">Select specific areas of expertise within each pillar:</p>
-                    <div className="space-y-6">
-                      {Object.entries(PILLAR_SPECIALTIES).map(([pillar, specialties]) => (
-                        <div key={pillar}>
-                          <p className="text-sm font-semibold text-muted-foreground mb-2">{pillar}</p>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                            {specialties.map((specialty) => (
-                              <div key={specialty} className="flex items-center space-x-2">
-                                <Checkbox
-                                  id={specialty}
-                                  checked={formData.pillar_specialties.includes(specialty)}
-                                  onCheckedChange={(checked) => handlePillarChange(specialty, checked as boolean)}
-                                />
-                                <Label htmlFor={specialty} className="text-sm cursor-pointer">{specialty}</Label>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* About You */}
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-display font-semibold">About You</h3>
-                    <div className="space-y-2">
-                      <Label htmlFor="bio">Professional Bio *</Label>
-                      <Textarea id="bio" required rows={4} value={formData.bio} onChange={(e) => setFormData({ ...formData, bio: e.target.value })} placeholder="Tell us about your coaching background and what makes you unique..." />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="philosophy">Coaching Philosophy</Label>
-                      <Textarea
-                        id="philosophy"
-                        rows={2}
-                        maxLength={300}
-                        value={formData.coaching_philosophy}
-                        onChange={(e) => setFormData({ ...formData, coaching_philosophy: e.target.value })}
-                        placeholder="Your coaching philosophy in a sentence or two..."
-                      />
-                      <p className="text-xs text-muted-foreground text-right">{formData.coaching_philosophy.length}/300</p>
-                    </div>
-                  </div>
-
-                  {/* Motivation */}
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-display font-semibold">Motivation</h3>
-                    <div className="space-y-2">
-                      <Label>Primary Reason for Joining *</Label>
-                      <Select value={formData.primary_join_reason} onValueChange={(v) => setFormData({ ...formData, primary_join_reason: v })} required>
-                        <SelectTrigger><SelectValue placeholder="Select reason" /></SelectTrigger>
-                        <SelectContent>
-                          {JOIN_REASON_OPTIONS.map((opt) => (
-                            <SelectItem key={opt} value={opt}>{opt}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Coaching Commitment Level *</Label>
-                      <Select value={formData.commitment_level} onValueChange={(v) => setFormData({ ...formData, commitment_level: v })} required>
-                        <SelectTrigger><SelectValue placeholder="Select level" /></SelectTrigger>
-                        <SelectContent>
-                          {COMMITMENT_LEVEL_OPTIONS.map((opt) => (
-                            <SelectItem key={opt} value={opt}>{opt}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>When Would You Like to Begin? *</Label>
-                      <Select value={formData.start_timeline} onValueChange={(v) => setFormData({ ...formData, start_timeline: v })} required>
-                        <SelectTrigger><SelectValue placeholder="Select timeline" /></SelectTrigger>
-                        <SelectContent>
-                          {START_TIMELINE_OPTIONS.map((opt) => (
-                            <SelectItem key={opt} value={opt}>{opt}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="excitement">What excites you most about coaching?</Label>
-                      <Textarea
-                        id="excitement"
-                        rows={2}
-                        maxLength={200}
-                        value={formData.excitement_note}
-                        onChange={(e) => setFormData({ ...formData, excitement_note: e.target.value })}
-                        placeholder="Optional — max 200 characters"
-                      />
-                      <p className="text-xs text-muted-foreground text-right">{formData.excitement_note.length}/200</p>
-                    </div>
-                  </div>
-
                   <Button 
                     type="submit" 
                     className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
@@ -740,10 +450,10 @@ export default function Apply() {
             </h2>
             <div className="space-y-4">
               {[
-                { step: 1, title: "Application Review", description: "Our team reviews your application within 5 business days." },
-                { step: 2, title: "Discovery Call", description: "If selected, we'll schedule a 30-minute call to learn more about you." },
-                { step: 3, title: "Onboarding", description: "Complete your profile, set up your schedule, and join our coach community." },
-                { step: 4, title: "Start Coaching", description: "Begin receiving client matches through our AI-powered platform." },
+                { step: 1, title: "Application Review", description: "Our team reviews your background and experience within 5 business days." },
+                { step: 2, title: "Approval & Onboarding Link", description: "If approved, you'll receive a personalized link to complete your full coach profile (Step 2 of 2)." },
+                { step: 3, title: "Complete Your Profile", description: "Use the onboarding link to add your coaching pillars, specialties, preferences, and availability." },
+                { step: 4, title: "Start Coaching", description: "Once your profile is complete, begin receiving client matches through our AI-powered platform." },
               ].map((item, index) => (
                 <div key={index} className="flex items-start gap-4">
                   <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold shrink-0">

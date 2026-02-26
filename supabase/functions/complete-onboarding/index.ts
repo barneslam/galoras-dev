@@ -18,16 +18,15 @@ serve(async (req) => {
       certificationInterest, coachingExperienceYears, leadershipExperienceYears,
       currentRole, coachingExperienceLevel, pillarSpecialties,
       primaryJoinReason, commitmentLevel, startTimeline, excitementNote,
-      // New structured fields
       primaryPillar, secondaryPillars, industryFocus, coachingStyle,
       engagementModel, availabilityStatus,
       founderStageFocus, founderFunctionStrength, execLevel, execFunction,
       bookingUrl,
     } = await req.json();
 
-    if (!token || !fullName || !bio || !coachingFocus) {
+    if (!token) {
       return new Response(
-        JSON.stringify({ error: "Required fields missing" }),
+        JSON.stringify({ error: "Token is required" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -52,44 +51,47 @@ serve(async (req) => {
       );
     }
 
-    // Update the application with profile data and mark as completed
+    // Build update object with conditional spreads to prevent wiping Step-1 data
+    const updates: Record<string, any> = {
+      onboarding_status: "completed",
+      reviewed_at: new Date().toISOString(),
+      // Only update if provided
+      ...(fullName && { full_name: fullName }),
+      ...(bio && { bio }),
+      ...(coachingFocus && { specialties: coachingFocus.split(",").map((s: string) => s.trim()) }),
+      ...(linkedinUrl !== undefined && { linkedin_url: linkedinUrl || null }),
+      ...(avatarUrl !== undefined && { avatar_url: avatarUrl || null }),
+      ...(coachingPhilosophy !== undefined && { coaching_philosophy: coachingPhilosophy || null }),
+      // Step-1 fields: only update if explicitly sent
+      ...(coachBackground !== undefined && { coach_background: coachBackground || null }),
+      ...(coachBackgroundDetail !== undefined && { coach_background_detail: coachBackgroundDetail || null }),
+      ...(certificationInterest !== undefined && { certification_interest: certificationInterest || null }),
+      ...(coachingExperienceYears !== undefined && { coaching_experience_years: coachingExperienceYears || null }),
+      ...(leadershipExperienceYears !== undefined && { leadership_experience_years: leadershipExperienceYears || null }),
+      ...(currentRole !== undefined && { current_role: currentRole || null }),
+      ...(coachingExperienceLevel !== undefined && { coaching_experience_level: coachingExperienceLevel || null }),
+      // Step-2 fields
+      ...(pillarSpecialties !== undefined && { pillar_specialties: pillarSpecialties || null }),
+      ...(primaryJoinReason !== undefined && { primary_join_reason: primaryJoinReason || null }),
+      ...(commitmentLevel !== undefined && { commitment_level: commitmentLevel || null }),
+      ...(startTimeline !== undefined && { start_timeline: startTimeline || null }),
+      ...(excitementNote !== undefined && { excitement_note: excitementNote || null }),
+      ...(primaryPillar !== undefined && { primary_pillar: primaryPillar || null }),
+      ...(secondaryPillars !== undefined && { secondary_pillars: secondaryPillars || null }),
+      ...(industryFocus !== undefined && { industry_focus: industryFocus || null }),
+      ...(coachingStyle !== undefined && { coaching_style: coachingStyle || null }),
+      ...(engagementModel !== undefined && { engagement_model: engagementModel || null }),
+      ...(availabilityStatus !== undefined && { availability_status: availabilityStatus || null }),
+      ...(founderStageFocus !== undefined && { founder_stage_focus: founderStageFocus || null }),
+      ...(founderFunctionStrength !== undefined && { founder_function_strength: founderFunctionStrength || null }),
+      ...(execLevel !== undefined && { exec_level: execLevel || null }),
+      ...(execFunction !== undefined && { exec_function: execFunction || null }),
+      ...(bookingUrl !== undefined && { booking_url: bookingUrl || null }),
+    };
+
     const { error: updateError } = await supabase
       .from("coach_applications")
-      .update({
-        full_name: fullName,
-        bio: bio,
-        specialties: coachingFocus.split(",").map((s: string) => s.trim()),
-        linkedin_url: linkedinUrl || null,
-        avatar_url: avatarUrl || null,
-        onboarding_status: "completed",
-        reviewed_at: new Date().toISOString(),
-        // New structured fields
-        coaching_philosophy: coachingPhilosophy || null,
-        coach_background: coachBackground || null,
-        coach_background_detail: coachBackgroundDetail || null,
-        certification_interest: certificationInterest || null,
-        coaching_experience_years: coachingExperienceYears || null,
-        leadership_experience_years: leadershipExperienceYears || null,
-        current_role: currentRole || null,
-        coaching_experience_level: coachingExperienceLevel || null,
-        pillar_specialties: pillarSpecialties || null,
-        primary_join_reason: primaryJoinReason || null,
-        commitment_level: commitmentLevel || null,
-        start_timeline: startTimeline || null,
-        excitement_note: excitementNote || null,
-        // New structured intake fields
-        primary_pillar: primaryPillar || null,
-        secondary_pillars: secondaryPillars || null,
-        industry_focus: industryFocus || null,
-        coaching_style: coachingStyle || null,
-        engagement_model: engagementModel || null,
-        availability_status: availabilityStatus || null,
-        founder_stage_focus: founderStageFocus || null,
-        founder_function_strength: founderFunctionStrength || null,
-        exec_level: execLevel || null,
-        exec_function: execFunction || null,
-        booking_url: bookingUrl || null,
-      })
+      .update(updates)
       .eq("id", application.id);
 
     if (updateError) {
