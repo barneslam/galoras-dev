@@ -158,6 +158,12 @@ export default function Apply() {
       const coach_background_detail = backgroundConfig?.field === "detail" ? formData.coach_background_detail : null;
       const certification_interest = backgroundConfig?.field === "certification" ? formData.certification_interest : null;
 
+      const normalizedBooking = normalizeUrl(formData.booking_url);
+
+      if (normalizedBooking && !/^https?:\/\/[^\s]+\.[^\s]+/i.test(normalizedBooking)) {
+        throw new Error("Please enter a valid booking URL.");
+      }
+
       const payload = {
         full_name: formData.full_name,
         email: formData.email,
@@ -174,7 +180,7 @@ export default function Apply() {
         current_role: formData.current_role || null,
         coaching_experience_level: formData.coaching_experience_level,
         coaching_philosophy: formData.coaching_philosophy || null,
-        booking_url: normalizeUrl(formData.booking_url),
+        booking_url: normalizedBooking,
       };
 
       const { data, error } = await supabase
@@ -333,12 +339,12 @@ export default function Apply() {
                       <Label htmlFor="booking_url">Booking Link (e.g., Calendly)</Label>
                       <Input
                         id="booking_url"
-                        type="url"
+                        type="text"
                         value={formData.booking_url}
                         onChange={(e) => setFormData({ ...formData, booking_url: e.target.value })}
                         placeholder="https://calendly.com/yourname"
                       />
-                      <p className="text-xs text-muted-foreground">Optional — if you omit https:// we'll add it automatically.</p>
+                      <p className="text-xs text-muted-foreground">Optional — enter your Calendly or booking page (we'll add https:// if missing).</p>
                     </div>
                   </div>
 
