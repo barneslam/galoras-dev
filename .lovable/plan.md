@@ -1,31 +1,26 @@
 
 
-## Step 1 Verification: Confirm booking_url Persistence
+## Fix Booking URL Browser Validation
 
-### Overview
-Add URL normalization, round-trip DB verification, and updated helper text to `src/pages/Apply.tsx` to confirm `booking_url` is being persisted correctly.
+### File: `src/pages/Apply.tsx`
 
-### Changes to `src/pages/Apply.tsx`
+**1. Change input type** (line 336): Replace `type="url"` with `type="text"` to prevent browser-native URL validation from blocking submission.
 
-**1. Add `normalizeUrl` helper** (inside the component, before `handleSubmit` around line 123):
+**2. Add light validation in `handleSubmit`** (after line 160, before the payload): Add URL format check after normalization:
 ```typescript
-const normalizeUrl = (url: string) => {
-  const trimmed = (url || "").trim();
-  if (!trimmed) return null;
-  return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
-};
+const normalizedBooking = normalizeUrl(formData.booking_url);
+
+if (normalizedBooking && !/^https?:\/\/[^\s]+\.[^\s]+/i.test(normalizedBooking)) {
+  throw new Error("Please enter a valid booking URL.");
+}
 ```
+Then use `normalizedBooking` in the payload instead of `normalizeUrl(formData.booking_url)` (line 177).
 
-**2. Replace the insert call** (lines 155-174) with a payload variable + `.select().single()` round-trip check:
-- Build the payload object separately
-- Use `normalizeUrl(formData.booking_url)` instead of `formData.booking_url || null`
-- Chain `.select("id, booking_url").single()` onto the insert
-- After insert, compare `normalizeUrl(formData.booking_url)` against `data?.booking_url` -- if user provided a URL but DB returned null, throw a descriptive error
-- Log `data` to console for diagnostic confirmation
+**3. Update helper text** (line 341): Change to: "Optional -- enter your Calendly or booking page (we'll add https:// if missing)."
 
-**3. Update helper text** (line 320): Change from "Optional -- must start with https://" to "Optional -- if you omit https:// we'll add it automatically."
+### Expected behavior
+- `calendly.com/abc` saves as `https://calendly.com/abc`
+- `https://calendly.com/abc` saves as-is
+- Blank saves as `null`
+- No browser validation popup; our own code handles it
 
-### No other files changed
-- No schema changes
-- No routing changes
-- This is diagnostic-only to confirm DB persistence
