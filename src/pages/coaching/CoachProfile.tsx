@@ -6,11 +6,11 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { MessageCoachModal } from "@/components/coaching/MessageCoachModal";
-import { 
+import {
   ArrowLeft,
-  Star, 
-  MapPin, 
-  Clock, 
+  Star,
+  MapPin,
+  Clock,
   Globe,
   Linkedin,
   Calendar,
@@ -18,43 +18,111 @@ import {
   CheckCircle,
   Award,
   Users,
-  Briefcase
+  Briefcase,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
+// ── Tier config ──────────────────────────────────────────────────────────────
+const TIER_CONFIG: Record<string, { label: string; className: string }> = {
+  elite:    { label: "⭐ Elite",  className: "bg-amber-500/10 border-amber-500/30 text-amber-400" },
+  premium:  { label: "Premium",  className: "bg-blue-500/10 border-blue-500/30 text-blue-400" },
+  standard: { label: "Standard", className: "bg-muted border-border text-muted-foreground" },
+};
+
+const AUDIENCE_LABELS: Record<string, string> = {
+  individual: "Individuals",
+  sme:        "SME",
+  enterprise: "Enterprise",
+  startup:    "Startups",
+  nonprofit:  "Non-Profit",
+  government: "Government",
+};
+
+const FORMAT_LABELS: Record<string, string> = {
+  online:    "Remote",
+  in_person: "In-Person",
+  hybrid:    "Hybrid",
+};
+
+// ── Type for proof point JSON objects ────────────────────────────────────────
+interface ProofPoint {
+  name:    string;
+  role?:   string;
+  company?: string;
+  outcome?: string;
+  quote:   string;
+}
+
+// ── Component ────────────────────────────────────────────────────────────────
 export default function CoachProfile() {
-  const { coachId } = useParams<{ coachId: string }>();
+  // Support both /coaching/:coachId (legacy UUID) and /coach/:slug (new)
+  const { coachId, slug } = useParams<{ coachId?: string; slug?: string }>();
+  const identifier = slug || coachId;
+  const useSlug    = !!slug;
+
   const [isMessageModalOpen, setIsMessageModalOpen] = useState(false);
 
+  // ── Main coach query ──────────────────────────────────────────────────────
   const { data: coach, isLoading } = useQuery({
-    queryKey: ["coach", coachId],
+    queryKey: ["coach", identifier, useSlug],
     queryFn: async () => {
-      const { data: coachData, error } = await supabase
+      let query = supabase
         .from("coaches")
-        .select("*")
-        .eq("id", coachId)
-        .single();
+        .select(`
+          *,
+          coach_categories (
+            categories ( id, name, slug, icon )
+          )
+        `);
+
+      // Route by slug (new) or id (legacy)
+      if (useSlug) {
+        query = query.eq("slug", identifier);
+      } else {
+        query = query.eq("id", identifier);
+      }
+
+      const { data, error } = await query.single();
       if (error) throw error;
-      return coachData;
+      return data;
     },
-    enabled: !!coachId,
+    enabled: !!identifier,
   });
 
+  // ── Testimonials (legacy — kept for coaches without proof_points yet) ─────
   const { data: testimonials } = useQuery({
-    queryKey: ["testimonials", coachId],
+    queryKey: ["testimonials", coach?.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("testimonials")
         .select("*")
-        .eq("coach_id", coachId)
+        .eq("coach_id", coach!.id)
         .limit(5);
       if (error) throw error;
       return data;
     },
-    enabled: !!coachId,
+    enabled: !!coach?.id,
   });
 
+  // ── Derived values ────────────────────────────────────────────────────────
+  const categories = coach?.coach_categories
+    ?.map((cc: any) => cc.categories)
+    .filter(Boolean) ?? [];
+
+  // proof_points: use structured jsonb if available, fall back to testimonials
+  const proofPoints: ProofPoint[] = Array.isArray(coach?.proof_points) && coach.proof_points.length > 0
+    ? coach.proof_points as ProofPoint[]
+    : [];
+
+  const showTestimonials = proofPoints.length === 0 && testimonials && testimonials.length > 0;
+
+  const tierCfg = coach?.tier ? TIER_CONFIG[coach.tier] : null;
+
+  const audienceLabels = (coach?.audience ?? [])
+    .map((a: string) => AUDIENCE_LABELS[a] ?? a);
+
+  // ── Loading state ─────────────────────────────────────────────────────────
   if (isLoading) {
     return (
       <Layout>
@@ -82,7 +150,9 @@ export default function CoachProfile() {
         <div className="pt-32 pb-16">
           <div className="container-wide text-center">
             <h1 className="text-2xl font-display font-bold mb-4">Coach Not Found</h1>
-            <p className="text-muted-foreground mb-6">This coach profile doesn't exist or has been removed.</p>
+            <p className="text-muted-foreground mb-6">
+              This coach profile doesn't exist or hasn't been published yet.
+            </p>
             <Link to="/coaching">
               <Button>
                 <ArrowLeft className="mr-2 h-4 w-4" />
@@ -99,9 +169,10 @@ export default function CoachProfile() {
     <Layout>
       <div className="pt-28 pb-16">
         <div className="container-wide">
-          {/* Back Button */}
-          <Link 
-            to="/coaching" 
+
+          {/* Back button */}
+          <Link
+            to="/coaching"
             className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-8 transition-colors"
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
@@ -109,11 +180,13 @@ export default function CoachProfile() {
           </Link>
 
           <div className="grid lg:grid-cols-3 gap-8">
-            {/* Main Content */}
+
+            {/* ── Main content ─────────────────────────────────────────── */}
             <div className="lg:col-span-2 space-y-8">
-              {/* Profile Header */}
+
+              {/* Profile header */}
               <Card className="overflow-hidden">
-                <div 
+                <div
                   className="h-32 bg-cover bg-center relative"
                   style={{ backgroundImage: "url('https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=1920&auto=format&fit=crop')" }}
                 >
@@ -141,13 +214,21 @@ export default function CoachProfile() {
                         </div>
                       )}
                     </div>
-                    
+
                     <div className="flex-1 pt-4 sm:pt-8">
                       <div className="flex flex-wrap items-start justify-between gap-4">
                         <div>
-                          <h1 className="text-2xl sm:text-3xl font-display font-bold">
-                            {coach.display_name || "Coach"}
-                          </h1>
+                          <div className="flex items-center gap-2 flex-wrap mb-1">
+                            <h1 className="text-2xl sm:text-3xl font-display font-bold">
+                              {coach.display_name || "Coach"}
+                            </h1>
+                            {/* Tier badge — new structured field */}
+                            {tierCfg && (
+                              <span className={`px-2.5 py-0.5 text-xs font-bold rounded-full border ${tierCfg.className}`}>
+                                {tierCfg.label}
+                              </span>
+                            )}
+                          </div>
                           <p className="text-lg text-muted-foreground">
                             {coach.headline || "Executive Coach"}
                           </p>
@@ -182,35 +263,76 @@ export default function CoachProfile() {
                             {coach.timezone}
                           </span>
                         )}
+                        {/* Engagement format — new structured field */}
+                        {coach.engagement_format && FORMAT_LABELS[coach.engagement_format] && (
+                          <span className="flex items-center gap-1">
+                            {FORMAT_LABELS[coach.engagement_format]}
+                          </span>
+                        )}
                       </div>
+
+                      {/* Category tags from DB — new structured field */}
+                      {categories.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mt-3">
+                          {categories.map((cat: any) => (
+                            <Badge key={cat.id} variant="secondary" className="text-xs">
+                              {cat.icon && <span className="mr-1">{cat.icon}</span>}
+                              {cat.name}
+                            </Badge>
+                          ))}
+                          {/* Audience tags */}
+                          {audienceLabels.map((a: string) => (
+                            <Badge
+                              key={a}
+                              variant="outline"
+                              className="text-xs border-amber-500/30 text-amber-400"
+                            >
+                              {a}
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
-              {/* About */}
-              <Card>
-                <CardContent className="p-6">
-                  <h2 className="text-xl font-display font-semibold mb-4">About</h2>
-                  <p className="text-muted-foreground leading-relaxed">
-                    {coach.bio || "This coach hasn't added a bio yet."}
-                  </p>
-                </CardContent>
-              </Card>
-
-              {/* Coaching Philosophy */}
-              {coach.coaching_philosophy && (
+              {/* Positioning statement (structured) — replaces plain About */}
+              {(coach.positioning_statement || coach.bio) && (
                 <Card>
                   <CardContent className="p-6">
-                    <h2 className="text-xl font-display font-semibold mb-4">Coaching Philosophy</h2>
-                    <p className="text-muted-foreground leading-relaxed italic">
-                      "{coach.coaching_philosophy}"
+                    <h2 className="text-xl font-display font-semibold mb-4">About</h2>
+                    {/* Pull quote style for positioning_statement */}
+                    {coach.positioning_statement ? (
+                      <blockquote className="border-l-2 border-primary/40 pl-4 mb-4">
+                        <p className="text-base font-medium leading-relaxed italic text-foreground">
+                          {coach.positioning_statement}
+                        </p>
+                      </blockquote>
+                    ) : null}
+                    {/* Bio shown below if different from positioning_statement */}
+                    {coach.bio && coach.bio !== coach.positioning_statement && (
+                      <p className="text-muted-foreground leading-relaxed">
+                        {coach.bio}
+                      </p>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Methodology (structured) — replaces Coaching Philosophy */}
+              {(coach.methodology || coach.coaching_philosophy) && (
+                <Card>
+                  <CardContent className="p-6">
+                    <h2 className="text-xl font-display font-semibold mb-4">Methodology</h2>
+                    <p className="text-muted-foreground leading-relaxed">
+                      {coach.methodology || coach.coaching_philosophy}
                     </p>
                   </CardContent>
                 </Card>
               )}
 
-              {/* Coach Background & Experience */}
+              {/* Background & Experience — unchanged */}
               {(coach.coach_background || coach.coaching_experience_level || coach.leadership_experience_years) && (
                 <Card>
                   <CardContent className="p-6 space-y-3">
@@ -247,40 +369,38 @@ export default function CoachProfile() {
                 </Card>
               )}
 
-              {/* Pillar Specialties */}
-              {coach.pillar_specialties && coach.pillar_specialties.length > 0 ? (
+              {/* Specialties — unchanged, reads pillar_specialties → specialties */}
+              {coach.pillar_specialties?.length > 0 ? (
                 <Card>
                   <CardContent className="p-6">
                     <h2 className="text-xl font-display font-semibold mb-4">Specialties</h2>
                     <div className="flex flex-wrap gap-2">
-                      {coach.pillar_specialties.map((specialty: string, i: number) => (
+                      {coach.pillar_specialties.map((s: string, i: number) => (
                         <Badge
                           key={i}
                           variant="secondary"
-                          className={`px-3 py-1 ${specialty.includes("Sport of Business") ? "bg-primary/10 text-primary border-primary/20" : ""}`}
+                          className={`px-3 py-1 ${s.includes("Sport of Business") ? "bg-primary/10 text-primary border-primary/20" : ""}`}
                         >
-                          {specialty}
+                          {s}
                         </Badge>
                       ))}
                     </div>
                   </CardContent>
                 </Card>
-              ) : coach.specialties && coach.specialties.length > 0 ? (
+              ) : coach.specialties?.length > 0 ? (
                 <Card>
                   <CardContent className="p-6">
                     <h2 className="text-xl font-display font-semibold mb-4">Specialties</h2>
                     <div className="flex flex-wrap gap-2">
-                      {coach.specialties.map((specialty, i) => (
-                        <Badge key={i} variant="secondary" className="px-3 py-1">
-                          {specialty}
-                        </Badge>
+                      {coach.specialties.map((s: string, i: number) => (
+                        <Badge key={i} variant="secondary" className="px-3 py-1">{s}</Badge>
                       ))}
                     </div>
                   </CardContent>
                 </Card>
               ) : null}
 
-              {/* Coaching Style & Framework */}
+              {/* Coaching Style & Framework — unchanged */}
               {(coach.coaching_style || coach.signature_framework) && (
                 <Card>
                   <CardContent className="p-6 space-y-6">
@@ -306,32 +426,69 @@ export default function CoachProfile() {
                 </Card>
               )}
 
-              {/* Testimonials */}
-              {testimonials && testimonials.length > 0 && (
+              {/* Proof Points (structured jsonb) — new, replaces raw testimonials */}
+              {proofPoints.length > 0 && (
+                <Card>
+                  <CardContent className="p-6">
+                    <h2 className="text-xl font-display font-semibold mb-6">Proof Points</h2>
+                    <div className="space-y-6">
+                      {proofPoints.map((p, i) => (
+                        <div key={i} className="relative pl-6 border-l-2 border-primary/30">
+                          <p className="text-muted-foreground italic mb-3">"{p.quote}"</p>
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                              <span className="text-sm font-semibold text-primary">
+                                {p.name?.charAt(0) ?? "?"}
+                              </span>
+                            </div>
+                            <div>
+                              <p className="font-medium text-sm">{p.name}</p>
+                              {(p.role || p.company) && (
+                                <p className="text-xs text-muted-foreground">
+                                  {[p.role, p.company].filter(Boolean).join(" · ")}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                          {p.outcome && (
+                            <div className="mt-3 pt-3 border-t border-border">
+                              <span className="text-xs font-medium text-primary">Outcome: </span>
+                              <span className="text-xs text-muted-foreground">{p.outcome}</span>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Legacy testimonials — shown only when proof_points are not yet populated */}
+              {showTestimonials && (
                 <Card>
                   <CardContent className="p-6">
                     <h2 className="text-xl font-display font-semibold mb-6">Client Testimonials</h2>
                     <div className="space-y-6">
-                      {testimonials.map((testimonial) => (
-                        <div key={testimonial.id} className="relative pl-6 border-l-2 border-primary/30">
-                          <p className="text-muted-foreground italic mb-3">"{testimonial.content}"</p>
+                      {testimonials!.map((t) => (
+                        <div key={t.id} className="relative pl-6 border-l-2 border-primary/30">
+                          <p className="text-muted-foreground italic mb-3">"{t.content}"</p>
                           <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
                               <span className="text-sm font-semibold text-primary">
-                                {testimonial.client_name.charAt(0)}
+                                {t.client_name.charAt(0)}
                               </span>
                             </div>
                             <div>
-                              <p className="font-medium text-sm">{testimonial.client_name}</p>
-                              {(testimonial.client_title || testimonial.client_company) && (
+                              <p className="font-medium text-sm">{t.client_name}</p>
+                              {(t.client_title || t.client_company) && (
                                 <p className="text-xs text-muted-foreground">
-                                  {[testimonial.client_title, testimonial.client_company].filter(Boolean).join(" at ")}
+                                  {[t.client_title, t.client_company].filter(Boolean).join(" at ")}
                                 </p>
                               )}
                             </div>
-                            {testimonial.rating && (
+                            {t.rating && (
                               <div className="ml-auto flex items-center gap-1">
-                                {[...Array(testimonial.rating)].map((_, i) => (
+                                {[...Array(t.rating)].map((_: any, i: number) => (
                                   <Star key={i} className="h-3 w-3 text-primary fill-current" />
                                 ))}
                               </div>
@@ -345,9 +502,10 @@ export default function CoachProfile() {
               )}
             </div>
 
-            {/* Sidebar */}
+            {/* ── Sidebar ────────────────────────────────────────────────── */}
             <div className="space-y-6">
-              {/* Booking Card */}
+
+              {/* Booking card — unchanged */}
               <Card className="sticky top-28">
                 <CardContent className="p-6">
                   {coach.hourly_rate && (
@@ -356,31 +514,31 @@ export default function CoachProfile() {
                       <span className="text-muted-foreground">/session</span>
                     </div>
                   )}
-
                   <div className="space-y-3 mb-6">
-                  {coach.booking_url ? (
-                      <Button 
-                        className="w-full" 
+                    {coach.booking_url ? (
+                      <Button
+                        className="w-full"
                         size="lg"
-                        title="Schedule directly with this coach"
                         onClick={() => {
-                          supabase.from('booking_click_events').insert({
+                          supabase.from("booking_click_events").insert({
                             coach_id: coach.id,
                             user_id: null,
                             session_id: null,
                           }).then(() => {});
-                          window.open(coach.booking_url!, '_blank', 'noopener,noreferrer');
+                          window.open(coach.booking_url!, "_blank", "noopener,noreferrer");
                         }}
                       >
                         <Calendar className="mr-2 h-4 w-4" />
                         Book a Session
                       </Button>
                     ) : (
-                      <p className="text-sm text-muted-foreground text-center">Booking link coming soon</p>
+                      <p className="text-sm text-muted-foreground text-center">
+                        Booking link coming soon
+                      </p>
                     )}
-                    <Button 
-                      variant="outline" 
-                      className="w-full" 
+                    <Button
+                      variant="outline"
+                      className="w-full"
                       size="lg"
                       onClick={() => setIsMessageModalOpen(true)}
                     >
@@ -391,9 +549,19 @@ export default function CoachProfile() {
 
                   <Separator className="my-6" />
 
-                  {/* Quick Info */}
+                  {/* Quick info */}
                   <div className="space-y-4 text-sm">
-                    {coach.languages && coach.languages.length > 0 && (
+                    {/* Audience — new structured field */}
+                    {audienceLabels.length > 0 && (
+                      <div className="flex items-start gap-3">
+                        <Users className="h-4 w-4 text-muted-foreground mt-0.5" />
+                        <div>
+                          <p className="font-medium">Works With</p>
+                          <p className="text-muted-foreground">{audienceLabels.join(", ")}</p>
+                        </div>
+                      </div>
+                    )}
+                    {coach.languages?.length > 0 && (
                       <div className="flex items-start gap-3">
                         <Globe className="h-4 w-4 text-muted-foreground mt-0.5" />
                         <div>
@@ -402,7 +570,7 @@ export default function CoachProfile() {
                         </div>
                       </div>
                     )}
-                    {coach.total_sessions && coach.total_sessions > 0 && (
+                    {coach.total_sessions > 0 && (
                       <div className="flex items-start gap-3">
                         <Users className="h-4 w-4 text-muted-foreground mt-0.5" />
                         <div>
@@ -424,25 +592,17 @@ export default function CoachProfile() {
 
                   <Separator className="my-6" />
 
-                  {/* External Links */}
+                  {/* External links — unchanged */}
                   <div className="flex justify-center gap-4">
                     {coach.linkedin_url && (
-                      <a
-                        href={coach.linkedin_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="p-2 rounded-lg bg-muted hover:bg-muted/80 transition-colors"
-                      >
+                      <a href={coach.linkedin_url} target="_blank" rel="noopener noreferrer"
+                         className="p-2 rounded-lg bg-muted hover:bg-muted/80 transition-colors">
                         <Linkedin className="h-5 w-5" />
                       </a>
                     )}
                     {coach.website_url && (
-                      <a
-                        href={coach.website_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="p-2 rounded-lg bg-muted hover:bg-muted/80 transition-colors"
-                      >
+                      <a href={coach.website_url} target="_blank" rel="noopener noreferrer"
+                         className="p-2 rounded-lg bg-muted hover:bg-muted/80 transition-colors">
                         <Globe className="h-5 w-5" />
                       </a>
                     )}
@@ -450,27 +610,22 @@ export default function CoachProfile() {
                 </CardContent>
               </Card>
 
-              {/* Trust Signals */}
+              {/* Trust signals — unchanged */}
               <Card>
                 <CardContent className="p-6">
                   <h3 className="font-semibold mb-4">Why Choose This Coach</h3>
                   <div className="space-y-3">
-                    <div className="flex items-center gap-3 text-sm">
-                      <CheckCircle className="h-4 w-4 text-green-500" />
-                      <span>Vetted by Galoras team</span>
-                    </div>
-                    <div className="flex items-center gap-3 text-sm">
-                      <CheckCircle className="h-4 w-4 text-green-500" />
-                      <span>Background verified</span>
-                    </div>
-                    <div className="flex items-center gap-3 text-sm">
-                      <CheckCircle className="h-4 w-4 text-green-500" />
-                      <span>Secure booking & payments</span>
-                    </div>
-                    <div className="flex items-center gap-3 text-sm">
-                      <CheckCircle className="h-4 w-4 text-green-500" />
-                      <span>Satisfaction guaranteed</span>
-                    </div>
+                    {[
+                      "Vetted by Galoras team",
+                      "Background verified",
+                      "Secure booking & payments",
+                      "Satisfaction guaranteed",
+                    ].map((t) => (
+                      <div key={t} className="flex items-center gap-3 text-sm">
+                        <CheckCircle className="h-4 w-4 text-green-500" />
+                        <span>{t}</span>
+                      </div>
+                    ))}
                   </div>
                 </CardContent>
               </Card>
@@ -479,15 +634,13 @@ export default function CoachProfile() {
         </div>
       </div>
 
-      {/* Message Coach Modal */}
       <MessageCoachModal
         isOpen={isMessageModalOpen}
         onClose={() => setIsMessageModalOpen(false)}
-        coachId={coachId || ""}
+        coachId={coach?.id || ""}
         coachName={coach?.display_name || "Coach"}
         coachUserId={coach?.user_id || ""}
       />
-
     </Layout>
   );
 }
