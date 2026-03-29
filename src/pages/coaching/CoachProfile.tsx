@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { MessageCoachModal } from "@/components/coaching/MessageCoachModal";
+import { ProductCard, type CoachProduct } from "@/components/coaching/ProductCard";
 import {
   ArrowLeft,
   Star,
@@ -94,6 +95,22 @@ export default function CoachProfile() {
       return data;
     },
     enabled: !!identifier,
+  });
+
+  // ── Products query ────────────────────────────────────────────────────────
+  const { data: products } = useQuery({
+    queryKey: ["coach-products", coach?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("coach_products")
+        .select("*")
+        .eq("coach_id", coach!.id)
+        .eq("is_active", true)
+        .order("sort_order", { ascending: true });
+      if (error) throw error;
+      return (data ?? []) as CoachProduct[];
+    },
+    enabled: !!coach?.id,
   });
 
   // ── Testimonials (legacy — kept for coaches without proof_points yet) ─────
@@ -334,6 +351,26 @@ export default function CoachProfile() {
                     <p className="text-muted-foreground leading-relaxed">
                       {coach.methodology || coach.coaching_philosophy}
                     </p>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* ── Products / Offerings ───────────────────────────── */}
+              {products && products.length > 0 && (
+                <Card>
+                  <CardContent className="p-6">
+                    <h2 className="text-xl font-display font-semibold mb-6">
+                      Work With {coach.display_name?.split(" ")[0] || "Me"}
+                    </h2>
+                    <div className="grid sm:grid-cols-2 gap-4">
+                      {products.map((product) => (
+                        <ProductCard
+                          key={product.id}
+                          product={product}
+                          coachName={coach.display_name ?? undefined}
+                        />
+                      ))}
+                    </div>
                   </CardContent>
                 </Card>
               )}
