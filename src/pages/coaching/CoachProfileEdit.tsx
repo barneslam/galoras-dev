@@ -77,7 +77,7 @@ export default function CoachProfileEdit() {
     mutationFn: async (bookingUrl: string) => {
       const { error } = await supabase
         .from('coaches')
-        .update({ booking_url: bookingUrl || null } as any)
+        .update({ booking_url: bookingUrl || null })
         .eq('id', coachProfile!.id);
       if (error) throw error;
     },
@@ -93,7 +93,7 @@ export default function CoachProfileEdit() {
   // Redirect if not logged in
   useEffect(() => {
     if (!userLoading && !user) {
-      navigate('/auth');
+      navigate('/login');
     }
   }, [user, userLoading, navigate]);
 
@@ -194,7 +194,7 @@ export default function CoachProfileEdit() {
                     <Input
                       name="bookingUrl"
                       type="url"
-                      defaultValue={(coachProfile as any).booking_url || ''}
+                      defaultValue={(coachProfile as typeof coachProfile & { booking_url?: string | null }).booking_url || ''}
                       placeholder="https://calendly.com/yourname"
                       className="flex-1"
                     />

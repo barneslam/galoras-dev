@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
@@ -62,6 +62,12 @@ export default function CoachProfile() {
   const useSlug    = !!slug;
 
   const [isMessageModalOpen, setIsMessageModalOpen] = useState(false);
+  const currentUserIdRef = useRef<string | null>(null);
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      currentUserIdRef.current = user?.id ?? null;
+    });
+  }, []);
 
   // ── Main coach query ──────────────────────────────────────────────────────
   const { data: coach, isLoading } = useQuery({
@@ -522,9 +528,11 @@ export default function CoachProfile() {
                         onClick={() => {
                           supabase.from("booking_click_events").insert({
                             coach_id: coach.id,
-                            user_id: null,
+                            user_id: currentUserIdRef.current,
                             session_id: null,
-                          }).then(() => {});
+                          }).then(({ error }) => {
+                            if (error) console.error("booking_click_events insert failed:", error);
+                          });
                           window.open(coach.booking_url!, "_blank", "noopener,noreferrer");
                         }}
                       >

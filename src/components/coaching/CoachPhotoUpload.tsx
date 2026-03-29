@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -40,9 +40,9 @@ export function CoachPhotoUpload({
   const { toast } = useToast();
 
   // Check WebGPU support on mount
-  useState(() => {
+  useEffect(() => {
     isWebGPUSupported().then(setWebGPUSupported);
-  });
+  }, []);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

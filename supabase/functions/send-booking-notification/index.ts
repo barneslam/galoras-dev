@@ -311,7 +311,7 @@ const handler = async (req: Request): Promise<Response> => {
       // Send to client
       emailPromises.push(
         resend.emails.send({
-          from: "Galoras <onboarding@resend.dev>",
+          from: Deno.env.get("EMAIL_FROM") ?? "Galoras <onboarding@resend.dev>",
           to: [data.clientEmail],
           subject: `Session Request Submitted - ${data.scheduledDate}`,
           html: generateClientNewBookingEmail(data),
@@ -322,7 +322,7 @@ const handler = async (req: Request): Promise<Response> => {
       if (data.coachEmail) {
         emailPromises.push(
           resend.emails.send({
-            from: "Galoras <onboarding@resend.dev>",
+            from: Deno.env.get("EMAIL_FROM") ?? "Galoras <onboarding@resend.dev>",
             to: [data.coachEmail],
             subject: `New Session Request from ${data.clientName}`,
             html: generateCoachNewBookingEmail(data),
@@ -332,7 +332,7 @@ const handler = async (req: Request): Promise<Response> => {
     } else if (data.type === "booking_confirmed") {
       emailPromises.push(
         resend.emails.send({
-          from: "Galoras <onboarding@resend.dev>",
+          from: Deno.env.get("EMAIL_FROM") ?? "Galoras <onboarding@resend.dev>",
           to: [data.clientEmail],
           subject: `Session Confirmed - ${data.scheduledDate} with ${data.coachName}`,
           html: generateConfirmedEmail(data),
@@ -342,7 +342,7 @@ const handler = async (req: Request): Promise<Response> => {
       // Notify client
       emailPromises.push(
         resend.emails.send({
-          from: "Galoras <onboarding@resend.dev>",
+          from: Deno.env.get("EMAIL_FROM") ?? "Galoras <onboarding@resend.dev>",
           to: [data.clientEmail],
           subject: `Session Cancelled - ${data.scheduledDate}`,
           html: generateCancelledEmail(data, false),
@@ -353,7 +353,7 @@ const handler = async (req: Request): Promise<Response> => {
       if (data.coachEmail) {
         emailPromises.push(
           resend.emails.send({
-            from: "Galoras <onboarding@resend.dev>",
+            from: Deno.env.get("EMAIL_FROM") ?? "Galoras <onboarding@resend.dev>",
             to: [data.coachEmail],
             subject: `Session Cancelled - ${data.clientName}`,
             html: generateCancelledEmail(data, true),

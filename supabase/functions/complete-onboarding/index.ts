@@ -64,7 +64,7 @@ serve(async (req) => {
       .select("*")
       .eq("onboarding_token", token)
       .eq("status", "approved")
-      .eq("onboarding_status", "pending")
+      .in("onboarding_status", ["pending", "needs_changes"])
       .maybeSingle();
 
     if (fetchError || !application) {
