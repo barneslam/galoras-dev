@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { MessageCoachModal } from "@/components/coaching/MessageCoachModal";
+import { ProductCard, type CoachProduct } from "@/components/coaching/ProductCard";
 import {
   ArrowLeft,
   Star,
@@ -62,6 +63,12 @@ export default function CoachProfile() {
   const useSlug    = !!slug;
 
   const [isMessageModalOpen, setIsMessageModalOpen] = useState(false);
+  const currentUserIdRef = useRef<string | null>(null);
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      currentUserIdRef.current = user?.id ?? null;
+    });
+  }, []);
 
   // ── Main coach query ──────────────────────────────────────────────────────
   const { data: coach, isLoading } = useQuery({
@@ -88,6 +95,22 @@ export default function CoachProfile() {
       return data;
     },
     enabled: !!identifier,
+  });
+
+  // ── Products query ────────────────────────────────────────────────────────
+  const { data: products } = useQuery({
+    queryKey: ["coach-products", coach?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("coach_products")
+        .select("*")
+        .eq("coach_id", coach!.id)
+        .eq("is_active", true)
+        .order("sort_order", { ascending: true });
+      if (error) throw error;
+      return (data ?? []) as CoachProduct[];
+    },
+    enabled: !!coach?.id,
   });
 
   // ── Testimonials (legacy — kept for coaches without proof_points yet) ─────
@@ -332,6 +355,26 @@ export default function CoachProfile() {
                 </Card>
               )}
 
+              {/* ── Products / Offerings ───────────────────────────── */}
+              {products && products.length > 0 && (
+                <Card>
+                  <CardContent className="p-6">
+                    <h2 className="text-xl font-display font-semibold mb-6">
+                      Work With {coach.display_name?.split(" ")[0] || "Me"}
+                    </h2>
+                    <div className="grid sm:grid-cols-2 gap-4">
+                      {products.map((product) => (
+                        <ProductCard
+                          key={product.id}
+                          product={product}
+                          coachName={coach.display_name ?? undefined}
+                        />
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
               {/* Background & Experience — unchanged */}
               {(coach.coach_background || coach.coaching_experience_level || coach.leadership_experience_years) && (
                 <Card>
@@ -522,9 +565,11 @@ export default function CoachProfile() {
                         onClick={() => {
                           supabase.from("booking_click_events").insert({
                             coach_id: coach.id,
-                            user_id: null,
+                            user_id: currentUserIdRef.current,
                             session_id: null,
-                          }).then(() => {});
+                          }).then(({ error }) => {
+                            if (error) console.error("booking_click_events insert failed:", error);
+                          });
                           window.open(coach.booking_url!, "_blank", "noopener,noreferrer");
                         }}
                       >

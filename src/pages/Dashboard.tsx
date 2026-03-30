@@ -85,13 +85,22 @@ export default function Dashboard() {
     enabled: !!user,
   });
 
-  // Cancel booking mutation
+  // Cancel booking mutation — enforces a 24-hour notice window
   const cancelBooking = useMutation({
     mutationFn: async (bookingId: string) => {
+      const booking = bookings?.find((b) => b.id === bookingId);
+      if (booking) {
+        const sessionStart = new Date(`${booking.scheduled_date}T${booking.scheduled_time}`);
+        const hoursUntilSession = (sessionStart.getTime() - Date.now()) / (1000 * 60 * 60);
+        if (hoursUntilSession < 24) {
+          throw new Error("Bookings cannot be cancelled less than 24 hours before the session.");
+        }
+      }
       const { error } = await supabase
         .from('session_bookings')
         .update({ status: 'cancelled' })
-        .eq('id', bookingId);
+        .eq('id', bookingId)
+        .eq('client_id', user!.id);
 
       if (error) throw error;
     },
@@ -134,7 +143,7 @@ export default function Dashboard() {
           <p className="text-muted-foreground mb-6">
             You need to be signed in to view your bookings.
           </p>
-          <Button onClick={() => navigate('/auth')}>Sign In</Button>
+          <Button onClick={() => navigate('/login')}>Sign In</Button>
         </div>
       </Layout>
     );

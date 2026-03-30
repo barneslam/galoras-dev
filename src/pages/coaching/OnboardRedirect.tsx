@@ -28,8 +28,8 @@ export default function OnboardRedirect() {
           return;
         }
 
-        // Internal redirect to the onboarding page with the resolved token
-        navigate(`/coaching/onboarding?token=${data.token}`, { replace: true });
+        // Pass token via router state — keeps it out of the URL, history, and Referer headers
+        navigate("/coaching/onboarding", { replace: true, state: { token: data.token } });
       } catch {
         setError("Something went wrong. Please try again.");
       }

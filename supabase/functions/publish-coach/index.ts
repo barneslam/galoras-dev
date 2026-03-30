@@ -6,10 +6,16 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
-const normalizeUrl = (url: string | null | undefined) => {
+const normalizeUrl = (url: string | null | undefined): string | null => {
   const trimmed = (url || "").trim();
   if (!trimmed) return null;
-  return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+  try {
+    const u = new URL(/^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`);
+    if (u.protocol !== "https:") return null;
+    return u.href;
+  } catch {
+    return null;
+  }
 };
 
 Deno.serve(async (req) => {
@@ -106,10 +112,10 @@ Deno.serve(async (req) => {
     let coachUserId = app.user_id;
 
     if (!coachUserId) {
-      const { data: usersData } = await adminClient.auth.admin.listUsers();
-      const existingUser = usersData?.users?.find(
-        (u: { email?: string }) => u.email === app.email
-      );
+      const { data: usersData } = await adminClient.auth.admin.listUsers({
+        filter: `email eq "${app.email}"`,
+      });
+      const existingUser = usersData?.users?.[0];
 
       if (existingUser) {
         coachUserId = existingUser.id;

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Layout } from "@/components/layout";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -53,10 +53,11 @@ interface CoachApplication {
 }
 
 export default function CoachOnboarding() {
-  const [searchParams] = useSearchParams();
+  const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const token = searchParams.get("token");
+  // Token is passed via router state (not query string) to keep it out of browser history and logs
+  const token = (location.state as { token?: string } | null)?.token ?? null;
 
   const [state, setState] = useState<"loading" | "invalid" | "form" | "submitting" | "success">("loading");
   const [application, setApplication] = useState<CoachApplication | null>(null);

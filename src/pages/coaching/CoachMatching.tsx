@@ -164,33 +164,29 @@ export default function CoachMatching() {
               <Sparkles className="h-10 w-10 text-primary" />
             </div>
             <h1 className="text-3xl md:text-4xl font-display font-bold mb-4">
-              Your Matches Are Ready!
+              Coach Matching Coming Soon
             </h1>
             <p className="text-lg text-muted-foreground mb-8">
-              Based on your preferences, we've identified coaches who align perfectly with your goals and style.
+              Personalized AI matching is on the way. Browse the full directory to find your coach now.
             </p>
 
-            {/* Sample Matches Preview */}
+            {/* Coming soon notice — real matching not yet implemented */}
             <div className="grid md:grid-cols-3 gap-4 mb-8">
-              {[
-                { match: 95, name: "Sarah Mitchell", specialty: "Executive Leadership" },
-                { match: 91, name: "James Chen", specialty: "Career Transitions" },
-                { match: 88, name: "Elena Rodriguez", specialty: "Performance Coaching" },
-              ].map((coach, i) => (
-                <Card key={i} className="text-left">
+              {[1, 2, 3].map((i) => (
+                <Card key={i} className="text-left opacity-40">
                   <CardContent className="p-4">
                     <div className="flex items-center gap-3 mb-3">
-                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white font-bold">
-                        {coach.name.charAt(0)}
+                      <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
+                        <Sparkles className="h-5 w-5 text-muted-foreground" />
                       </div>
                       <div>
-                        <p className="font-semibold text-sm">{coach.name}</p>
-                        <p className="text-xs text-muted-foreground">{coach.specialty}</p>
+                        <div className="h-3 bg-muted rounded w-24 mb-1" />
+                        <div className="h-2 bg-muted rounded w-16" />
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Progress value={coach.match} className="h-2 flex-1" />
-                      <span className="text-sm font-semibold text-primary">{coach.match}%</span>
+                      <Progress value={0} className="h-2 flex-1" />
+                      <span className="text-sm text-muted-foreground">—</span>
                     </div>
                   </CardContent>
                 </Card>

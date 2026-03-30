@@ -103,7 +103,8 @@ export default function CoachDashboard() {
       const { error } = await supabase
         .from('session_bookings')
         .update({ status })
-        .eq('id', id);
+        .eq('id', id)
+        .eq('coach_id', coachProfile!.id);
 
       if (error) throw error;
 
@@ -176,7 +177,7 @@ export default function CoachDashboard() {
       <Layout>
         <div className="container mx-auto px-4 py-12 text-center">
           <h1 className="text-2xl font-bold mb-4">Please Sign In</h1>
-          <Button onClick={() => navigate('/auth')}>Sign In</Button>
+          <Button onClick={() => navigate('/login')}>Sign In</Button>
         </div>
       </Layout>
     );
