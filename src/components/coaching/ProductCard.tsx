@@ -140,7 +140,7 @@ export function ProductCard({ product, coachName }: ProductCardProps) {
             {enquiry ? (
               <>
                 <Mail className="mr-1.5 h-3.5 w-3.5" />
-                Enquire
+                {ctaLabel === "Book Now" ? "Enquire" : ctaLabel}
               </>
             ) : (
               <>
