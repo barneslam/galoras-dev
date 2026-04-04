@@ -1,4 +1,4 @@
-project_id = "dajlrvyqcyvgdzkzbjwk"
+project_id = "qbjuomsmnrclsjhdsjcz"
 
 [functions.publish-coach]
 verify_jwt = false
