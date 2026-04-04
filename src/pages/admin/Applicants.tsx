@@ -10,11 +10,9 @@ type CoachApplication = {
   linkedin_url: string | null;
   website_url: string | null;
   bio: string | null;
-  methodology: string | null;
   why_galoras: string | null;
   status: string | null;
-  notes: string | null;
-  reviewed_by: string | null;
+  reviewer_notes: string | null;
   created_at: string | null;
 };
 
