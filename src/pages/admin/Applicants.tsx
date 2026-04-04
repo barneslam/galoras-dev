@@ -87,13 +87,12 @@ export default function Applicants() {
 
     setSaving(true);
 
-    const { error } = await supabase
+    const { error } = await (supabase
       .from("coach_applications")
       .update({
-        status: selected.status,
-        notes: selected.notes,
-        reviewed_by: selected.reviewed_by,
-      })
+        status: selected.status as any,
+        reviewer_notes: selected.reviewer_notes,
+      }) as any)
       .eq("id", selected.id);
 
     if (error) {

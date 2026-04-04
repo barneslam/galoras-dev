@@ -387,15 +387,10 @@ export default function CoachProfile() {
           </div>
         </div>
       </section>
-      {checkoutOpen && clientSecret && selectedProduct && (
+      {checkoutOpen && selectedProduct && (
         <CheckoutModal
           open={checkoutOpen}
-          stripePromise={stripePromise}
-          clientSecret={clientSecret}
-          productTitle={selectedProduct.title ?? "Coaching Session"}
-          amountCents={(selectedProduct as any).price_cents ?? 0}
-          onSuccess={handleCheckoutSuccess}
-          onClose={handleCheckoutClose}
+          onOpenChange={setCheckoutOpen}
         />
       )}
 
