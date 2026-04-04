@@ -92,12 +92,12 @@ export default function CoachProfile() {
     setDebugError("");
 
     try {
-      let query = supabase
+      let query = (supabase
         .from("coaches")
         .select(
-          "id, slug, display_name, headline, positioning_statement, methodology, proof_points, audience, tier, lifecycle_status"
-        )
-        .eq("lifecycle_status", "published");
+          "id, display_name, headline, bio, specialties, avatar_url, booking_url, status, current_role, location"
+        ) as any)
+        .eq("status", "approved");
 
       if (resolvedSlug) {
         query = query.eq("slug", resolvedSlug);
