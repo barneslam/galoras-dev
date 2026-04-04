@@ -129,22 +129,10 @@ export default function CoachProfile() {
         return;
       }
 
-      setCoach(data as CoachProfileData);
+      setCoach(data as unknown as CoachProfileData);
 
-      const { data: productData, error: productError } = await supabase
-        .from("coach_products")
-        .select(
-          "id, coach_id, product_type, title, summary, duration_minutes, format, pricing_band, is_active"
-        )
-        .eq("coach_id", data.id)
-        .eq("is_active", true);
-
-      if (productError) {
-        console.error(productError);
-        setProducts([]);
-      } else {
-        setProducts((productData || []) as CoachProduct[]);
-      }
+      // coach_products table doesn't exist yet — skip product fetch
+      setProducts([]);
 
       setLoading(false);
     } catch (err) {
