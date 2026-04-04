@@ -48,8 +48,8 @@ export default function CoachingDirectory() {
   } = useQuery({
     queryKey: ["public-coaches-simple"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("coaches")
+      const { data, error } = await (supabase
+        .from("coaches") as any)
         .select("id, slug, display_name, headline, bio, specialties, status, avatar_url")
         .eq("lifecycle_status", "published")
         .order("display_name", { ascending: true });
