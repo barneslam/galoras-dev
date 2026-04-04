@@ -220,15 +220,16 @@ export default function Applicants() {
                       <option value="rejected">rejected</option>
                     </select>
 
-                    <div>Reviewed By</div>
-                    <input
-                      value={selected.reviewed_by || ""}
+                    <div>Reviewer Notes</div>
+                    <textarea
+                      value={selected.reviewer_notes || ""}
                       onChange={(e) =>
                         setSelected({
                           ...selected,
-                          reviewed_by: e.target.value,
+                          reviewer_notes: e.target.value,
                         })
                       }
+                      rows={4}
                       style={{
                         width: "100%",
                         padding: 10,
