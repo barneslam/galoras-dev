@@ -50,9 +50,9 @@ export default function CoachingDirectory() {
       const { data, error } = await (
         supabase
           .from("coaches")
-          .select("id, display_name, headline, bio, specialties, status, avatar_url, location") as any
+          .select("id, display_name, headline, bio, specialties, status, avatar_url, slug") as any
       )
-        .eq("status", "approved")
+        .eq("lifecycle_status", "published")
         .order("display_name", { ascending: true });
 
       if (error) throw error;
