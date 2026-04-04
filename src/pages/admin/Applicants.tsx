@@ -237,11 +237,7 @@ export default function Applicants() {
                       }}
                     />
 
-                    <div>Notes</div>
-                    <textarea
-                      value={selected.notes || ""}
-                      onChange={(e) =>
-                        setSelected({ ...selected, notes: e.target.value })
+                    {/* Notes field removed — using reviewer_notes above */}
                       }
                       rows={4}
                       style={{

@@ -236,9 +236,7 @@ export default function CoachingDirectory() {
                   </p>
 
                   <p className="text-muted-foreground mb-4 line-clamp-4">
-                    {coach.positioning_statement ||
-                      coach.bio ||
-                      "Profile details coming soon."}
+                    {coach.bio || "Profile details coming soon."}
                   </p>
 
                   <Link to={`/coaching/${coach.id}`}>

@@ -175,11 +175,7 @@ export default function CoachProfile() {
     setSelectedProduct(product);
     setBuyingProductId(product.id);
 
-    await initiateCoachingPurchase({
-      productId: product.id,
-      coachId: product.coach_id,
-      amountCents,
-    });
+    await initiateCoachingPurchase(product.id);
 
     setCheckoutOpen(true);
     setBuyingProductId(null);
