@@ -9,10 +9,9 @@ import { supabase } from "@/integrations/supabase/client";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 
-// Coaching (FIXED IMPORTS)
+// Coaching
 import { CoachingDirectory, CoachProfile, WhyCoaching } from "./pages/coaching";
 import CoachMatching from "./pages/coaching/CoachMatching";
-
 import CoachDashboard from "./pages/coaching/CoachDashboard";
 import CoachProfileEdit from "./pages/coaching/CoachProfileEdit";
 import CoachOnboarding from "./pages/coaching/CoachOnboarding";
@@ -20,13 +19,7 @@ import OnboardRedirect from "./pages/coaching/OnboardRedirect";
 import CoachesAdmin from "./pages/admin/Coaches";
 
 // Business
-import {
-  Business,
-  SportOfBusiness,
-  LeadershipCircles,
-  Workshops,
-  Diagnostics,
-} from "./pages/business";
+import { Business, SportOfBusiness, LeadershipCircles, Workshops, Diagnostics } from "./pages/business";
 
 // Core pages
 import Compass from "./pages/Compass";
@@ -50,18 +43,25 @@ import Bookings from "@/pages/admin/Bookings";
 
 const queryClient = new QueryClient();
 
-// Route-level guard: redirects unauthenticated users to /login before rendering children.
-// For admin routes, also verifies the user holds the "admin" role.
 function ProtectedRoute({ children, requireAdmin = false }: { children: React.ReactNode; requireAdmin?: boolean }) {
   const [state, setState] = useState<"loading" | "allowed" | "denied">("loading");
 
   useEffect(() => {
     (async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { setState("denied"); return; }
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) {
+        setState("denied");
+        return;
+      }
       if (requireAdmin) {
         const { data } = await supabase
-          .from("user_roles").select("role").eq("user_id", user.id).eq("role", "admin").maybeSingle();
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", user.id)
+          .eq("role", "admin")
+          .maybeSingle();
         setState(data ? "allowed" : "denied");
       } else {
         setState("allowed");
@@ -86,11 +86,10 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-
           {/* Home */}
           <Route path="/" element={<Index />} />
 
-          {/* B2C Routes */}
+          {/* B2C Routes — static routes MUST come before dynamic :coachId */}
           <Route path="/coaching" element={<CoachingDirectory />} />
           <Route path="/coaching/matching" element={<CoachMatching />} />
           <Route path="/coaching/why" element={<WhyCoaching />} />
@@ -122,25 +121,85 @@ const App = () => (
           <Route path="/subscription-success" element={<SubscriptionSuccess />} />
 
           {/* Dashboard Routes */}
-          <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-          <Route path="/coach-dashboard" element={<ProtectedRoute><CoachDashboard /></ProtectedRoute>} />
-          <Route path="/coach-dashboard/edit" element={<ProtectedRoute><CoachProfileEdit /></ProtectedRoute>} />
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/coach-dashboard"
+            element={
+              <ProtectedRoute>
+                <CoachDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/coach-dashboard/edit"
+            element={
+              <ProtectedRoute>
+                <CoachProfileEdit />
+              </ProtectedRoute>
+            }
+          />
 
           {/* Admin Routes */}
-          <Route path="/admin/images" element={<ProtectedRoute requireAdmin><ImageGenerator /></ProtectedRoute>} />
-          <Route path="/admin/coach-cutouts" element={<ProtectedRoute requireAdmin><CoachCutoutManager /></ProtectedRoute>} />
-          <Route path="/admin/applicants" element={<ProtectedRoute requireAdmin><Applicants /></ProtectedRoute>} />
-          <Route path="/admin/coaches" element={<ProtectedRoute requireAdmin><CoachesList /></ProtectedRoute>} />
-          <Route path="/admin/coaches/:id" element={<ProtectedRoute requireAdmin><CoachEditorDetail /></ProtectedRoute>} />
-          <Route path="/admin/bookings" element={<ProtectedRoute requireAdmin><Bookings /></ProtectedRoute>} />
+          <Route
+            path="/admin/images"
+            element={
+              <ProtectedRoute requireAdmin>
+                <ImageGenerator />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/coach-cutouts"
+            element={
+              <ProtectedRoute requireAdmin>
+                <CoachCutoutManager />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/applicants"
+            element={
+              <ProtectedRoute requireAdmin>
+                <Applicants />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/coaches"
+            element={
+              <ProtectedRoute requireAdmin>
+                <CoachesList />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/coaches/:id"
+            element={
+              <ProtectedRoute requireAdmin>
+                <CoachEditorDetail />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/bookings"
+            element={
+              <ProtectedRoute requireAdmin>
+                <Bookings />
+              </ProtectedRoute>
+            }
+          />
 
           {/* Always last */}
           <Route path="*" element={<NotFound />} />
-
         </Routes>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
 );
-
-export default App;
