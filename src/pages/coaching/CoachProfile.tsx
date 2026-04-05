@@ -1,229 +1,259 @@
-import { useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useParams } from "react-router-dom";
 import { Layout } from "@/components/layout";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Search, ArrowRight, Sparkles, Users } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft, Sparkles, Calendar } from "lucide-react";
 
-type PublicCoach = {
+type CoachProfileData = {
   id: string;
   slug: string | null;
   display_name: string | null;
   headline: string | null;
-  bio: string | null;
-  specialties: string[] | null;
-  status: string | null;
+  positioning_statement: string | null;
+  methodology: string | null;
+  proof_points: unknown;
+  audience: string[] | null;
+  tier: string | null;
+  lifecycle_status: string | null;
+  booking_url: string | null;
   avatar_url: string | null;
 };
 
-type RankedCoach = PublicCoach & {
-  score: number;
-};
-
-cons\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\st contextKeywords: Record<string, string[]> = {
-  scaling: ["scaling", "growth", "execution", "leadership", "scale"],
-  transition: ["transition", "change", "career", "shift", "next stage"],
-  performance: ["performance", "pressure", "execution", "results", "focus"],
-  leadership: ["leadership", "team", "executive", "management", "influence"],
-};
-
-const contextLabels: Record<string, string> = {
-  scaling: "Scaling business",
-  transition: "Career transition",
-  performance: "Performance pressure",
-  leadership: "Leadership challenge",
-};
-
-export default function CoachingDirectory() {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchParams] = useSearchParams();
-  const context = searchParams.get("context");
-
-  const {
-    data: coaches,
-    isLoading,
-    error,
-  } = useQuery({
-    queryKey: ["public-coaches-simple"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("coaches")
-        .select("id, slug, display_name, headline, bio, specialties, status, avatar_url")
-        .eq("lifecycle_status", "published")
-        .order("display_name", { ascending: true });
-
-      if (error) throw error;
-      return (data || []) as PublicCoach[];
-    },
-  });
-
-  const rankedCoaches: RankedCoach[] =
-    coaches
-      ?.map((coach) => {
-        let score = 0;
-        const searchableText = [coach.display_name || "", coach.headline || "", coach.bio || ""]
-          .join(" ")
-          .toLowerCase();
-        if (searchQuery && searchableText.includes(searchQuery.toLowerCase())) score += 1;
-        if (context) {
-          const keywords = contextKeywords[context] || [context];
-          score += keywords.filter((k) => searchableText.includes(k.toLowerCase())).length * 2;
+function normalizeProofPoints(value: unknown): string[] {
+  if (!value) return [];
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => {
+        if (typeof item === "string") return item.trim();
+        if (item && typeof item === "object" && "text" in item) {
+          const text = (item as { text?: unknown }).text;
+          return typeof text === "string" ? text.trim() : "";
         }
-        return { ...coach, score };
+        return "";
       })
-      .sort((a, b) => b.score - a.score) || [];
+      .filter(Boolean);
+  }
+  if (typeof value === "string") {
+    return value.split("\n").map((line) => line.trim()).filter(Boolean);
+  }
+  return [];
+}
 
-  const filteredCoaches: RankedCoach[] =
-    rankedCoaches.filter((coach) => {
-      if (!searchQuery) return true;
-      const q = searchQuery.toLowerCase();
-      return [coach.display_name || "", coach.headline || "", coach.bio || ""].join(" ").toLowerCase().includes(q);
-    }) || [];
+export default function CoachProfile() {
+  const { slug, id, coachId } = useParams();
+
+  const resolvedSlug = slug;
+  const fallbackId = !slug ? id || coachId : null;
+
+  const [coach, setCoach] = useState<CoachProfileData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [debugError, setDebugError] = useState("");
+
+  useEffect(() => {
+    fetchCoach();
+  }, [resolvedSlug, fallbackId]);
+
+  const fetchCoach = async () => {
+    setLoading(true);
+    setDebugError("");
+    try {
+      let query = supabase
+        .from("coaches")
+        .select(
+          "id, slug, display_name, headline, positioning_statement, methodology, proof_points, audience, tier, lifecycle_status, booking_url, avatar_url"
+        )
+        .eq("lifecycle_status", "published");
+
+      if (resolvedSlug) {
+        query = query.eq("slug", resolvedSlug);
+      } else if (fallbackId) {
+        query = query.eq("id", fallbackId);
+      } else {
+        setDebugError("Missing slug or coach id");
+        setCoach(null);
+        setLoading(false);
+        return;
+      }
+
+      const { data, error } = await query.maybeSingle();
+
+      if (error) {
+        console.error(error);
+        setDebugError(JSON.stringify(error));
+        setCoach(null);
+        setLoading(false);
+        return;
+      }
+
+      if (!data) {
+        setCoach(null);
+        setLoading(false);
+        return;
+      }
+
+      setCoach(data as unknown as CoachProfileData);
+      setLoading(false);
+    } catch (err) {
+      console.error(err);
+      setDebugError("Unexpected profile load error");
+      setCoach(null);
+      setLoading(false);
+    }
+  };
+
+  const proofPoints = useMemo(
+    () => normalizeProofPoints(coach?.proof_points),
+    [coach?.proof_points]
+  );
 
   return (
     <Layout>
-      <section className="relative pt-32 pb-16 overflow-hidden">
-        <div
-          className="absolute inset-0 bg-cover bg-center"
-          style={{
-            backgroundImage:
-              "url('https://images.unsplash.com/photo-1573164713988-8665fc963095?q=80&w=1920&auto=format&fit=crop')",
-          }}
-        />
-        <div
-          className="absolute inset-0 bg-gradient-to-b from-background/95 via-background/80
-  to-background"
-        />
+      <section className="relative pt-28 pb-12 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-b from-background to-muted/30" />
         <div className="container-wide relative z-10">
-          <div className="max-w-3xl mx-auto text-center mb-12">
-            <div
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border
-  border-primary/20 text-primary text-sm font-medium mb-6"
-            >
-              <Users className="h-4 w-4" />
-              Coaching Exchange
-            </div>
-            <h1 className="text-4xl md:text-5xl font-display font-bold mb-4">
-              Explore <span className="text-gradient">Execution-Ready</span> Coaches
-            </h1>
-            <p className="text-lg text-muted-foreground mb-8">
-              Coaches in this exchange are surfaced based on demonstrated execution experience, deployability, and
-              real-world performance.
-            </p>
-            <div className="flex flex-col items-center gap-3">
-              {!context && (
-                <Link to="/coaching/matching">
-                  <Button
-                    size="lg"
-                    className="bg-primary text-primary-foreground hover:bg-primary/90
-  glow-primary"
-                  >
-                    <Sparkles className="mr-2 h-5 w-5" />
-                    Begin Performance Context Mapping
-                  </Button>
-                </Link>
-              )}
-              {context && (
-                <div
-                  className="inline-flex items-center gap-3 rounded-xl border border-primary/20
-  bg-primary/10 px-6 py-3 text-sm text-primary"
-                >
-                  <Sparkles className="h-5 w-5" />
-                  <span className="text-muted-foreground">Showing coaches for</span>
-                  <span className="font-semibold text-primary">{contextLabels[context] || context}</span>
-                </div>
-              )}
-              {context && (
-                <Link to="/coaching/matching">
-                  <Button variant="ghost" size="sm">
-                    Change Context
-                  </Button>
-                </Link>
-              )}
-              <p className="text-sm text-muted-foreground">
-                AI supports the selection process — it does not replace performance evaluation.
-              </p>
-            </div>
-          </div>
-          <div
-            className="max-w-4xl mx-auto bg-card/80 backdrop-blur-sm border border-border rounded-2xl
-  p-4 md:p-6"
-          >
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-              <Input
-                placeholder="Search by coach, challenge, or operating context..."
-                className="pl-10 h-12 bg-background"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="section-padding bg-muted/50">
-        <div className="container-wide">
-          <div className="mt-4 mb-8 text-center">
-            <h2 className="text-3xl md:text-[40px] font-bold tracking-tight text-foreground text-center">
-              Published <span className="text-gradient">Coaches</span>
-            </h2>
-            <p className="mt-2 text-sm text-muted-foreground">Only approved and published coaches appear here.</p>
-          </div>
-
-          {isLoading ? (
-            <div className="text-center py-12">Loading coaches...</div>
-          ) : error ? (
-            <div className="text-center py-12 text-red-500">Failed to load coaches.</div>
-          ) : filteredCoaches.length > 0 ? (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {filteredCoaches.map((coach) => (
-                <div key={coach.id} className="bg-card rounded-2xl border border-border p-6">
-                  <div className="flex items-start justify-between gap-3 mb-2">
-                    <h3 className="text-2xl font-semibold">{coach.display_name || "Unnamed Coach"}</h3>
-                    {context && coach.score >= 4 && (
-                      <div
-                        className="inline-flex items-center gap-1 rounded-full bg-primary/10 border
-  border-primary/20 px-3 py-1 text-xs font-medium text-primary shrink-0"
-                      >
-                        <Sparkles className="h-3.5 w-3.5" />
-                        Best Match
-                      </div>
-                    )}
-                  </div>
-                  <p className="text-primary font-medium mb-4">{coach.headline || "No headline yet"}</p>
-                  <p className="text-muted-foreground mb-4 line-clamp-4">
-                    {coach.bio || "Profile details coming soon."}
-                  </p>
-                  <Link to={coach.slug ? `/coach/${coach.slug}` : `/coaching/${coach.id}`}>
-                    <Button variant="outline" className="w-full">
-                      View Profile
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </Button>
-                  </Link>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-16">
-              <div
-                className="w-20 h-20 mx-auto rounded-full bg-muted flex items-center justify-center
-  mb-6"
+          <div className="max-w-5xl mx-auto">
+            <div className="mb-6">
+              <Link
+                to="/coaching"
+                className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
-                <Users className="h-10 w-10 text-muted-foreground" />
-              </div>
-              <h3 className="text-xl font-display font-semibold mb-2">No Coaches Found</h3>
-              <p className="text-muted-foreground mb-6">No coaches match the current search.</p>
-              <Link to="/coaching/matching">
-                <Button>
-                  <Sparkles className="mr-2 h-4 w-4" />
-                  Try AI Matching
-                </Button>
+                <ArrowLeft className="h-4 w-4" />
+                Back to Coaching Exchange
               </Link>
             </div>
-          )}
+
+            {loading && (
+              <div className="py-16 text-center text-muted-foreground">
+                Loading profile...
+              </div>
+            )}
+
+            {!loading && debugError && (
+              <pre className="whitespace-pre-wrap text-red-500 text-sm">
+                {debugError}
+              </pre>
+            )}
+
+            {!loading && !debugError && !coach && (
+              <div className="py-16 text-center">
+                <h1 className="text-2xl font-semibold mb-2">Coach not found</h1>
+                <p className="text-muted-foreground">
+                  This profile is not currently available.
+                </p>
+              </div>
+            )}
+
+            {!loading && !debugError && coach && (
+              <>
+                <div className="rounded-2xl border border-border bg-card p-8 md:p-10 mb-8">
+                  <div className="flex flex-col md:flex-row gap-8">
+                    {/* Avatar */}
+                    {coach.avatar_url && (
+                      <div className="shrink-0">
+                        <img
+                          src={coach.avatar_url}
+                          alt={coach.display_name || "Coach"}
+                          className="w-32 h-32 md:w-40 md:h-40 rounded-2xl object-cover object-top"
+                        />
+                      </div>
+                    )}
+
+                    <div className="flex-1 max-w-3xl">
+                      <div className="flex flex-wrap items-center gap-3 mb-5">
+                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-medium">
+                          <Sparkles className="h-3.5 w-3.5" />
+                          Galoras Coaching Exchange
+                        </div>
+                        {coach.tier && (
+                          <div className="inline-flex items-center px-3 py-1 rounded-full border border-border text-xs font-medium capitalize">
+                            {coach.tier}
+                          </div>
+                        )}
+                        {coach.audience && coach.audience.length > 0 && (
+                          <div className="inline-flex items-center px-3 py-1 rounded-full border border-border text-xs text-muted-foreground">
+                            {coach.audience.slice(0, 2).join(", ")}
+                          </div>
+                        )}
+                      </div>
+
+                      <h1 className="text-3xl md:text-4xl font-display font-bold tracking-tight mb-3">
+                        {coach.display_name || "Unnamed Coach"}
+                      </h1>
+
+                      {coach.headline && (
+                        <p className="text-sm text-primary font-medium mb-4">
+                          {coach.headline}
+                        </p>
+                      )}
+
+                      <p className="text-base md:text-lg text-muted-foreground mb-6 max-w-2xl">
+                        {coach.positioning_statement || "Positioning statement not available."}
+                      </p>
+
+                      {coach.booking_url && (
+                        <a
+                          href={coach.booking_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 glow-primary">
+                            <Calendar className="mr-2 h-5 w-5" />
+                            Book a Call
+                          </Button>
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid gap-6">
+                  <section className="rounded-2xl border border-border bg-card p-8">
+                    <h2 className="text-2xl font-semibold mb-4">Methodology</h2>
+                    <p className="text-muted-foreground leading-7 whitespace-pre-wrap">
+                      {coach.methodology || "Methodology not available."}
+                    </p>
+                  </section>
+
+                  <section className="rounded-2xl border border-border bg-card p-8">
+                    <h2 className="text-2xl font-semibold mb-4">Proof Points</h2>
+                    {proofPoints.length > 0 ? (
+                      <div className="space-y-4">
+                        {proofPoints.map((point, index) => (
+                          <div
+                            key={index}
+                            className="rounded-xl border border-border bg-muted/30 p-5"
+                          >
+                            <p className="text-muted-foreground leading-7">{point}</p>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-muted-foreground">Proof points not available.</p>
+                    )}
+                  </section>
+                </div>
+
+                <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
+                  {coach.booking_url && (
+                    <a
+                      href={coach.booking_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90">
+                        <Calendar className="mr-2 h-5 w-5" />
+                        Book a Call
+                      </Button>
+                    </a>
+                  )}
+                  <Link to="/coaching">
+                    <Button variant="outline">Back to Coaching Exchange</Button>
+                  </Link>
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </section>
     </Layout>
