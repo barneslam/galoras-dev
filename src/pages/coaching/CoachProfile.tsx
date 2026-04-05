@@ -22,7 +22,7 @@ type RankedCoach = PublicCoach & {
   score: number;
 };
 
-const contextKeywords: Record<string, string[]> = {
+cons\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\st contextKeywords: Record<string, string[]> = {
   scaling: ["scaling", "growth", "execution", "leadership", "scale"],
   transition: ["transition", "change", "career", "shift", "next stage"],
   performance: ["performance", "pressure", "execution", "results", "focus"],
