@@ -3,6 +3,8 @@ import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { OptimizedImage } from "@/components/ui/optimized-image";
 import { FounderVideoModal } from "@/components/FounderVideoModal";
+import { FeaturedCoaches } from "@/components/FeaturedCoaches";
+import { CoachCarousel } from "@/components/coaching/CoachCarousel";
 import { ArrowRight, Users, Building2, Compass, Zap, Target, Brain, MessageCircle, TrendingUp } from "lucide-react";
 
 const pillars = [
@@ -85,6 +87,9 @@ export default function Index() {
           </div>
         </div>
       </section>
+
+      <FeaturedCoaches />
+      <CoachCarousel />
 
       {/* How Galoras Delivers The Sport of Business */}
       <section className="section-padding bg-muted/30">

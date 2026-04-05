@@ -1,12 +1,6 @@
-import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { CoachCard } from "@/components/coaching/CoachCard";
-import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 
 type FeaturedCoach = {
   id: string;
@@ -14,171 +8,91 @@ type FeaturedCoach = {
   display_name: string | null;
   avatar_url: string | null;
   headline: string | null;
-  specialties: string[] | null;
-  is_featured: boolean | null;
-  bio: string | null;
   current_role: string | null;
 };
 
 export function FeaturedCoaches() {
-  const [selectedCoach, setSelectedCoach] = useState<FeaturedCoach | null>(null);
-  const [pageIndex, setPageIndex] = useState(0);
+  const navigate = useNavigate();
 
-  const { data: featuredCoaches, isLoading } = useQuery({
+  const { data: coaches, isLoading } = useQuery({
     queryKey: ["featured-coaches"],
     queryFn: async () => {
-      const { data: featured, error: featuredError } = await supabase
+      const { data, error } = await supabase
         .from("coaches")
-        .select("id, slug, display_name, avatar_url, headline, specialties, is_featured, bio, current_role")
+        .select("id, slug, display_name, avatar_url, headline, current_role")
         .eq("lifecycle_status", "published")
         .eq("is_featured", true)
         .order("display_name", { ascending: true });
 
-      if (featuredError) throw featuredError;
-
-      return (featured || []) as FeaturedCoach[];
+      if (error) throw error;
+      return (data || []) as FeaturedCoach[];
     },
   });
 
-  if (isLoading) {
-    return (
-      <section className="py-14 md:py-16">
-        <div className="container mx-auto px-6">
-          <h2 className="text-3xl md:text-[42px] font-bold tracking-tight text-foreground text-center">
-            <span className="text-gradient">Featured</span> Coaches
-          </h2>
-          <p className="mt-2 text-sm text-muted-foreground text-center mb-10">Curated leaders selected by Galoras.</p>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {[...Array(4)].map((_, i) => (
-              <div key={i} className="aspect-[4/3] rounded-3xl bg-muted animate-pulse" />
-            ))}
-          </div>
-        </div>
-      </section>
-    );
-  }
+  if (isLoading || !coaches || coaches.length === 0) return null;
 
-  if (!featuredCoaches || featuredCoaches.length === 0) {
-    return null;
-  }
-
-  const PAGE_SIZE = 4;
-  const maxPage = Math.ceil(featuredCoaches.length / PAGE_SIZE) - 1;
-  const showControls = featuredCoaches.length > PAGE_SIZE;
-
-  const start = pageIndex * PAGE_SIZE;
-  const sliced = featuredCoaches.slice(start, start + PAGE_SIZE);
-  const visibleCoaches: FeaturedCoach[] = [...sliced];
-  if (visibleCoaches.length < PAGE_SIZE) {
-    const ids = new Set(visibleCoaches.map((c) => c.id));
-    for (const coach of featuredCoaches) {
-      if (visibleCoaches.length >= PAGE_SIZE) break;
-      if (!ids.has(coach.id)) {
-        visibleCoaches.push(coach);
-        ids.add(coach.id);
-      }
-    }
-  }
-
-  const prevPage = () => setPageIndex((p) => (p <= 0 ? maxPage : p - 1));
-  const nextPage = () => setPageIndex((p) => (p >= maxPage ? 0 : p + 1));
+  const handleClick = (coach: FeaturedCoach) => {
+    const path = coach.slug ? `/coach/${coach.slug}` : `/coaching/${coach.id}`;
+    navigate(path);
+  };
 
   return (
-    <section className="py-14 md:py-16">
-      <div className="container mx-auto px-6">
-        <div className="flex items-center justify-between mb-10">
-          <div className="flex-1" />
-          <div className="text-center">
-            <h2 className="text-3xl md:text-[42px] font-bold tracking-tight text-foreground">
-              <span className="text-gradient">Featured</span> Coaches
-            </h2>
-            <p className="mt-2 text-sm text-muted-foreground">Curated leaders selected by Galoras.</p>
-          </div>
-          <div className="flex-1 flex justify-end gap-2">
-            {showControls && (
-              <>
-                <Button variant="ghost" size="icon" onClick={prevPage} aria-label="Previous coaches">
-                  <ChevronLeft className="h-5 w-5" />
-                </Button>
-                <Button variant="ghost" size="icon" onClick={nextPage} aria-label="Next coaches">
-                  <ChevronRight className="h-5 w-5" />
-                </Button>
-              </>
-            )}
-          </div>
+    <section className="py-16 bg-zinc-950">
+      <div className="container-wide">
+        <div className="text-center mb-10">
+          <h2 className="text-3xl md:text-4xl font-display font-bold text-white">
+            Featured <span className="text-gradient">Coaches</span>
+          </h2>
+          <p className="mt-2 text-sm text-zinc-400">
+            Curated leaders selected by Galoras.
+          </p>
         </div>
 
-        <div className="flex justify-center">
-          <div
-            className={cn(
-              "grid gap-6",
-              visibleCoaches.length === 1 && "grid-cols-1 max-w-xs",
-              visibleCoaches.length === 2 && "grid-cols-2 max-w-2xl",
-              visibleCoaches.length === 3 && "grid-cols-3 max-w-4xl",
-              visibleCoaches.length >= 4 && "grid-cols-2 md:grid-cols-3 lg:grid-cols-4 w-full",
-            )}
-          >
-            {visibleCoaches.map((coach, idx) => (
-              <div
-                key={`${coach.id}-${idx}`}
-                className="group relative aspect-[4/3] overflow-hidden rounded-3xl cursor-pointer border
-  border-white/10 bg-white/5 shadow-sm transition hover:shadow-md hover:-translate-y-0.5"
-                onClick={() => setSelectedCoach(coach)}
-              >
+        <div className="flex items-end justify-center gap-1">
+          {coaches.map((coach) => (
+            <button
+              key={coach.id}
+              onClick={() => handleClick(coach)}
+              className="group relative flex-1 max-w-[280px] min-w-[160px] cursor-pointer focus:outline-none"
+              aria-label={`View ${coach.display_name || "coach"} profile`}
+            >
+              <div className="relative overflow-hidden">
                 {coach.avatar_url ? (
                   <img
                     src={coach.avatar_url}
                     alt={coach.display_name || "Coach"}
-                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    className="w-full h-[420px] object-cover object-top transition-all duration-500 grayscale group-hover:grayscale-0 group-hover:scale-105"
                   />
                 ) : (
-                  <div className="h-full w-full bg-muted flex items-center justify-center">
-                    <span className="text-5xl font-bold text-muted-foreground/40">
+                  <div className="w-full h-[420px] bg-zinc-800 flex items-center justify-center">
+                    <span className="text-7xl font-bold text-zinc-500">
                       {(coach.display_name || "C").charAt(0)}
                     </span>
                   </div>
                 )}
+
+                {/* Dark gradient at bottom */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
+
+                {/* Name + role — revealed on hover */}
+                <div className="absolute bottom-0 left-0 right-0 p-4 opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
+                  <p className="text-white font-semibold text-sm leading-tight">
+                    {coach.display_name}
+                  </p>
+                  {(coach.current_role || coach.headline) && (
+                    <p className="text-zinc-300 text-xs mt-0.5 line-clamp-1">
+                      {coach.current_role || coach.headline}
+                    </p>
+                  )}
+                  <p className="text-primary text-xs mt-1 font-medium">
+                    View Profile →
+                  </p>
+                </div>
               </div>
-            ))}
-          </div>
+            </button>
+          ))}
         </div>
-
-        <div className="mx-auto mt-12 md:mt-14 h-px w-2/3 bg-white/10" />
       </div>
-
-      <Dialog
-        open={selectedCoach !== null}
-        onOpenChange={(open) => {
-          if (!open) setSelectedCoach(null);
-        }}
-      >
-        <DialogContent className="max-w-lg p-0 gap-0 overflow-hidden">
-          <DialogTitle className="sr-only">{selectedCoach?.display_name || "Coach Preview"}</DialogTitle>
-          {selectedCoach && (
-            <>
-              <CoachCard
-                variant="static"
-                id={selectedCoach.id}
-                displayName={selectedCoach.display_name}
-                avatarUrl={selectedCoach.avatar_url}
-                headline={selectedCoach.headline}
-                specialties={selectedCoach.specialties}
-                isFeatured={selectedCoach.is_featured}
-                bio={selectedCoach.bio}
-                currentRole={selectedCoach.current_role}
-              />
-              <div className="p-4 pt-0">
-                <Link
-                  to={selectedCoach.slug ? `/coach/${selectedCoach.slug}` : `/coaching/${selectedCoach.id}`}
-                  className="block"
-                >
-                  <Button className="w-full">View Full Profile</Button>
-                </Link>
-              </div>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
     </section>
   );
 }
