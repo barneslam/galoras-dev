@@ -6,11 +6,7 @@ import { CoachCard } from "@/components/coaching/CoachCard";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 
 type FeaturedCoach = {
   id: string;
@@ -31,12 +27,9 @@ export function FeaturedCoaches() {
   const { data: featuredCoaches, isLoading } = useQuery({
     queryKey: ["featured-coaches"],
     queryFn: async () => {
-      const baseSelect =
-        "id, slug, display_name, avatar_url, headline, specialties, is_featured, bio, current_role";
-
       const { data: featured, error: featuredError } = await supabase
         .from("coaches")
-        .select(baseSelect)
+        .select("id, slug, display_name, avatar_url, headline, specialties, is_featured, bio, current_role")
         .eq("lifecycle_status", "published")
         .eq("is_featured", true)
         .order("display_name", { ascending: true });
@@ -54,15 +47,10 @@ export function FeaturedCoaches() {
           <h2 className="text-3xl md:text-[42px] font-bold tracking-tight text-foreground text-center">
             <span className="text-gradient">Featured</span> Coaches
           </h2>
-          <p className="mt-2 text-sm text-muted-foreground text-center mb-10">
-            Curated leaders selected by Galoras.
-          </p>
+          <p className="mt-2 text-sm text-muted-foreground text-center mb-10">Curated leaders selected by Galoras.</p>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {[...Array(4)].map((_, i) => (
-              <div
-                key={i}
-                className="aspect-[4/3] rounded-3xl bg-muted animate-pulse"
-              />
+              <div key={i} className="aspect-[4/3] rounded-3xl bg-muted animate-pulse" />
             ))}
           </div>
         </div>
@@ -80,7 +68,6 @@ export function FeaturedCoaches() {
 
   const start = pageIndex * PAGE_SIZE;
   const sliced = featuredCoaches.slice(start, start + PAGE_SIZE);
-  // Fill remaining slots from beginning without duplicates
   const visibleCoaches: FeaturedCoach[] = [...sliced];
   if (visibleCoaches.length < PAGE_SIZE) {
     const ids = new Set(visibleCoaches.map((c) => c.id));
@@ -105,9 +92,7 @@ export function FeaturedCoaches() {
             <h2 className="text-3xl md:text-[42px] font-bold tracking-tight text-foreground">
               <span className="text-gradient">Featured</span> Coaches
             </h2>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Curated leaders selected by Galoras.
-            </p>
+            <p className="mt-2 text-sm text-muted-foreground">Curated leaders selected by Galoras.</p>
           </div>
           <div className="flex-1 flex justify-end gap-2">
             {showControls && (
@@ -124,35 +109,38 @@ export function FeaturedCoaches() {
         </div>
 
         <div className="flex justify-center">
-        <div className={cn(
-          "grid gap-6",
-          visibleCoaches.length === 1 && "grid-cols-1 max-w-xs",
-          visibleCoaches.length === 2 && "grid-cols-2 max-w-2xl",
-          visibleCoaches.length === 3 && "grid-cols-3 max-w-4xl",
-          visibleCoaches.length >= 4 && "grid-cols-2 md:grid-cols-3 lg:grid-cols-4 w-full"
-        )}>
-          {visibleCoaches.map((coach, idx) => (
-            <div
-              key={`${coach.id}-${idx}`}
-              className="group relative aspect-[4/3] overflow-hidden rounded-3xl cursor-pointer border border-white/10 bg-white/5 shadow-sm transition hover:shadow-md hover:-translate-y-0.5"
-              onClick={() => setSelectedCoach(coach)}
-            >
-              {coach.avatar_url ? (
-                <img
-                  src={coach.avatar_url}
-                  alt={coach.display_name || "Coach"}
-                  className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                />
-              ) : (
-                <div className="h-full w-full bg-muted flex items-center justify-center">
-                  <span className="text-5xl font-bold text-muted-foreground/40">
-                    {(coach.display_name || "C").charAt(0)}
-                  </span>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
+          <div
+            className={cn(
+              "grid gap-6",
+              visibleCoaches.length === 1 && "grid-cols-1 max-w-xs",
+              visibleCoaches.length === 2 && "grid-cols-2 max-w-2xl",
+              visibleCoaches.length === 3 && "grid-cols-3 max-w-4xl",
+              visibleCoaches.length >= 4 && "grid-cols-2 md:grid-cols-3 lg:grid-cols-4 w-full",
+            )}
+          >
+            {visibleCoaches.map((coach, idx) => (
+              <div
+                key={`${coach.id}-${idx}`}
+                className="group relative aspect-[4/3] overflow-hidden rounded-3xl cursor-pointer border
+  border-white/10 bg-white/5 shadow-sm transition hover:shadow-md hover:-translate-y-0.5"
+                onClick={() => setSelectedCoach(coach)}
+              >
+                {coach.avatar_url ? (
+                  <img
+                    src={coach.avatar_url}
+                    alt={coach.display_name || "Coach"}
+                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  />
+                ) : (
+                  <div className="h-full w-full bg-muted flex items-center justify-center">
+                    <span className="text-5xl font-bold text-muted-foreground/40">
+                      {(coach.display_name || "C").charAt(0)}
+                    </span>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
 
         <div className="mx-auto mt-12 md:mt-14 h-px w-2/3 bg-white/10" />
@@ -165,9 +153,7 @@ export function FeaturedCoaches() {
         }}
       >
         <DialogContent className="max-w-lg p-0 gap-0 overflow-hidden">
-          <DialogTitle className="sr-only">
-            {selectedCoach?.display_name || "Coach Preview"}
-          </DialogTitle>
+          <DialogTitle className="sr-only">{selectedCoach?.display_name || "Coach Preview"}</DialogTitle>
           {selectedCoach && (
             <>
               <CoachCard
@@ -182,7 +168,10 @@ export function FeaturedCoaches() {
                 currentRole={selectedCoach.current_role}
               />
               <div className="p-4 pt-0">
-                <Link to={selectedCoach.slug ? `/coach/${selectedCoach.slug}` : `/coaching/${selectedCoach.id}`} className="block">
+                <Link
+                  to={selectedCoach.slug ? `/coach/${selectedCoach.slug}` : `/coaching/${selectedCoach.id}`}
+                  className="block"
+                >
                   <Button className="w-full">View Full Profile</Button>
                 </Link>
               </div>
