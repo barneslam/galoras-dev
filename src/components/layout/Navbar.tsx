@@ -164,7 +164,7 @@ export function Navbar() {
           {/* Right Side Actions */}
           <div className="hidden lg:flex items-center gap-3">
             <Button variant="ghost" size="sm" asChild>
-              <Link to="/apply">Apply to Coach</Link>
+              <Link to="/coach-signup">Join as a Coach</Link>
             </Button>
             {isLoggedIn ? (
               <DropdownMenu>
@@ -264,11 +264,11 @@ export function Navbar() {
               ))}
               <div className="pt-4 mt-4 border-t border-border space-y-2">
                 <Link
-                  to="/apply"
+                  to="/coach-signup"
                   className="block px-3 py-2 text-sm font-medium rounded-md hover:bg-muted"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
-                  Apply to Coach
+                  Join as a Coach
                 </Link>
                 {isLoggedIn ? (
                   <>

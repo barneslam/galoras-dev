@@ -33,6 +33,7 @@ import Pricing from "./pages/Pricing";
 import BookingSuccess from "./pages/BookingSuccess";
 import SubscriptionSuccess from "./pages/SubscriptionSuccess";
 import Onboarding from "./pages/Onboarding";
+import CoachSignup from "./pages/CoachSignup";
 
 // Admin
 import ImageGenerator from "./pages/admin/ImageGenerator";
@@ -118,6 +119,9 @@ const App = () => (
 
           {/* Onboarding */}
           <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
+
+          {/* Coach signup */}
+          <Route path="/coach-signup" element={<CoachSignup />} />
 
           {/* Payments & Subscriptions */}
           <Route path="/pricing" element={<Pricing />} />
