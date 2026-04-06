@@ -80,7 +80,7 @@ export function FeaturedCoaches() {
               key={coach.id}
               onClick={() => handleClick(coach)}
               className="group relative flex-1 max-w-[280px] min-w-[160px] cursor-pointer focus:outline-none"
-              style={{ marginLeft: coach.display_name === "Mitesh Kapadia" ? "-170px" : i > 0 ? "-96px" : 0 }}
+              style={{ marginLeft: coach.display_name === "Mitesh Kapadia" ? "-220px" : i > 0 ? "-96px" : 0 }}
               aria-label={`View ${coach.display_name || "coach"} profile`}
             >
               <div className="relative overflow-hidden">
