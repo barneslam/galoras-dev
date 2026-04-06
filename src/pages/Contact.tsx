@@ -164,13 +164,12 @@ export default function Contact() {
 
                   <div className="grid md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="company">Company Name *</Label>
+                      <Label htmlFor="company">Company / Organization</Label>
                       <Input
                         id="company"
-                        required
                         value={formData.company_name}
                         onChange={(e) => setFormData({ ...formData, company_name: e.target.value })}
-                        placeholder="Acme Inc."
+                        placeholder="Optional"
                       />
                     </div>
                     <div className="space-y-2">

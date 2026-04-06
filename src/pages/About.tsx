@@ -56,19 +56,19 @@ const stats = [
 
 const team = [
   {
-    name: "Alexandra Chen",
-    role: "Founder & CEO",
-    bio: "Former Olympic athlete turned executive coach with 15+ years of experience in high-performance development.",
+    name: "Conor McGowan Smyth",
+    role: "Founder & Executive Performance Coach",
+    bio: "CEO of $100M+ revenue businesses across Europe, the Caribbean, Latin America, and the United States. Coaches senior executives and founders navigating rapid change and sustained pressure.",
   },
   {
-    name: "Marcus Williams",
-    role: "Head of Coaching",
-    bio: "ICF Master Certified Coach with expertise in leadership development and organizational psychology.",
+    name: "Mitesh Kapadia",
+    role: "Executive Performance Coach",
+    bio: "Coached 1,000+ Directors and VPs at Apple, Google, Cisco, and Fortune 500 companies. Focused on making leadership capability visible, deployable, and career-defining.",
   },
   {
-    name: "Sarah Martinez",
-    role: "VP of Technology",
-    bio: "AI researcher and product leader passionate about using technology to scale human potential.",
+    name: "Barnes Lam",
+    role: "Execution Advisor for Founders & CEOs",
+    bio: "30+ years across telecom, SaaS, and AI — including APAC Business Development at BlackBerry. Works with founders and CEOs when growth has stalled and the reasons are not obvious.",
   },
 ];
 

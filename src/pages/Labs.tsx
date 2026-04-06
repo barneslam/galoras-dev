@@ -393,11 +393,11 @@ export default function Labs() {
             Ready for Transformation?
           </h2>
           <p className="text-muted-foreground text-lg mb-8 max-w-xl mx-auto">
-            Apply today and start your journey toward peak performance.
+            Create a free account and start your journey toward peak performance.
           </p>
-          <Link to="/apply">
+          <Link to="/signup">
             <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 glow-primary">
-              Apply Now
+              Get Started Free
               <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
           </Link>
