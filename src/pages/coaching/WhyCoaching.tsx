@@ -317,7 +317,7 @@ export default function WhyCoaching() {
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
-            <Link to="/coaching/why">
+            <Link to="/coaching/matching">
               <Button size="lg" variant="outline" className="border-primary/50 hover:bg-primary/10">
                 Understand How Selection Works
               </Button>
