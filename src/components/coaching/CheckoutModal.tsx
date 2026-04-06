@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import {
   Elements,
   PaymentElement,
@@ -15,6 +15,8 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Loader2, CheckCircle2, XCircle } from "lucide-react";
+import { LegalConsentCheckboxes } from "@/components/legal/LegalConsentCheckboxes";
+import { recordAgreements } from "@/lib/legal";
 
 interface CheckoutFormProps {
   productTitle: string;
@@ -36,6 +38,12 @@ function CheckoutForm({
   const [paying, setPaying] = useState(false);
   const [payError, setPayError] = useState<string | null>(null);
   const [succeeded, setSucceeded] = useState(false);
+  const [consentValid, setConsentValid] = useState(false);
+  const [marketingOptIn, setMarketingOptIn] = useState(false);
+  const handleConsentChange = useCallback((valid: boolean, marketing: boolean) => {
+    setConsentValid(valid);
+    setMarketingOptIn(marketing);
+  }, []);
 
   const formatAmount = (cents: number, cur: string) =>
     new Intl.NumberFormat("en-CA", {
@@ -62,6 +70,13 @@ function CheckoutForm({
       setPayError(error.message ?? "Payment failed. Please try again.");
       setPaying(false);
     } else {
+      // Record legal agreements
+      const types: import("@/lib/legal").AgreementType[] = [
+        "terms_of_service", "privacy_policy", "payments_refunds", "cooling_off_waiver",
+      ];
+      if (marketingOptIn) types.push("marketing_opt_in");
+      await recordAgreements({ context: "session_checkout", agreementTypes: types, marketingOptIn });
+
       setSucceeded(true);
       setPaying(false);
       setTimeout(() => onSuccess(), 1500);
@@ -99,6 +114,14 @@ function CheckoutForm({
         </div>
       )}
 
+      <div className="border-t border-border pt-4">
+        <LegalConsentCheckboxes
+          context="session_checkout"
+          onChange={handleConsentChange}
+          variant="light"
+        />
+      </div>
+
       <div className="flex gap-3 pt-1">
         <Button
           type="button"
@@ -109,7 +132,7 @@ function CheckoutForm({
         >
           Cancel
         </Button>
-        <Button type="submit" className="flex-1" disabled={!stripe || paying}>
+        <Button type="submit" className="flex-1" disabled={!stripe || paying || !consentValid}>
           {paying ? (
             <>
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />

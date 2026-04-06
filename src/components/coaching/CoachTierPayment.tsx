@@ -2,7 +2,7 @@
  * CoachTierPayment — Stripe SetupIntent card form.
  * Authorises the card without charging. After success calls confirm-coach-registration.
  */
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import {
   Elements,
   PaymentElement,
@@ -13,6 +13,8 @@ import { loadStripe } from "@stripe/stripe-js";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, Loader2, Lock, XCircle, Mail } from "lucide-react";
+import { LegalConsentCheckboxes } from "@/components/legal/LegalConsentCheckboxes";
+import { recordAgreements } from "@/lib/legal";
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY ?? "");
 
@@ -38,6 +40,12 @@ function SetupForm({
   const elements = useElements();
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [consentValid, setConsentValid] = useState(false);
+  const [marketingOptIn, setMarketingOptIn] = useState(false);
+  const handleConsentChange = useCallback((valid: boolean, marketing: boolean) => {
+    setConsentValid(valid);
+    setMarketingOptIn(marketing);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -74,6 +82,14 @@ function SetupForm({
       if (fnError || !data?.success) {
         throw new Error(data?.error ?? fnError?.message ?? "Confirmation failed");
       }
+
+      // Record legal agreements
+      const types: import("@/lib/legal").AgreementType[] = [
+        "terms_of_service", "privacy_policy", "payments_refunds",
+        "cooling_off_waiver", "coach_agreement",
+      ];
+      if (marketingOptIn) types.push("marketing_opt_in");
+      await recordAgreements({ context: "coach_tier_payment", agreementTypes: types, marketingOptIn });
 
       onSuccess(data.registrationLink ?? "");
     } catch (err: any) {
@@ -115,12 +131,20 @@ function SetupForm({
         Your card will only be charged after Galoras approves your application.
       </p>
 
+      <div className="border-t border-zinc-700 pt-4">
+        <LegalConsentCheckboxes
+          context="coach_tier_payment"
+          onChange={handleConsentChange}
+          variant="dark"
+        />
+      </div>
+
       <div className="flex gap-3">
         <Button type="button" variant="outline" className="flex-1 border-zinc-700 text-zinc-300"
           onClick={onCancel} disabled={saving}>
           Back
         </Button>
-        <Button type="submit" disabled={!stripe || saving}
+        <Button type="submit" disabled={!stripe || saving || !consentValid}
           className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold">
           {saving ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Processing…</> : "Authorise & Apply"}
         </Button>

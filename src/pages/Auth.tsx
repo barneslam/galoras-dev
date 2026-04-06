@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
@@ -7,6 +7,8 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Zap, Mail, Lock, User as UserIcon, KeyRound, ArrowRight, CheckCircle2 } from "lucide-react";
+import { LegalConsentCheckboxes } from "@/components/legal/LegalConsentCheckboxes";
+import { recordAgreements } from "@/lib/legal";
 
 type SignupStep = "email" | "otp" | "complete";
 
@@ -28,6 +30,14 @@ export default function Auth() {
   const [otpCode, setOtpCode] = useState("");
   const [fullName, setFullName] = useState("");
   const [password, setPassword] = useState("");
+
+  // Legal consent state
+  const [consentValid, setConsentValid] = useState(false);
+  const [marketingOptIn, setMarketingOptIn] = useState(false);
+  const handleConsentChange = useCallback((valid: boolean, marketing: boolean) => {
+    setConsentValid(valid);
+    setMarketingOptIn(marketing);
+  }, []);
 
   // Redirect already-logged-in users
   useEffect(() => {
@@ -116,6 +126,11 @@ export default function Auth() {
       if (user) {
         await supabase.from("profiles").update({ full_name: fullName }).eq("id", user.id);
       }
+
+      // Record legal agreements
+      const types: import("@/lib/legal").AgreementType[] = ["terms_of_service", "privacy_policy"];
+      if (marketingOptIn) types.push("marketing_opt_in");
+      await recordAgreements({ context: "user_signup", agreementTypes: types, marketingOptIn, email: signupEmail });
 
       toast({ title: "Account created!", description: "Welcome to Galoras." });
       navigate("/onboarding");
@@ -276,7 +291,8 @@ export default function Auth() {
                         value={password} onChange={(e) => setPassword(e.target.value)} />
                     </div>
                   </div>
-                  <Button type="submit" className="w-full bg-primary text-primary-foreground hover:bg-primary/90" disabled={isLoading}>
+                  <LegalConsentCheckboxes context="user_signup" onChange={handleConsentChange} variant="light" />
+                  <Button type="submit" className="w-full bg-primary text-primary-foreground hover:bg-primary/90" disabled={isLoading || !consentValid}>
                     {isLoading ? "Creating account..." : "Create account & get started"}
                   </Button>
                 </form>

@@ -44,6 +44,13 @@ import CoachEditorDetail from "./pages/admin/CoachEditorDetail";
 import Bookings from "@/pages/admin/Bookings";
 import CompleteRegistration from "./pages/CompleteRegistration";
 
+// Legal pages
+import Terms from "./pages/legal/Terms";
+import Privacy from "./pages/legal/Privacy";
+import Payments from "./pages/legal/Payments";
+import CoachAgreement from "./pages/legal/CoachAgreement";
+import CookiePolicy from "./pages/legal/CookiePolicy";
+
 const queryClient = new QueryClient();
 
 function ProtectedRoute({ children, requireAdmin = false }: { children: React.ReactNode; requireAdmin?: boolean }) {
@@ -205,6 +212,13 @@ const App = () => (
               </ProtectedRoute>
             }
           />
+
+          {/* Legal Routes */}
+          <Route path="/terms" element={<Terms />} />
+          <Route path="/privacy" element={<Privacy />} />
+          <Route path="/cookies" element={<CookiePolicy />} />
+          <Route path="/legal/payments" element={<Payments />} />
+          <Route path="/legal/coach-agreement" element={<CoachAgreement />} />
 
           {/* Always last */}
           <Route path="*" element={<NotFound />} />

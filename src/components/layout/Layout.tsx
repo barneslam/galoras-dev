@@ -2,6 +2,7 @@ import { ReactNode } from "react";
 import { Navbar } from "./Navbar";
 import { Footer } from "./Footer";
 import { IdlePopup } from "@/components/IdlePopup";
+import { CookieBanner } from "@/components/legal/CookieBanner";
 
 interface LayoutProps {
   children: ReactNode;
@@ -18,6 +19,7 @@ export function Layout({ children, hideNavbar = false, hideFooter = false }: Lay
       </main>
       {!hideFooter && <Footer />}
       <IdlePopup />
+      <CookieBanner />
     </div>
   );
 }
