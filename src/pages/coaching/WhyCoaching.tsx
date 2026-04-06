@@ -311,9 +311,9 @@ export default function WhyCoaching() {
             Galoras is a performance-led coaching exchange where coaches are surfaced based on demonstrated execution capability.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link to="/coaching/matching">
+            <Link to="/signup">
               <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 glow-primary">
-                Explore the Coaching Exchange
+                Join the Galoras Community
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>

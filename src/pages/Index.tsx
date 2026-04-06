@@ -48,9 +48,9 @@ export default function Index() {
             </p>
             
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link to="/coaching">
+              <Link to="/signup">
                 <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 glow-primary text-lg px-8 h-14">
-                  Explore the Coaching Exchange
+                  Join the Galoras Community
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
