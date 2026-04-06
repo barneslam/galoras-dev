@@ -13,12 +13,15 @@ import {
   FlaskConical
 } from "lucide-react";
 
+const BARNES_PHOTO = "https://qbjuomsmnrclsjhdsjcz.supabase.co/storage/v1/object/public/coach-images/Barnes_Lam_-Removebg_BusinessPortraits.ca__1_-removebg-preview.png";
+
 const labs = [
   {
     icon: Target,
     title: "Alignment Under Pressure",
     duration: "Full-day",
     highlight: undefined,
+    sample: true,
     description:
       "Teams that are misaligned on priorities execute slowly and disagree at the wrong moments. This Lab surfaces and resolves alignment gaps — fast.",
     outcomes: [
@@ -32,6 +35,7 @@ const labs = [
     title: "Decision Velocity",
     duration: "Half-day",
     highlight: undefined,
+    sample: true,
     description:
       "Most leadership teams make decisions too slowly, too often, and by the wrong people. This Lab installs the structures that accelerate decision quality without sacrificing speed.",
     outcomes: [
@@ -45,6 +49,7 @@ const labs = [
     title: "Execution Discipline",
     duration: "Full-day",
     highlight: undefined,
+    sample: true,
     description:
       "Strategy fails in the gap between decision and delivery. This Lab closes that gap by building the accountability structures your team will actually use.",
     outcomes: [
@@ -58,6 +63,7 @@ const labs = [
     title: "Executive Communication",
     duration: "Half-day",
     highlight: undefined,
+    sample: true,
     description:
       "How leaders communicate determines how organisations move. This Lab develops the clarity, directness, and precision that high-performance environments demand.",
     outcomes: [
@@ -70,6 +76,8 @@ const labs = [
     icon: Bot,
     title: "AI for Executives",
     duration: "1:1 Private",
+    highlight: "private",
+    sample: false,
     description:
       "Most executives are making AI decisions without truly understanding the technology. This private session gives you the clarity to lead AI conversations, evaluate tools, and ask the right questions of your teams — no technical background required.",
     outcomes: [
@@ -77,12 +85,13 @@ const labs = [
       "How to evaluate AI tools and vendors",
       "Asking the right questions of your team",
     ],
-    highlight: "private",
   },
   {
     icon: Globe,
     title: "Digital Presence",
     duration: "Free · 1 Hour",
+    highlight: "free",
+    sample: false,
     description:
       "Exclusively for Galoras coaches at Elite tier and above. A complimentary private session covering LinkedIn positioning, personal website strategy, and social media — so you attract the right clients and build your coaching practice with confidence.",
     outcomes: [
@@ -90,7 +99,6 @@ const labs = [
       "Personal website and brand positioning",
       "Social media approach for coaches",
     ],
-    highlight: "free",
   },
 ];
 
@@ -168,7 +176,7 @@ export default function Workshops() {
             {labs.map((lab, i) => (
               <Card
                 key={i}
-                className={`group transition-all card-hover ${
+                className={`group relative overflow-hidden transition-all card-hover ${
                   lab.highlight === "free"
                     ? "border-green-500/40 hover:border-green-500/70 bg-green-500/5"
                     : lab.highlight === "private"
@@ -176,6 +184,13 @@ export default function Workshops() {
                     : "hover:border-primary/50"
                 }`}
               >
+                {/* SAMPLE ribbon — upper-left diagonal */}
+                {lab.sample && (
+                  <div className="absolute top-[18px] -left-[30px] w-[120px] text-center py-[5px] bg-zinc-600 text-white text-[10px] font-bold tracking-[0.15em] uppercase rotate-[-45deg] z-10 shadow-md">
+                    Sample
+                  </div>
+                )}
+
                 <CardContent className="p-6">
                   <div className="flex items-start justify-between mb-4">
                     <div className={`w-12 h-12 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform ${
@@ -193,9 +208,11 @@ export default function Workshops() {
                       {lab.duration}
                     </span>
                   </div>
+
                   <h3 className="text-xl font-display font-semibold mb-2">{lab.title}</h3>
                   <p className="text-muted-foreground text-sm mb-4 leading-relaxed">{lab.description}</p>
-                  <div className="space-y-1.5">
+
+                  <div className="space-y-1.5 mb-5">
                     <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Outcomes</p>
                     {lab.outcomes.map((outcome, j) => (
                       <div key={j} className="flex items-center gap-2 text-sm">
@@ -204,6 +221,21 @@ export default function Workshops() {
                       </div>
                     ))}
                   </div>
+
+                  {/* Coach Barnes attribution on sample labs */}
+                  {lab.sample && (
+                    <div className="flex items-center gap-3 pt-4 border-t border-border">
+                      <img
+                        src={BARNES_PHOTO}
+                        alt="Coach Barnes"
+                        className="w-9 h-9 rounded-full object-cover object-top bg-muted shrink-0"
+                      />
+                      <div>
+                        <p className="text-xs font-semibold text-foreground leading-tight">Coach Barnes</p>
+                        <p className="text-xs text-muted-foreground">Delivering this lab</p>
+                      </div>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             ))}
@@ -219,7 +251,7 @@ export default function Workshops() {
               Delivery Options
             </h2>
             <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              The format follows the team's needs — not a preference for one delivery model.
+              The format follows the team's needs and not a preference for one delivery model.
             </p>
           </div>
 
