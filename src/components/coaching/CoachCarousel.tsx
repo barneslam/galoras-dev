@@ -4,6 +4,8 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { MessageCircle } from "lucide-react";
 import { ContactModal } from "./ContactModal";
+import { AuthGate } from "@/components/AuthGate";
+import { useAuth } from "@/hooks/useAuth";
 
 type CarouselCoach = {
   id: string;
@@ -24,6 +26,7 @@ export function CoachCarousel() {
   const [index, setIndex] = useState(0);
   const [transitioning, setTransitioning] = useState(false);
   const [contactCoach, setContactCoach] = useState<{ id: string; name: string } | null>(null);
+  const { isLoggedIn } = useAuth();
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const { data: coaches } = useQuery({
@@ -122,13 +125,15 @@ export function CoachCarousel() {
                   >
                     View Profile
                   </button>
-                  <button
-                    onClick={() => openContact(coach)}
-                    className="flex items-center justify-center w-9 h-9 rounded-lg border border-primary/50 text-primary hover:bg-primary/10 transition-colors"
-                    title="Send a message"
-                  >
-                    <MessageCircle className="h-4 w-4" />
-                  </button>
+                  <AuthGate isLoggedIn={isLoggedIn} message="Sign in to message coaches">
+                    <button
+                      onClick={() => openContact(coach)}
+                      className="flex items-center justify-center w-9 h-9 rounded-lg border border-primary/50 text-primary hover:bg-primary/10 transition-colors"
+                      title="Send a message"
+                    >
+                      <MessageCircle className="h-4 w-4" />
+                    </button>
+                  </AuthGate>
                 </div>
               </div>
             </div>

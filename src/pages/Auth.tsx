@@ -29,7 +29,16 @@ export default function Auth() {
         
         // Redirect to home if logged in
         if (session?.user) {
-          navigate("/");
+          // New signups go to onboarding; returning logins go home
+          if (event === "SIGNED_IN") {
+            // Check if they've completed onboarding
+            const { data: profile } = await supabase
+              .from("profiles")
+              .select("onboarding_complete")
+              .eq("id", session.user.id)
+              .maybeSingle();
+            navigate(profile?.onboarding_complete ? "/" : "/onboarding");
+          }
         }
       }
     );
@@ -38,7 +47,7 @@ export default function Auth() {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
-      
+
       if (session?.user) {
         navigate("/");
       }

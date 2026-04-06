@@ -3,7 +3,10 @@ import { Link, useParams } from "react-router-dom";
 import { Layout } from "@/components/layout";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Sparkles, Calendar } from "lucide-react";
+import { ArrowLeft, Sparkles, Calendar, MessageCircle } from "lucide-react";
+import { AuthGate } from "@/components/AuthGate";
+import { useAuth } from "@/hooks/useAuth";
+import { ContactModal } from "@/components/coaching/ContactModal";
 
 type CoachProfileData = {
   id: string;
@@ -49,6 +52,8 @@ export default function CoachProfile() {
   const [coach, setCoach] = useState<CoachProfileData | null>(null);
   const [loading, setLoading] = useState(true);
   const [debugError, setDebugError] = useState("");
+  const [showContact, setShowContact] = useState(false);
+  const { isLoggedIn } = useAuth();
 
   useEffect(() => {
     fetchCoach();
@@ -191,18 +196,34 @@ export default function CoachProfile() {
                         {coach.positioning_statement || "Positioning statement not available."}
                       </p>
 
-                      {coach.booking_url && (
-                        <a
-                          href={coach.booking_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 glow-primary">
-                            <Calendar className="mr-2 h-5 w-5" />
-                            Book a Call
+                      <div className="flex flex-wrap gap-3">
+                        <AuthGate isLoggedIn={isLoggedIn} message="Sign in to book a session">
+                          {coach.booking_url ? (
+                            <a href={coach.booking_url} target="_blank" rel="noopener noreferrer">
+                              <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 glow-primary">
+                                <Calendar className="mr-2 h-5 w-5" />
+                                Book a Call
+                              </Button>
+                            </a>
+                          ) : (
+                            <Button size="lg" className="bg-primary text-primary-foreground" disabled>
+                              <Calendar className="mr-2 h-5 w-5" />
+                              Book a Call
+                            </Button>
+                          )}
+                        </AuthGate>
+
+                        <AuthGate isLoggedIn={isLoggedIn} message="Sign in to message this coach">
+                          <Button
+                            size="lg"
+                            variant="outline"
+                            onClick={() => setShowContact(true)}
+                          >
+                            <MessageCircle className="mr-2 h-5 w-5" />
+                            Message
                           </Button>
-                        </a>
-                      )}
+                        </AuthGate>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -235,22 +256,33 @@ export default function CoachProfile() {
                 </div>
 
                 <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
-                  {coach.booking_url && (
-                    <a
-                      href={coach.booking_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90">
+                  <AuthGate isLoggedIn={isLoggedIn} message="Sign in to book a session">
+                    {coach.booking_url ? (
+                      <a href={coach.booking_url} target="_blank" rel="noopener noreferrer">
+                        <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90">
+                          <Calendar className="mr-2 h-5 w-5" />
+                          Book a Call
+                        </Button>
+                      </a>
+                    ) : (
+                      <Button size="lg" className="bg-primary text-primary-foreground" disabled>
                         <Calendar className="mr-2 h-5 w-5" />
                         Book a Call
                       </Button>
-                    </a>
-                  )}
+                    )}
+                  </AuthGate>
                   <Link to="/coaching">
                     <Button variant="outline">Back to Coaching Exchange</Button>
                   </Link>
                 </div>
+
+                {showContact && coach && (
+                  <ContactModal
+                    coachId={coach.id}
+                    coachName={coach.display_name || "Coach"}
+                    onClose={() => setShowContact(false)}
+                  />
+                )}
               </>
             )}
           </div>

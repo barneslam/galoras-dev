@@ -7,20 +7,27 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { AddToCalendarDropdown } from '@/components/coaching/AddToCalendarDropdown';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { 
-  Calendar, 
-  Clock, 
-  User, 
-  MapPin, 
+import { useAuth } from '@/hooks/useAuth';
+import {
+  Calendar,
+  Clock,
+  User,
+  MapPin,
   FileText,
   XCircle,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  Sparkles,
+  Linkedin,
+  ArrowRight,
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 
 type BookingStatus = 'pending' | 'confirmed' | 'completed' | 'cancelled';
 
@@ -47,20 +54,79 @@ const statusConfig: Record<BookingStatus, { label: string; variant: 'default' | 
   cancelled: { label: 'Cancelled', variant: 'destructive', icon: XCircle },
 };
 
+const GOAL_OPTIONS = [
+  "Leadership","Career","Performance","Mindset","Communication",
+  "Transitions","Executive Presence","Team Management","Work-Life Balance",
+  "Confidence","Strategy","Entrepreneurship",
+];
+
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState('upcoming');
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
-  // Check auth
-  const { data: user, isLoading: authLoading } = useQuery({
-    queryKey: ['current-user'],
-    queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      return user;
-    },
+  // Auth + profile via shared hook
+  const { user, profile, isLoading: authLoading } = useAuth();
+
+  // Profile edit state
+  const [editMode, setEditMode] = useState(false);
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [profileForm, setProfileForm] = useState({
+    full_name: '',
+    user_role: '',
+    industry: '',
+    linkedin_url: '',
+    challenges: '',
+    coaching_areas: [] as string[],
   });
+
+  // Recommended coaches based on profile coaching_areas
+  const { data: recommendedCoaches } = useQuery({
+    queryKey: ['recommended-coaches', profile?.coaching_areas],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('coaches')
+        .select('id, slug, display_name, avatar_url, headline, specialties')
+        .eq('lifecycle_status', 'published');
+      if (!data || !profile?.coaching_areas?.length) return [];
+      const userAreas = profile.coaching_areas.map((a: string) => a.toLowerCase());
+      return data
+        .map((c: any) => ({
+          ...c,
+          score: (c.specialties || []).filter((s: string) => userAreas.includes(s.toLowerCase())).length,
+        }))
+        .filter((c: any) => c.score > 0)
+        .sort((a: any, b: any) => b.score - a.score)
+        .slice(0, 3);
+    },
+    enabled: !!profile?.coaching_areas?.length,
+  });
+
+  const saveProfile = async () => {
+    if (!user) return;
+    setSavingProfile(true);
+    const { error } = await supabase
+      .from('profiles')
+      .update({
+        full_name: profileForm.full_name || undefined,
+        user_role: profileForm.user_role || undefined,
+        industry: profileForm.industry || undefined,
+        linkedin_url: profileForm.linkedin_url || undefined,
+        challenges: profileForm.challenges || undefined,
+        coaching_areas: profileForm.coaching_areas,
+        onboarding_complete: true,
+      })
+      .eq('id', user.id);
+    setSavingProfile(false);
+    if (error) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    } else {
+      toast({ title: 'Profile updated!' });
+      setEditMode(false);
+      queryClient.invalidateQueries({ queryKey: ['recommended-coaches'] });
+    }
+  };
 
   // Fetch bookings
   const { data: bookings, isLoading } = useQuery({
@@ -247,13 +313,58 @@ export default function Dashboard() {
 
   return (
     <Layout>
-      <div className="container mx-auto px-4 py-12">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold">My Bookings</h1>
-          <p className="text-muted-foreground mt-2">
-            Manage your coaching sessions and view your history
-          </p>
+      <div className="container mx-auto px-4 py-12 max-w-4xl">
+        <div className="mb-8 flex items-start justify-between">
+          <div>
+            <h1 className="text-3xl font-bold">
+              {profile?.full_name ? `Welcome back, ${profile.full_name.split(' ')[0]}` : 'My Dashboard'}
+            </h1>
+            <p className="text-muted-foreground mt-1">
+              {profile?.user_role && profile?.industry
+                ? `${profile.user_role} · ${profile.industry}`
+                : 'Manage your coaching journey'}
+            </p>
+          </div>
+          {!profile?.onboarding_complete && (
+            <Button size="sm" onClick={() => navigate('/onboarding')} className="bg-primary text-primary-foreground">
+              Complete profile <ArrowRight className="ml-1 h-3.5 w-3.5" />
+            </Button>
+          )}
         </div>
+
+        {/* Recommended coaches strip */}
+        {recommendedCoaches && recommendedCoaches.length > 0 && (
+          <div className="mb-8 p-5 rounded-2xl border border-border bg-card">
+            <div className="flex items-center gap-2 mb-4">
+              <Sparkles className="h-4 w-4 text-primary" />
+              <h2 className="font-semibold text-sm">Recommended for you</h2>
+              <Link to="/coaching" className="ml-auto text-xs text-primary hover:underline">
+                See all →
+              </Link>
+            </div>
+            <div className="flex gap-4 overflow-x-auto pb-1">
+              {recommendedCoaches.map((coach: any) => (
+                <Link
+                  key={coach.id}
+                  to={coach.slug ? `/coach/${coach.slug}` : `/coaching/${coach.id}`}
+                  className="shrink-0 w-36 group"
+                >
+                  <div className="w-36 h-36 rounded-xl bg-muted overflow-hidden mb-2">
+                    {coach.avatar_url ? (
+                      <img src={coach.avatar_url} alt={coach.display_name} className="w-full h-full object-contain object-center" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-3xl font-bold text-muted-foreground">
+                        {(coach.display_name || 'C').charAt(0)}
+                      </div>
+                    )}
+                  </div>
+                  <p className="text-sm font-semibold leading-tight group-hover:text-primary transition-colors">{coach.display_name}</p>
+                  {coach.headline && <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">{coach.headline}</p>}
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="mb-6">
@@ -266,6 +377,7 @@ export default function Dashboard() {
             <TabsTrigger value="cancelled">
               Cancelled ({cancelledBookings.length})
             </TabsTrigger>
+            <TabsTrigger value="profile">My Profile</TabsTrigger>
           </TabsList>
 
           <TabsContent value="upcoming">
@@ -329,6 +441,146 @@ export default function Dashboard() {
                 </CardContent>
               </Card>
             )}
+          </TabsContent>
+
+          {/* Profile tab */}
+          <TabsContent value="profile">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="text-lg">My Profile</CardTitle>
+                {!editMode ? (
+                  <Button size="sm" variant="outline" onClick={() => {
+                    setProfileForm({
+                      full_name: profile?.full_name || '',
+                      user_role: profile?.user_role || '',
+                      industry: profile?.industry || '',
+                      linkedin_url: profile?.linkedin_url || '',
+                      challenges: profile?.challenges || '',
+                      coaching_areas: profile?.coaching_areas || [],
+                    });
+                    setEditMode(true);
+                  }}>
+                    Edit
+                  </Button>
+                ) : (
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="ghost" onClick={() => setEditMode(false)}>Cancel</Button>
+                    <Button size="sm" onClick={saveProfile} disabled={savingProfile} className="bg-primary text-primary-foreground">
+                      {savingProfile ? 'Saving...' : 'Save'}
+                    </Button>
+                  </div>
+                )}
+              </CardHeader>
+              <CardContent className="space-y-5">
+                {editMode ? (
+                  <>
+                    <div className="grid sm:grid-cols-2 gap-4">
+                      <div>
+                        <Label className="text-sm mb-1.5 block">Full name</Label>
+                        <Input value={profileForm.full_name} onChange={(e) => setProfileForm(p => ({ ...p, full_name: e.target.value }))} />
+                      </div>
+                      <div>
+                        <Label className="text-sm mb-1.5 block">Current role</Label>
+                        <Input value={profileForm.user_role} onChange={(e) => setProfileForm(p => ({ ...p, user_role: e.target.value }))} placeholder="VP of Engineering, Founder..." />
+                      </div>
+                      <div>
+                        <Label className="text-sm mb-1.5 block">Industry</Label>
+                        <Input value={profileForm.industry} onChange={(e) => setProfileForm(p => ({ ...p, industry: e.target.value }))} placeholder="Technology, Finance..." />
+                      </div>
+                      <div>
+                        <Label className="text-sm mb-1.5 block">LinkedIn URL</Label>
+                        <div className="relative">
+                          <Linkedin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                          <Input className="pl-9" value={profileForm.linkedin_url} onChange={(e) => setProfileForm(p => ({ ...p, linkedin_url: e.target.value }))} placeholder="https://linkedin.com/in/..." />
+                        </div>
+                      </div>
+                    </div>
+                    <div>
+                      <Label className="text-sm mb-2 block">Coaching areas (select all that apply)</Label>
+                      <div className="flex flex-wrap gap-2">
+                        {GOAL_OPTIONS.map((g) => (
+                          <button
+                            key={g}
+                            type="button"
+                            onClick={() => setProfileForm(p => ({
+                              ...p,
+                              coaching_areas: p.coaching_areas.includes(g)
+                                ? p.coaching_areas.filter(a => a !== g)
+                                : [...p.coaching_areas, g],
+                            }))}
+                            className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                              profileForm.coaching_areas.includes(g)
+                                ? 'bg-primary border-primary text-primary-foreground'
+                                : 'border-border text-muted-foreground hover:border-primary'
+                            }`}
+                          >
+                            {g}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <Label className="text-sm mb-1.5 block">What are you working on?</Label>
+                      <Textarea
+                        value={profileForm.challenges}
+                        onChange={(e) => setProfileForm(p => ({ ...p, challenges: e.target.value }))}
+                        placeholder="Describe the challenges or goals you're bringing to coaching..."
+                        rows={3}
+                        className="resize-none"
+                      />
+                    </div>
+                  </>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="grid sm:grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <p className="text-muted-foreground text-xs mb-1">Name</p>
+                        <p className="font-medium">{profile?.full_name || '—'}</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground text-xs mb-1">Role</p>
+                        <p className="font-medium">{profile?.user_role || '—'}</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground text-xs mb-1">Industry</p>
+                        <p className="font-medium">{profile?.industry || '—'}</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground text-xs mb-1">LinkedIn</p>
+                        {profile?.linkedin_url ? (
+                          <a href={profile.linkedin_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center gap-1">
+                            <Linkedin className="h-3.5 w-3.5" /> View profile
+                          </a>
+                        ) : <p className="font-medium">—</p>}
+                      </div>
+                    </div>
+                    {profile?.coaching_areas && profile.coaching_areas.length > 0 && (
+                      <div>
+                        <p className="text-muted-foreground text-xs mb-2">Coaching areas</p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {profile.coaching_areas.map((a: string) => (
+                            <span key={a} className="px-2.5 py-1 rounded-full bg-primary/10 text-primary text-xs border border-primary/20">{a}</span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {profile?.challenges && (
+                      <div>
+                        <p className="text-muted-foreground text-xs mb-1">Working on</p>
+                        <p className="text-sm leading-relaxed">{profile.challenges}</p>
+                      </div>
+                    )}
+                    {!profile?.onboarding_complete && (
+                      <div className="pt-2">
+                        <Button size="sm" onClick={() => navigate('/onboarding')} className="bg-primary text-primary-foreground">
+                          Complete profile setup <Sparkles className="ml-2 h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </div>

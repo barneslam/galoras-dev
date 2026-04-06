@@ -1,12 +1,14 @@
 import { useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
-import { Search, MessageCircle } from "lucide-react";
+import { Search, MessageCircle, Sparkles, UserCircle2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ContactModal } from "@/components/coaching/ContactModal";
+import { AuthGate } from "@/components/AuthGate";
+import { useAuth } from "@/hooks/useAuth";
 
 type PublicCoach = {
   id: string;
@@ -29,6 +31,8 @@ export default function CoachingDirectory() {
   const [searchParams] = useSearchParams();
   const categoryParam = searchParams.get("category");
   const [contactCoach, setContactCoach] = useState<{ id: string; name: string } | null>(null);
+  const { isLoggedIn, profile } = useAuth();
+  const navigate = useNavigate();
 
   const { data: coaches, isLoading, error } = useQuery({
     queryKey: ["public-coaches-directory"],
@@ -50,29 +54,41 @@ export default function CoachingDirectory() {
 
   const filterTabs = [FILTER_ALL, ...allSpecialties];
 
-  const filtered = (coaches || []).filter((coach) => {
-    const text = [coach.display_name, coach.headline, coach.bio, ...(coach.specialties || [])]
-      .join(" ")
-      .toLowerCase();
+  // Match score: how many of the user's coaching_areas overlap with coach specialties
+  const matchScore = (coach: PublicCoach): number => {
+    if (!profile?.coaching_areas || profile.coaching_areas.length === 0) return 0;
+    const userAreas = profile.coaching_areas.map((a) => a.toLowerCase());
+    return (coach.specialties || []).filter((s) =>
+      userAreas.includes(s.toLowerCase())
+    ).length;
+  };
 
-    const matchesSearch = !searchQuery || text.includes(searchQuery.toLowerCase());
-    const matchesFilter =
-      activeFilter === FILTER_ALL ||
-      (coach.specialties || []).some((s) => s.toLowerCase() === activeFilter.toLowerCase());
-    const matchesCategory =
-      !categoryParam ||
-      (coach.specialties || []).some((s) =>
-        s.toLowerCase().includes(categoryParam.toLowerCase())
-      );
-
-    return matchesSearch && matchesFilter && matchesCategory;
-  });
+  const filtered = (coaches || [])
+    .filter((coach) => {
+      const text = [coach.display_name, coach.headline, coach.bio, ...(coach.specialties || [])]
+        .join(" ")
+        .toLowerCase();
+      const matchesSearch = !searchQuery || text.includes(searchQuery.toLowerCase());
+      const matchesFilter =
+        activeFilter === FILTER_ALL ||
+        (coach.specialties || []).some((s) => s.toLowerCase() === activeFilter.toLowerCase());
+      const matchesCategory =
+        !categoryParam ||
+        (coach.specialties || []).some((s) =>
+          s.toLowerCase().includes(categoryParam.toLowerCase())
+        );
+      return matchesSearch && matchesFilter && matchesCategory;
+    })
+    .sort((a, b) => matchScore(b) - matchScore(a)); // matched coaches float to top
 
   const primarySpecialty = (coach: PublicCoach) => {
     if (coach.specialties && coach.specialties.length > 0) return coach.specialties[0];
     if (coach.tier) return `${coach.tier.charAt(0).toUpperCase()}${coach.tier.slice(1)} Tier`;
     return "Coaching";
   };
+
+  const hasProfile = isLoggedIn && profile?.onboarding_complete;
+  const hasMatches = isLoggedIn && profile?.coaching_areas && profile.coaching_areas.length > 0;
 
   return (
     <Layout>
@@ -85,6 +101,24 @@ export default function CoachingDirectory() {
           <p className="text-zinc-400 text-base max-w-2xl mb-8">
             Execution-ready coaches surfaced by demonstrated performance — not polished profiles.
           </p>
+
+          {/* Profile nudge for guests or incomplete profiles */}
+          {!hasProfile && (
+            <div className="flex items-center gap-3 mb-6 p-4 rounded-xl bg-primary/5 border border-primary/20 max-w-xl">
+              <UserCircle2 className="h-5 w-5 text-primary shrink-0" />
+              <p className="text-sm text-zinc-300">
+                {isLoggedIn
+                  ? "Complete your profile to see coaches matched to your goals."
+                  : "Create a free profile to see coaches matched to your goals."}
+              </p>
+              <button
+                onClick={() => navigate(isLoggedIn ? "/onboarding" : "/signup")}
+                className="ml-auto text-xs font-semibold text-primary hover:underline whitespace-nowrap"
+              >
+                {isLoggedIn ? "Complete profile →" : "Get started →"}
+              </button>
+            </div>
+          )}
 
           {/* Search */}
           <div className="relative max-w-lg">
@@ -129,85 +163,100 @@ export default function CoachingDirectory() {
             <div className="text-center py-20 text-zinc-500">No coaches match your search.</div>
           ) : (
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-              {filtered.map((coach) => (
-                <div
-                  key={coach.id}
-                  className="group bg-zinc-900 rounded-2xl overflow-hidden border border-zinc-800 hover:border-primary/40 transition-colors flex flex-col"
-                >
-                  {/* Photo */}
-                  <div className="relative bg-zinc-800" style={{ height: "240px" }}>
-                    {coach.avatar_url ? (
-                      <img
-                        src={coach.avatar_url}
-                        alt={coach.display_name || "Coach"}
-                        className="w-full h-full object-contain object-center"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <span className="text-6xl font-bold text-zinc-600">
-                          {(coach.display_name || "C").charAt(0)}
+              {filtered.map((coach) => {
+                const score = matchScore(coach);
+                return (
+                  <div
+                    key={coach.id}
+                    className="group bg-zinc-900 rounded-2xl overflow-hidden border border-zinc-800 hover:border-primary/40 transition-colors flex flex-col"
+                  >
+                    {/* Photo */}
+                    <div className="relative bg-zinc-800" style={{ height: "240px" }}>
+                      {coach.avatar_url ? (
+                        <img
+                          src={coach.avatar_url}
+                          alt={coach.display_name || "Coach"}
+                          className="w-full h-full object-contain object-center"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <span className="text-6xl font-bold text-zinc-600">
+                            {(coach.display_name || "C").charAt(0)}
+                          </span>
+                        </div>
+                      )}
+
+                      {/* Specialty badge */}
+                      <div className="absolute top-3 left-3">
+                        <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-primary/15 text-primary border border-primary/30 backdrop-blur-sm">
+                          {primarySpecialty(coach)}
                         </span>
                       </div>
-                    )}
 
-                    {/* Specialty badge — top left */}
-                    <div className="absolute top-3 left-3">
-                      <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-primary/15 text-primary border border-primary/30 backdrop-blur-sm">
-                        {primarySpecialty(coach)}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Info */}
-                  <div className="p-4 flex flex-col flex-1">
-                    <h3 className="text-base font-bold text-white leading-tight mb-0.5">
-                      {coach.display_name || "Coach"}
-                    </h3>
-
-                    {coach.headline && (
-                      <p className="text-zinc-400 text-xs mb-3 line-clamp-2 leading-relaxed">
-                        {coach.headline}
-                      </p>
-                    )}
-
-                    {/* Extra specialties */}
-                    {coach.specialties && coach.specialties.length > 1 && (
-                      <div className="flex flex-wrap gap-1 mb-3">
-                        {coach.specialties.slice(1, 3).map((s) => (
-                          <span
-                            key={s}
-                            className="px-2 py-0.5 rounded-full border border-zinc-700 text-zinc-500 text-xs"
-                          >
-                            {s}
+                      {/* Match badge */}
+                      {hasMatches && score > 0 && (
+                        <div className="absolute top-3 right-3">
+                          <span className="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 backdrop-blur-sm">
+                            <Sparkles className="h-3 w-3" />
+                            Match
                           </span>
-                        ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Info */}
+                    <div className="p-4 flex flex-col flex-1">
+                      <h3 className="text-base font-bold text-white leading-tight mb-0.5">
+                        {coach.display_name || "Coach"}
+                      </h3>
+
+                      {coach.headline && (
+                        <p className="text-zinc-400 text-xs mb-3 line-clamp-2 leading-relaxed">
+                          {coach.headline}
+                        </p>
+                      )}
+
+                      {/* Extra specialties */}
+                      {coach.specialties && coach.specialties.length > 1 && (
+                        <div className="flex flex-wrap gap-1 mb-3">
+                          {coach.specialties.slice(1, 3).map((s) => (
+                            <span
+                              key={s}
+                              className="px-2 py-0.5 rounded-full border border-zinc-700 text-zinc-500 text-xs"
+                            >
+                              {s}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Buttons */}
+                      <div className="flex gap-2 mt-auto pt-3 border-t border-zinc-800">
+                        <Link
+                          to={coach.slug ? `/coach/${coach.slug}` : `/coaching/${coach.id}`}
+                          className="flex-1"
+                        >
+                          <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold h-8 rounded-lg">
+                            View Profile
+                          </Button>
+                        </Link>
+
+                        <AuthGate isLoggedIn={isLoggedIn} message="Sign in to message coaches">
+                          <button
+                            onClick={() =>
+                              setContactCoach({ id: coach.id, name: coach.display_name || "Coach" })
+                            }
+                            className="flex items-center justify-center w-8 h-8 rounded-lg border border-primary/50 text-primary hover:bg-primary/10 transition-colors"
+                            title="Send a message"
+                          >
+                            <MessageCircle className="h-3.5 w-3.5" />
+                          </button>
+                        </AuthGate>
                       </div>
-                    )}
-
-                    {/* Buttons */}
-                    <div className="flex gap-2 mt-auto pt-3 border-t border-zinc-800">
-                      <Link
-                        to={coach.slug ? `/coach/${coach.slug}` : `/coaching/${coach.id}`}
-                        className="flex-1"
-                      >
-                        <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold h-8 rounded-lg">
-                          View Profile
-                        </Button>
-                      </Link>
-
-                      <button
-                        onClick={() =>
-                          setContactCoach({ id: coach.id, name: coach.display_name || "Coach" })
-                        }
-                        className="flex items-center justify-center w-8 h-8 rounded-lg border border-primary/50 text-primary hover:bg-primary/10 transition-colors"
-                        title="Send a message"
-                      >
-                        <MessageCircle className="h-3.5 w-3.5" />
-                      </button>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
