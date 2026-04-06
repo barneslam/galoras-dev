@@ -1,5 +1,12 @@
 project_id = "qbjuomsmnrclsjhdsjcz"
 
+[auth]
+site_url = "https://uat-galoras.site"
+additional_redirect_urls = ["https://uat-galoras.site/**", "https://main--galoras-dev.netlify.app/**"]
+
+[auth.email]
+enable_confirmations = false
+
 [auth.email.template.magic_link]
 subject = "Your Galoras sign-in link"
 content_path = "./supabase/templates/magic_link.html"
