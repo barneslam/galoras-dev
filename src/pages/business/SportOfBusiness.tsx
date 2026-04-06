@@ -2,108 +2,121 @@ import { Link } from "react-router-dom";
 import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { OptimizedImage } from "@/components/ui/optimized-image";
-import { 
-  ArrowRight, 
-  Trophy, 
-  Target, 
+import {
+  ArrowRight,
+  Target,
   Brain,
   Zap,
   Users,
-  Clock,
-  BarChart3,
-  Shield
+  Shield,
+  BarChart3
 } from "lucide-react";
 
-const principles = [
-  {
-    icon: Brain,
-    title: "Mental Performance",
-    description: "Train your mind like elite athletes. Develop focus, resilience, and the ability to perform under pressure.",
-  },
+const pillars = [
   {
     icon: Target,
-    title: "Goal Architecture",
-    description: "Create clear, measurable objectives with the same precision used in Olympic training programs.",
+    title: "Alignment",
+    description:
+      "Leadership teams that can't agree on direction don't execute. The Sport of Business starts by establishing shared clarity on what matters, why it matters, and who owns what.",
   },
   {
-    icon: Users,
-    title: "Team Cohesion",
-    description: "Build the trust and communication that championship teams rely on to achieve the impossible.",
+    icon: Brain,
+    title: "Decision-Making Under Pressure",
+    description:
+      "Speed and quality of decisions under pressure is what separates high-performing teams from the rest. We install the structures and disciplines that make good decisions repeatable.",
   },
   {
     icon: Zap,
-    title: "Peak State Management",
-    description: "Learn to access your optimal performance state on demand, just like elite performers.",
+    title: "Execution Discipline",
+    description:
+      "Execution fails when accountability is unclear and follow-through is optional. The Sport of Business builds the disciplines that close the gap between intention and outcome.",
+  },
+];
+
+const differentiators = [
+  {
+    icon: Users,
+    title: "Teams as Performance Units",
+    description:
+      "We don't coach individuals in isolation. The Sport of Business measures and improves how your leadership team functions as a unit — because that's where performance is won or lost.",
   },
   {
     icon: Shield,
-    title: "Competitive Advantage",
-    description: "Develop the strategic thinking and execution discipline that separates winners from the rest.",
+    title: "Built for Real Conditions",
+    description:
+      "Not classroom theory. Every intervention is designed to be applied under the actual pressure, pace, and constraints your team faces — not in a controlled environment.",
   },
   {
     icon: BarChart3,
-    title: "Performance Analytics",
-    description: "Use data-driven insights to track progress and optimize performance continuously.",
+    title: "Grounded in Data",
+    description:
+      "We diagnose before we intervene. Sequenced improvements are based on your team's actual execution patterns — not a generic programme applied to every organisation.",
   },
 ];
 
 const formats = [
   {
-    title: "Executive Intensive",
-    duration: "2-Day Program",
-    description: "Deep-dive experience for senior leaders seeking transformational growth.",
-    features: ["360° assessment", "1:1 coaching", "Personalized playbook", "90-day follow-up"],
+    title: "Leadership Team Diagnostic",
+    duration: "Discovery Engagement",
+    description:
+      "A structured assessment of how your leadership team currently aligns, decides, and executes. Identifies the specific gaps holding performance back.",
+    features: [
+      "Team alignment mapping",
+      "Decision-making audit",
+      "Execution gap analysis",
+      "Prioritised intervention plan",
+    ],
   },
   {
-    title: "Team Accelerator",
-    duration: "6-Week Program",
-    description: "Transform your leadership team into a high-performing unit.",
-    features: ["Weekly team sessions", "Individual coaching", "Team challenges", "Performance metrics"],
+    title: "Sport of Business Programme",
+    duration: "Structured Engagement",
+    description:
+      "A sequenced series of facilitated sessions that install alignment, decision quality, and execution discipline across your leadership team.",
+    features: [
+      "Facilitated working sessions",
+      "Real-time application",
+      "Accountability structures",
+      "Progress measurement",
+    ],
   },
   {
-    title: "Organization-Wide",
-    duration: "Custom Duration",
-    description: "Scale the Sport of Business mindset across your entire company.",
-    features: ["Train-the-trainer", "Custom curriculum", "Culture integration", "Ongoing support"],
+    title: "Enterprise Deployment",
+    duration: "Custom Scope",
+    description:
+      "For organisations deploying The Sport of Business across multiple teams or divisions — scaled without losing the rigour.",
+    features: [
+      "Multi-team facilitation",
+      "Internal champion development",
+      "Cross-team alignment sessions",
+      "Ongoing performance support",
+    ],
   },
 ];
 
 export default function SportOfBusiness() {
   return (
     <Layout>
-      {/* Hero Section */}
-      <section className="relative pt-32 pb-20 overflow-hidden">
-        {/* Background Image */}
-        <div className="absolute inset-0">
-          <OptimizedImage
-            src="https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=1920&q=80"
-            alt="Athletic performance and focus"
-            className="w-full h-full"
-            overlay
-          />
-          <div className="absolute inset-0 bg-background/75" />
-        </div>
-        
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,hsl(var(--primary)/0.15),transparent_50%)]" />
-        
+      {/* Hero */}
+      <section className="relative pt-32 pb-20 overflow-hidden bg-zinc-950">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,hsl(var(--primary)/0.10),transparent_55%)]" />
         <div className="container-wide relative z-10">
           <div className="max-w-3xl mx-auto text-center">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-medium mb-8">
-              <Trophy className="h-4 w-4" />
-              Flagship Program
-            </div>
-            
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-display font-bold mb-6">
-              The <span className="text-gradient">Sport of Business</span>
+            <p className="text-xs font-semibold text-primary uppercase tracking-widest mb-4">
+              Galoras Flagship Framework
+            </p>
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-display font-black tracking-tight text-white uppercase mb-6">
+              The Sport of{" "}
+              <span className="text-primary">Business</span>
             </h1>
-            <p className="text-lg md:text-xl text-muted-foreground mb-8">
-              Apply the mindset, discipline, and performance principles of elite athletes 
-              to build winning business teams and cultures.
+            <p className="text-zinc-300 text-lg md:text-xl max-w-2xl mx-auto mb-4">
+              Business is a team sport. It demands alignment, fast decision-making, and execution under pressure — the same disciplines that separate elite sports teams from the rest.
+            </p>
+            <p className="text-zinc-500 text-base max-w-xl mx-auto mb-10">
+              The Sport of Business is Galoras's performance framework for leadership teams. Not a motivational programme. A structured methodology for improving how teams align, decide, and execute in real conditions.
             </p>
             <Link to="/contact">
-              <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 glow-primary">
-                Request Program Details
+              <Button size="lg" className="bg-primary text-zinc-950 hover:bg-primary/90 font-bold">
+                Start the Conversation
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
@@ -111,29 +124,56 @@ export default function SportOfBusiness() {
         </div>
       </section>
 
-      {/* Philosophy */}
-      <section className="section-padding bg-background">
+      {/* The Framework */}
+      <section className="section-padding bg-zinc-900 border-y border-zinc-800">
         <div className="container-wide">
-          <div className="max-w-3xl mx-auto text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-display font-bold mb-4">
-              What Elite Athletes Know
+          <div className="text-center mb-12">
+            <h2 className="text-2xl md:text-3xl font-display font-bold text-white mb-3">
+              The Framework
             </h2>
-            <p className="text-muted-foreground text-lg">
-              The world's best athletes don't just train harder—they train smarter. 
-              They've mastered the mental game, team dynamics, and performance optimization 
-              that most business leaders never learn. Until now.
+            <p className="text-zinc-400 text-base max-w-2xl mx-auto">
+              Three disciplines. Every high-performing team has them. Most leadership teams have never been coached on them.
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {principles.map((principle, index) => (
-              <Card key={index} className="group hover:border-primary/50 transition-all card-hover">
+          <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+            {pillars.map((pillar, i) => (
+              <div key={i} className="relative p-8 rounded-2xl bg-zinc-950 border border-zinc-800 hover:border-primary/40 transition-colors">
+                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-5">
+                  <pillar.icon className="h-6 w-6 text-primary" />
+                </div>
+                <h3 className="text-lg font-bold text-white mb-3">{pillar.title}</h3>
+                <p className="text-zinc-400 text-sm leading-relaxed">{pillar.description}</p>
+                {i < 2 && (
+                  <ArrowRight className="hidden md:block absolute -right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-primary/40 z-10" />
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Why It's Different */}
+      <section className="section-padding bg-background">
+        <div className="container-wide">
+          <div className="max-w-3xl mx-auto text-center mb-14">
+            <h2 className="text-3xl md:text-4xl font-display font-bold mb-4">
+              Why It's Different
+            </h2>
+            <p className="text-muted-foreground text-lg">
+              The Sport of Business is not a leadership workshop. It is a performance intervention — designed for teams that are already operating, under real pressure, with real consequences.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            {differentiators.map((item, i) => (
+              <Card key={i} className="group hover:border-primary/50 transition-all card-hover">
                 <CardContent className="p-6">
                   <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                    <principle.icon className="h-6 w-6 text-primary" />
+                    <item.icon className="h-6 w-6 text-primary" />
                   </div>
-                  <h3 className="text-xl font-display font-semibold mb-2">{principle.title}</h3>
-                  <p className="text-muted-foreground">{principle.description}</p>
+                  <h3 className="text-xl font-display font-semibold mb-2">{item.title}</h3>
+                  <p className="text-muted-foreground text-sm leading-relaxed">{item.description}</p>
                 </CardContent>
               </Card>
             ))}
@@ -141,31 +181,60 @@ export default function SportOfBusiness() {
         </div>
       </section>
 
-      {/* Program Formats */}
+      {/* Credibility */}
       <section className="section-padding bg-muted/30">
         <div className="container-wide">
-          <div className="text-center mb-16">
+          <div className="max-w-3xl mx-auto">
+            <div className="grid md:grid-cols-2 gap-12 items-center">
+              <div>
+                <p className="text-sm text-primary font-semibold uppercase tracking-widest mb-4">
+                  Built from the inside
+                </p>
+                <h2 className="text-3xl md:text-4xl font-display font-bold mb-5">
+                  Designed by Someone Who's Been in the Arena
+                </h2>
+                <p className="text-muted-foreground text-base leading-relaxed mb-4">
+                  The Sport of Business was not designed by consultants observing from the outside. It was built from experience leading $100M+ revenue businesses across Europe, the Caribbean, Latin America, and the United States — through growth, transformation, and disruption.
+                </p>
+                <p className="text-muted-foreground text-base leading-relaxed">
+                  The disciplines in this framework are the ones that actually moved organisations forward under pressure — not the ones that looked good in a boardroom presentation.
+                </p>
+              </div>
+              <div
+                className="aspect-square rounded-2xl bg-cover bg-center overflow-hidden"
+                style={{ backgroundImage: "url('https://images.unsplash.com/photo-1552664730-d307ca884978?q=80&w=800&auto=format&fit=crop')" }}
+              >
+                <div className="w-full h-full bg-gradient-to-br from-primary/20 to-transparent" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Engagement Formats */}
+      <section className="section-padding bg-background">
+        <div className="container-wide">
+          <div className="text-center mb-14">
             <h2 className="text-3xl md:text-4xl font-display font-bold mb-4">
-              Program Formats
+              How We Engage
             </h2>
             <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              Choose the format that fits your organization's needs and timeline.
+              Every engagement starts with understanding your team's actual execution environment — then we design accordingly.
             </p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
-            {formats.map((format, index) => (
-              <Card key={index} className="relative overflow-hidden">
+            {formats.map((format, i) => (
+              <Card key={i} className="relative overflow-hidden hover:border-primary/50 transition-all">
                 <CardContent className="p-8">
-                  <div className="flex items-center gap-2 text-sm text-primary mb-4">
-                    <Clock className="h-4 w-4" />
+                  <p className="text-xs font-semibold text-primary uppercase tracking-widest mb-4">
                     {format.duration}
-                  </div>
-                  <h3 className="text-2xl font-display font-semibold mb-3">{format.title}</h3>
-                  <p className="text-muted-foreground mb-6">{format.description}</p>
+                  </p>
+                  <h3 className="text-xl font-display font-semibold mb-3">{format.title}</h3>
+                  <p className="text-muted-foreground text-sm mb-6 leading-relaxed">{format.description}</p>
                   <ul className="space-y-2">
-                    {format.features.map((feature, i) => (
-                      <li key={i} className="flex items-center gap-2 text-sm">
+                    {format.features.map((feature, j) => (
+                      <li key={j} className="flex items-center gap-2 text-sm">
                         <Zap className="h-3 w-3 text-primary shrink-0" />
                         {feature}
                       </li>
@@ -178,62 +247,25 @@ export default function SportOfBusiness() {
         </div>
       </section>
 
-      {/* Results */}
-      <section className="section-padding bg-background">
-        <div className="container-wide">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div>
-              <h2 className="text-3xl md:text-4xl font-display font-bold mb-4">
-                Results That Speak
-              </h2>
-              <p className="text-muted-foreground text-lg mb-8">
-                Organizations that embrace the Sport of Business methodology see measurable improvements across key performance indicators.
-              </p>
-              <div className="grid grid-cols-2 gap-6">
-                {[
-                  { value: "47%", label: "Increase in team performance" },
-                  { value: "62%", label: "Improvement in decision-making speed" },
-                  { value: "38%", label: "Reduction in leadership turnover" },
-                  { value: "89%", label: "Participant satisfaction rate" },
-                ].map((stat, i) => (
-                  <div key={i}>
-                    <div className="text-3xl font-display font-bold text-primary">{stat.value}</div>
-                    <p className="text-sm text-muted-foreground">{stat.label}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className="relative">
-              <OptimizedImage
-                src="https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=800&q=80"
-                alt="Athletes celebrating victory"
-                aspectRatio="video"
-                className="rounded-2xl"
-              />
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* CTA */}
-      <section className="section-padding hero-gradient">
+      <section className="section-padding bg-zinc-950">
         <div className="container-wide text-center">
-          <h2 className="text-3xl md:text-4xl font-display font-bold mb-4">
-            Ready to Play at the Highest Level?
+          <h2 className="text-3xl md:text-4xl font-display font-bold text-white mb-4">
+            Ready to Build a High-Performance Team?
           </h2>
-          <p className="text-muted-foreground text-lg mb-8 max-w-xl mx-auto">
-            Let's discuss how the Sport of Business can transform your organization.
+          <p className="text-zinc-400 text-lg mb-8 max-w-xl mx-auto">
+            Start with a conversation about where your team is and what's getting in the way.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link to="/contact">
-              <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 glow-primary">
-                Schedule Consultation
+              <Button size="lg" className="bg-primary text-zinc-950 hover:bg-primary/90 font-bold">
+                Book a Business Consultation
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
             <Link to="/business">
-              <Button size="lg" variant="outline" className="border-primary/50 hover:bg-primary/10">
-                View All Programs
+              <Button size="lg" variant="outline" className="border-zinc-700 text-zinc-300 hover:bg-zinc-800">
+                View All Programmes
               </Button>
             </Link>
           </div>

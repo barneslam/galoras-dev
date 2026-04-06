@@ -2,116 +2,143 @@ import { Link } from "react-router-dom";
 import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { 
-  ArrowRight, 
-  Lightbulb, 
-  Target, 
+import {
+  ArrowRight,
+  Target,
   MessageCircle,
   Zap,
   Users,
-  Clock,
   Brain,
-  TrendingUp
+  TrendingUp,
+  FlaskConical
 } from "lucide-react";
 
-const workshops = [
+const labs = [
+  {
+    icon: Target,
+    title: "Alignment Under Pressure",
+    duration: "Full-day",
+    description:
+      "Teams that are misaligned on priorities execute slowly and disagree at the wrong moments. This Lab surfaces and resolves alignment gaps — fast.",
+    outcomes: [
+      "Shared priority clarity",
+      "Decision rights mapped",
+      "Conflict resolved in-session",
+    ],
+  },
+  {
+    icon: Brain,
+    title: "Decision Velocity",
+    duration: "Half-day",
+    description:
+      "Most leadership teams make decisions too slowly, too often, and by the wrong people. This Lab installs the structures that accelerate decision quality without sacrificing speed.",
+    outcomes: [
+      "Decision frameworks installed",
+      "Escalation paths defined",
+      "Real decisions made live",
+    ],
+  },
+  {
+    icon: Zap,
+    title: "Execution Discipline",
+    duration: "Full-day",
+    description:
+      "Strategy fails in the gap between decision and delivery. This Lab closes that gap by building the accountability structures your team will actually use.",
+    outcomes: [
+      "Accountability operating model",
+      "Follow-through cadence",
+      "Progress visibility",
+    ],
+  },
   {
     icon: MessageCircle,
     title: "Executive Communication",
     duration: "Half-day",
-    description: "Master the art of clear, compelling communication that inspires action and builds trust.",
-    outcomes: ["Craft compelling narratives", "Present with confidence", "Navigate difficult conversations"],
-  },
-  {
-    icon: Brain,
-    title: "Strategic Thinking",
-    duration: "Full-day",
-    description: "Develop the mental models and frameworks used by world-class strategists.",
-    outcomes: ["Systems thinking", "Scenario planning", "Decision-making under uncertainty"],
+    description:
+      "How leaders communicate determines how organisations move. This Lab develops the clarity, directness, and precision that high-performance environments demand.",
+    outcomes: [
+      "Clear, direct communication",
+      "Difficult conversations",
+      "Influence and persuasion",
+    ],
   },
   {
     icon: Users,
-    title: "Team Dynamics",
+    title: "High-Performance Team Dynamics",
     duration: "Full-day",
-    description: "Build trust, improve collaboration, and create psychological safety within your team.",
-    outcomes: ["Trust-building exercises", "Conflict resolution", "Feedback cultures"],
-  },
-  {
-    icon: Target,
-    title: "Goal Setting & OKRs",
-    duration: "Half-day",
-    description: "Implement effective goal-setting systems that drive alignment and accountability.",
-    outcomes: ["OKR methodology", "Cascading goals", "Progress tracking"],
-  },
-  {
-    icon: Zap,
-    title: "High-Performance Habits",
-    duration: "Full-day",
-    description: "Build the daily routines and practices that sustain excellence over time.",
-    outcomes: ["Energy management", "Focus techniques", "Recovery strategies"],
+    description:
+      "The gap between a group of talented individuals and a high-performing team is specific and closeable. This Lab identifies and addresses what's getting in the way.",
+    outcomes: [
+      "Trust and candour",
+      "Role clarity",
+      "Collective accountability",
+    ],
   },
   {
     icon: TrendingUp,
-    title: "Change Leadership",
+    title: "Leading Through Change",
     duration: "Two-day",
-    description: "Lead organizational change with confidence and bring your people along.",
-    outcomes: ["Change frameworks", "Stakeholder management", "Resistance handling"],
+    description:
+      "Transformation fails when leaders can't hold the organisation steady during disruption. This Lab builds the personal and operational disciplines that keep teams executing through change.",
+    outcomes: [
+      "Stability under pressure",
+      "Stakeholder management",
+      "Change communication",
+    ],
   },
 ];
 
 const formats = [
   {
-    title: "In-Person",
-    description: "Immersive, hands-on experience at your location or our partner venues.",
-    features: ["Interactive exercises", "Team bonding", "Immediate application"],
+    title: "On-Site",
+    description:
+      "Facilitated at your location. High-intensity working sessions that use your team's real environment and real challenges.",
+    features: ["Your context, your team", "No travel overhead", "Immediate application"],
+  },
+  {
+    title: "Offsite",
+    description:
+      "Removed from the day-to-day environment, which creates the space for more honest and more difficult conversations.",
+    features: ["Neutral environment", "Full team presence", "Deeper engagement"],
   },
   {
     title: "Virtual",
-    description: "Engaging online sessions designed for distributed teams.",
-    features: ["Breakout rooms", "Digital whiteboards", "Flexible scheduling"],
-  },
-  {
-    title: "Hybrid",
-    description: "Combine in-person and virtual participants seamlessly.",
-    features: ["Inclusive experience", "Tech-enabled facilitation", "Global reach"],
+    description:
+      "Structured for distributed teams. Designed to achieve the same depth and output as in-person sessions.",
+    features: ["Global team access", "Flexible scheduling", "No less rigorous"],
   },
 ];
 
 export default function Workshops() {
   return (
     <Layout>
-      {/* Hero Section */}
-      <section className="relative pt-32 pb-20 overflow-hidden">
-        {/* Background Image */}
-        <div className="absolute inset-0">
-          <img
-            src="https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=1920&q=80"
-            alt="Interactive workshop session"
-            className="w-full h-full object-cover"
-            loading="lazy"
-          />
-          <div className="absolute inset-0 bg-background/80" />
-        </div>
-        
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,hsl(var(--primary)/0.15),transparent_50%)]" />
-        
+      {/* Hero */}
+      <section className="relative pt-32 pb-20 overflow-hidden bg-zinc-950">
+        <div
+          className="absolute inset-0 bg-cover bg-center opacity-15"
+          style={{ backgroundImage: "url('https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=1920&q=80')" }}
+        />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,hsl(var(--primary)/0.10),transparent_55%)]" />
+
         <div className="container-wide relative z-10">
           <div className="max-w-3xl mx-auto text-center">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-medium mb-8">
-              <Lightbulb className="h-4 w-4" />
-              Interactive Learning
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-medium mb-6">
+              <FlaskConical className="h-4 w-4" />
+              Leadership Labs
             </div>
-            
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-display font-bold mb-6">
-              <span className="text-gradient">Workshops & Training</span>
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-display font-black tracking-tight text-white uppercase mb-6">
+              Workshops &{" "}
+              <span className="text-primary">Offsites</span>
             </h1>
-            <p className="text-lg md:text-xl text-muted-foreground mb-8">
-              Engaging, practical workshops that build capabilities and drive immediate impact. 
-              Customized for your team's specific needs and challenges.
+            <p className="text-zinc-300 text-lg md:text-xl max-w-2xl mx-auto mb-4">
+              Leadership Labs are immersive, facilitated working sessions where teams practise The Sport of Business in real time.
+            </p>
+            <p className="text-zinc-500 text-base max-w-xl mx-auto mb-10">
+              Not training programmes. Not presentations. Working sessions where your team leaves with decisions made, alignment installed, and a clearer path forward.
             </p>
             <Link to="/contact">
-              <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 glow-primary">
-                Request Workshop
+              <Button size="lg" className="bg-primary text-zinc-950 hover:bg-primary/90 font-bold">
+                Request a Lab
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
@@ -119,37 +146,36 @@ export default function Workshops() {
         </div>
       </section>
 
-      {/* Workshop Catalog */}
+      {/* Labs Catalogue */}
       <section className="section-padding bg-background">
         <div className="container-wide">
-          <div className="text-center mb-16">
+          <div className="text-center mb-14">
             <h2 className="text-3xl md:text-4xl font-display font-bold mb-4">
-              Workshop Catalog
+              Lab Catalogue
             </h2>
             <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              Choose from our proven programs or work with us to create something custom.
+              Each Lab is built around a specific execution challenge. Choose the one that fits where your team is — or we design something custom.
             </p>
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {workshops.map((workshop, index) => (
-              <Card key={index} className="group hover:border-primary/50 transition-all card-hover">
+            {labs.map((lab, i) => (
+              <Card key={i} className="group hover:border-primary/50 transition-all card-hover">
                 <CardContent className="p-6">
                   <div className="flex items-start justify-between mb-4">
                     <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center group-hover:scale-110 transition-transform">
-                      <workshop.icon className="h-6 w-6 text-primary" />
+                      <lab.icon className="h-6 w-6 text-primary" />
                     </div>
-                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                      <Clock className="h-4 w-4" />
-                      {workshop.duration}
-                    </div>
+                    <span className="text-xs font-medium text-muted-foreground bg-muted px-2.5 py-1 rounded-full">
+                      {lab.duration}
+                    </span>
                   </div>
-                  <h3 className="text-xl font-display font-semibold mb-2">{workshop.title}</h3>
-                  <p className="text-muted-foreground text-sm mb-4">{workshop.description}</p>
-                  <div className="space-y-1">
-                    <p className="text-xs font-medium text-muted-foreground">Key outcomes:</p>
-                    {workshop.outcomes.map((outcome, i) => (
-                      <div key={i} className="flex items-center gap-2 text-sm">
+                  <h3 className="text-xl font-display font-semibold mb-2">{lab.title}</h3>
+                  <p className="text-muted-foreground text-sm mb-4 leading-relaxed">{lab.description}</p>
+                  <div className="space-y-1.5">
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Outcomes</p>
+                    {lab.outcomes.map((outcome, j) => (
+                      <div key={j} className="flex items-center gap-2 text-sm">
                         <Zap className="h-3 w-3 text-primary shrink-0" />
                         {outcome}
                       </div>
@@ -165,24 +191,24 @@ export default function Workshops() {
       {/* Delivery Formats */}
       <section className="section-padding bg-muted/30">
         <div className="container-wide">
-          <div className="text-center mb-16">
+          <div className="text-center mb-14">
             <h2 className="text-3xl md:text-4xl font-display font-bold mb-4">
-              Flexible Delivery
+              Delivery Options
             </h2>
             <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              We meet your team where they are with multiple delivery options.
+              The format follows the team's needs — not a preference for one delivery model.
             </p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
-            {formats.map((format, index) => (
-              <Card key={index}>
+            {formats.map((format, i) => (
+              <Card key={i} className="hover:border-primary/50 transition-all">
                 <CardContent className="p-8 text-center">
                   <h3 className="text-2xl font-display font-semibold mb-3">{format.title}</h3>
-                  <p className="text-muted-foreground mb-6">{format.description}</p>
+                  <p className="text-muted-foreground text-sm mb-6 leading-relaxed">{format.description}</p>
                   <ul className="space-y-2">
-                    {format.features.map((feature, i) => (
-                      <li key={i} className="flex items-center justify-center gap-2 text-sm">
+                    {format.features.map((feature, j) => (
+                      <li key={j} className="flex items-center justify-center gap-2 text-sm">
                         <Zap className="h-3 w-3 text-primary shrink-0" />
                         {feature}
                       </li>
@@ -195,35 +221,34 @@ export default function Workshops() {
         </div>
       </section>
 
-      {/* Custom Workshops */}
+      {/* Custom */}
       <section className="section-padding bg-background">
         <div className="container-wide">
-          <div className="max-w-4xl mx-auto">
+          <div className="max-w-3xl mx-auto">
             <div className="grid lg:grid-cols-2 gap-12 items-center">
               <div>
                 <h2 className="text-3xl md:text-4xl font-display font-bold mb-4">
-                  Custom Workshops
+                  Custom Labs
                 </h2>
-                <p className="text-muted-foreground text-lg mb-6">
-                  Don't see exactly what you need? We specialize in designing custom workshops 
-                  tailored to your organization's specific challenges and culture.
+                <p className="text-muted-foreground text-lg mb-6 leading-relaxed">
+                  Your team's challenges don't always fit a catalogue. We design custom Labs built around your specific operating environment, team dynamics, and the outcomes that matter most.
                 </p>
                 <ul className="space-y-3 mb-8">
                   {[
-                    "Needs assessment to understand your goals",
-                    "Custom content design by expert facilitators",
-                    "Branded materials and frameworks",
-                    "Follow-up coaching and reinforcement",
+                    "Discovery conversation to understand your context",
+                    "Lab designed around your actual challenges",
+                    "Facilitated by coaches with direct operating experience",
+                    "Follow-up coaching available post-session",
                   ].map((item, i) => (
                     <li key={i} className="flex items-start gap-3">
                       <Target className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                      <span>{item}</span>
+                      <span className="text-sm">{item}</span>
                     </li>
                   ))}
                 </ul>
                 <Link to="/contact">
-                  <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
-                    Discuss Custom Workshop
+                  <Button className="bg-primary text-zinc-950 hover:bg-primary/90 font-bold">
+                    Discuss a Custom Lab
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </Link>
@@ -231,7 +256,7 @@ export default function Workshops() {
               <div className="relative">
                 <img
                   src="https://images.unsplash.com/photo-1531538606174-0f90ff5dce83?w=600&q=80"
-                  alt="Custom workshop facilitation"
+                  alt="Facilitated session"
                   className="aspect-square rounded-2xl object-cover"
                   loading="lazy"
                 />
@@ -242,24 +267,24 @@ export default function Workshops() {
       </section>
 
       {/* CTA */}
-      <section className="section-padding hero-gradient">
+      <section className="section-padding bg-zinc-950">
         <div className="container-wide text-center">
-          <h2 className="text-3xl md:text-4xl font-display font-bold mb-4">
-            Invest in Your Team's Growth
+          <h2 className="text-3xl md:text-4xl font-display font-bold text-white mb-4">
+            Your Team Leaves with Decisions Made
           </h2>
-          <p className="text-muted-foreground text-lg mb-8 max-w-xl mx-auto">
-            Let's design a workshop experience that drives real results.
+          <p className="text-zinc-400 text-lg mb-8 max-w-xl mx-auto">
+            Not slides. Not action items. Actual alignment, clarity, and a path forward.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link to="/contact">
-              <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 glow-primary">
-                Request Workshop
+              <Button size="lg" className="bg-primary text-zinc-950 hover:bg-primary/90 font-bold">
+                Request a Lab
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
             <Link to="/business">
-              <Button size="lg" variant="outline" className="border-primary/50 hover:bg-primary/10">
-                View All Programs
+              <Button size="lg" variant="outline" className="border-zinc-700 text-zinc-300 hover:bg-zinc-800">
+                View All Programmes
               </Button>
             </Link>
           </div>
