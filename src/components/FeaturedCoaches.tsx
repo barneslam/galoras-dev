@@ -61,6 +61,7 @@ export function FeaturedCoaches() {
         }}
       />
 
+      {/* Heading — constrained */}
       <div className="container-wide relative z-10">
         <div className="text-center mb-10">
           <h2 className="text-3xl md:text-4xl font-display font-bold text-white">
@@ -70,9 +71,11 @@ export function FeaturedCoaches() {
             Curated leaders selected by Galoras.
           </p>
         </div>
+      </div>
 
-        <div className="flex items-end justify-center gap-0">
-          {coaches.map((coach, i) => (
+      {/* Coach strip — full width, no container clipping */}
+      <div className="relative z-10 flex items-end justify-center gap-0 w-full">
+        {coaches.map((coach, i) => (
             <button
               key={coach.id}
               onClick={() => handleClick(coach)}
@@ -119,7 +122,6 @@ export function FeaturedCoaches() {
               </div>
             </button>
           ))}
-        </div>
       </div>
     </section>
   );
