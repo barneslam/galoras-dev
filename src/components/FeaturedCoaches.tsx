@@ -31,6 +31,13 @@ export function FeaturedCoaches() {
 
   if (isLoading || !coaches || coaches.length === 0) return null;
 
+  const n = coaches.length;
+  const SECTION_HEIGHT = 580;
+  // Overlap: coaches shift left by this many px per step
+  const OVERLAP = 80;
+  // Each slot width: full width divided equally
+  const slotW = `calc(${100 / n}% + ${OVERLAP * (n - 1) / n}px)`;
+
   return (
     <section
       style={{
@@ -44,68 +51,85 @@ export function FeaturedCoaches() {
         </h2>
       </div>
 
-      {/* Shoulder-to-shoulder strip */}
+      {/* Coach strip — flex row, overlap via negative margin */}
       <div
-        className="flex items-end justify-center"
-        style={{ height: "580px", paddingBottom: 0 }}
+        className="flex items-stretch justify-center overflow-hidden"
+        style={{ height: `${SECTION_HEIGHT}px` }}
       >
-        {coaches.map((coach, i) => (
-          <button
-            key={coach.id}
-            onClick={() => navigate("/coaching")}
-            className="group relative flex-shrink-0 cursor-pointer focus:outline-none"
-            style={{
-              // Each coach takes an equal share; negative margin creates shoulder-to-shoulder touch
-              width: `${100 / coaches.length}%`,
-              height: "100%",
-              marginRight: i < coaches.length - 1 ? "-40px" : 0,
-              // Centre coach sits in front
-              zIndex: coaches.length - Math.abs(i - Math.floor(coaches.length / 2)),
-            }}
-            aria-label={`Go to coaching directory`}
-          >
-            {coach.avatar_url ? (
-              <img
-                src={coach.avatar_url}
-                alt={coach.display_name || "Coach"}
-                className="w-full h-full transition-all duration-500"
+        {coaches.map((coach, i) => {
+          const mid = (n - 1) / 2;
+          const dist = Math.abs(i - mid);
+          const zIndex = Math.round(n * 3 - dist * 2);
+
+          return (
+            <button
+              key={coach.id}
+              onClick={() => navigate("/coaching")}
+              className="group relative cursor-pointer focus:outline-none flex-shrink-0"
+              style={{
+                width: `calc(${100 / n}%)`,
+                // Pull subsequent coaches left to touch the previous
+                marginLeft: i > 0 ? `-${OVERLAP}px` : 0,
+                zIndex,
+              }}
+              aria-label="Go to coaching directory"
+            >
+              {coach.avatar_url ? (
+                // Absolutely position image anchored to BOTTOM so all feet align
+                <img
+                  src={coach.avatar_url}
+                  alt={coach.display_name || "Coach"}
+                  style={{
+                    position: "absolute",
+                    bottom: 0,
+                    left: "50%",
+                    transform: "translateX(-50%)",
+                    height: "100%",
+                    width: "100%",
+                    objectFit: "contain",
+                    objectPosition: "bottom center",
+                    filter: "grayscale(1)",
+                    transition: "filter 0.4s ease",
+                  }}
+                  onMouseEnter={(e) => {
+                    (e.currentTarget as HTMLImageElement).style.filter = "grayscale(0)";
+                  }}
+                  onMouseLeave={(e) => {
+                    (e.currentTarget as HTMLImageElement).style.filter = "grayscale(1)";
+                  }}
+                />
+              ) : (
+                <div className="absolute inset-0 flex items-end justify-center pb-10">
+                  <span className="text-7xl font-bold text-zinc-500">
+                    {(coach.display_name || "C").charAt(0)}
+                  </span>
+                </div>
+              )}
+
+              {/* Bottom fade */}
+              <div
+                className="absolute inset-x-0 bottom-0 pointer-events-none"
                 style={{
-                  objectFit: "contain",
-                  objectPosition: "bottom center",
-                  filter: "grayscale(1)",
-                }}
-                onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLImageElement).style.filter = "grayscale(0)";
-                }}
-                onMouseLeave={(e) => {
-                  (e.currentTarget as HTMLImageElement).style.filter = "grayscale(1)";
+                  height: "120px",
+                  background: "linear-gradient(to top, #1e1e1e 0%, transparent 100%)",
                 }}
               />
-            ) : (
-              <div className="w-full h-full flex items-end justify-center pb-8">
-                <span className="text-7xl font-bold text-zinc-500">
-                  {(coach.display_name || "C").charAt(0)}
-                </span>
-              </div>
-            )}
 
-            {/* Bottom fade */}
-            <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-[#1e1e1e] to-transparent pointer-events-none" />
-
-            {/* Name on hover */}
-            <div className="absolute bottom-8 left-0 right-0 text-center opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 pointer-events-none px-2">
-              <p className="text-white font-semibold text-sm drop-shadow-lg">
-                {coach.display_name}
-              </p>
-              {(coach.current_role || coach.headline) && (
-                <p className="text-zinc-300 text-xs mt-0.5 drop-shadow line-clamp-1">
-                  {coach.current_role || coach.headline}
+              {/* Name on hover */}
+              <div className="absolute bottom-8 left-0 right-0 text-center opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 pointer-events-none px-2">
+                <p className="text-white font-semibold text-sm drop-shadow-lg">
+                  {coach.display_name}
                 </p>
-              )}
-              <p className="text-primary text-xs mt-1 font-medium">View Coaches →</p>
-            </div>
-          </button>
-        ))}
+                {(coach.current_role || coach.headline) && (
+                  <p className="text-zinc-300 text-xs mt-0.5 line-clamp-1 drop-shadow">
+                    {coach.current_role || coach.headline}
+                  </p>
+                )}
+                <p className="text-primary text-xs mt-1 font-medium">View Coaches →</p>
+              </div>
+            </button>
+          );
+        })}
       </div>
     </section>
   );
