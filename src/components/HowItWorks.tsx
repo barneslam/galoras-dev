@@ -61,7 +61,7 @@ export function HowItWorks() {
             <Link
               key={pillar.number}
               to={pillar.href}
-              className="group relative overflow-hidden rounded-2xl min-h-[380px] flex flex-col justify-end focus:outline-none"
+              className="group relative overflow-hidden rounded-2xl min-h-[380px] flex flex-col items-center justify-center text-center focus:outline-none"
             >
               {/* Background image */}
               <img
@@ -70,22 +70,28 @@ export function HowItWorks() {
                 className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
               />
 
-              {/* Dark overlay */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-black/20 group-hover:from-black/95 transition-colors duration-300" />
+              {/* Default overlay — lighter so card looks clean */}
+              <div className="absolute inset-0 bg-black/55 group-hover:bg-black/75 transition-colors duration-400" />
 
               {/* Content */}
-              <div className="relative z-10 p-6">
+              <div className="relative z-10 p-6 flex flex-col items-center">
+                {/* Title — visible by default, grays out on hover */}
                 <h3
-                  className={`text-xl md:text-2xl font-black uppercase leading-tight mb-3 whitespace-pre-line ${
-                    pillar.accent ? "text-primary" : "text-white"
+                  className={`text-xl md:text-2xl font-black uppercase leading-tight whitespace-pre-line transition-colors duration-300 ${
+                    pillar.accent
+                      ? "text-primary group-hover:text-primary/40"
+                      : "text-white group-hover:text-zinc-500"
                   }`}
                 >
                   {pillar.title}
                 </h3>
-                <p className="text-sm text-zinc-300 leading-relaxed mb-4">
+
+                {/* Body — hidden by default, appears on hover */}
+                <p className="text-sm text-zinc-200 leading-relaxed mt-4 max-w-[220px] opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
                   {pillar.body}
                 </p>
-                <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+
+                <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary mt-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                   Learn more <ArrowRight className="h-3.5 w-3.5" />
                 </span>
               </div>
