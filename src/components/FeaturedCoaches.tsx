@@ -12,7 +12,13 @@ type FeaturedCoach = {
 };
 
 const SECTION_H = 680;  // px — section height
-const OVERLAP   = 160;  // px — how much each coach overlaps the previous
+const OVERLAP   = 210;  // px — how much each coach overlaps the previous
+
+// Per-coach image scale overrides to compensate for different photo crops
+// (e.g. Barnes is a portrait/chest-up shot, Conor/Mitesh are full-body standing)
+const SCALE_OVERRIDES: Record<string, number> = {
+  "Barnes Lam": 1.7,
+};
 
 export function FeaturedCoaches() {
   const navigate = useNavigate();
@@ -85,6 +91,8 @@ export function FeaturedCoaches() {
                     objectPosition: "bottom center",
                     filter: "grayscale(1)",
                     transition: "filter 0.4s ease",
+                    transform: `scale(${SCALE_OVERRIDES[coach.display_name || ""] ?? 1})`,
+                    transformOrigin: "bottom center",
                   }}
                   onMouseEnter={(e) =>
                     ((e.currentTarget as HTMLImageElement).style.filter = "grayscale(0)")
