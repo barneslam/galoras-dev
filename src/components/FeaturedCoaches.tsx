@@ -73,17 +73,14 @@ export function FeaturedCoaches() {
         </div>
       </div>
 
-      {/* Coach strip — full width, no container clipping */}
-      <div className="relative z-10 flex items-end justify-center gap-0 w-full">
+      {/* Coach strip — fixed width centered group, no overlap tricks */}
+      <div className="relative z-10 flex items-end justify-center gap-6 w-full">
         {coaches.map((coach, i) => (
             <button
               key={coach.id}
               onClick={() => handleClick(coach)}
-              className="group relative flex-1 max-w-[280px] min-w-[160px] cursor-pointer focus:outline-none"
-              style={{
-                marginLeft: i > 0 ? "-80px" : 0,
-                zIndex: i === 0 ? 1 : 2,
-              }}
+              className="group relative cursor-pointer focus:outline-none flex-shrink-0"
+              style={{ width: "240px" }}
               aria-label={`View ${coach.display_name || "coach"} profile`}
             >
               <div className="relative overflow-hidden">
