@@ -40,24 +40,24 @@ export function FeaturedCoaches() {
     <section
       className="py-16 relative overflow-hidden"
       style={{
-        background: "radial-gradient(ellipse at 50% 60%, #1e2024 0%, #111316 45%, #060708 100%)",
+        background: "radial-gradient(ellipse at 50% 60%, #2e3138 0%, #1a1d22 45%, #0d0f12 100%)",
       }}
     >
       {/* Subtle dark arena texture overlay */}
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
-          backgroundImage: `url("https://images.unsplash.com/photo-1518611012118-696072aa579a?w=1920&q=20&auto=format&fit=crop")`,
+          backgroundImage: `url("https://images.unsplash.com/photo-1518611012118-696072aa579a?w=1920&q=80&auto=format&fit=crop")`,
           backgroundSize: "cover",
           backgroundPosition: "center",
-          opacity: 0.06,
+          opacity: 0.25,
         }}
       />
       {/* Edge vignette */}
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
-          background: "radial-gradient(ellipse at center, transparent 30%, rgba(0,0,0,0.75) 100%)",
+          background: "radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.45) 100%)",
         }}
       />
 
