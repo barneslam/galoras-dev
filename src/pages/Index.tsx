@@ -100,9 +100,9 @@ export default function Index() {
             Every high-performer has blind spots. Galoras connects you with a coach who's been in the room and help you lead with more clarity, confidence, and impact.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link to="/coaching">
+            <Link to="/signup">
               <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90">
-                Explore the Coaching Exchange
+                Join the Galoras Community
               </Button>
             </Link>
             <Link to="/contact">
