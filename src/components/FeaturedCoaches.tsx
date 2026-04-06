@@ -14,10 +14,9 @@ type FeaturedCoach = {
 const SECTION_H = 680;  // px — section height
 const OVERLAP   = 210;  // px — how much each coach overlaps the previous
 
-// Per-coach image scale overrides to compensate for different photo crops
-// (e.g. Barnes is a portrait/chest-up shot, Conor/Mitesh are full-body standing)
-const SCALE_OVERRIDES: Record<string, number> = {
-  "Barnes Lam": 2.0,
+// Per-coach image overrides to compensate for different photo crops
+const COACH_OVERRIDES: Record<string, { scale: number; translateY: string }> = {
+  "Barnes Lam": { scale: 2.0, translateY: "-25%" },
 };
 
 export function FeaturedCoaches() {
@@ -91,7 +90,7 @@ export function FeaturedCoaches() {
                     objectPosition: "bottom center",
                     filter: "grayscale(1)",
                     transition: "filter 0.4s ease",
-                    transform: `scale(${SCALE_OVERRIDES[coach.display_name || ""] ?? 1})`,
+                    transform: `scale(${COACH_OVERRIDES[coach.display_name || ""]?.scale ?? 1}) translateY(${COACH_OVERRIDES[coach.display_name || ""]?.translateY ?? "0%"})`,
                     transformOrigin: "bottom center",
                   }}
                   onMouseEnter={(e) =>
