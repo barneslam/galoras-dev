@@ -5,31 +5,7 @@ import { OptimizedImage } from "@/components/ui/optimized-image";
 import { FounderVideoModal } from "@/components/FounderVideoModal";
 import { FeaturedCoaches } from "@/components/FeaturedCoaches";
 import { HowItWorks } from "@/components/HowItWorks";
-import { ArrowRight, Users, Building2, Compass, Zap, Target, Brain, MessageCircle, TrendingUp } from "lucide-react";
-
-const pillars = [
-  {
-    icon: Users,
-    title: "Coaching Exchange",
-    description: "A performance-led selection system that surfaces coaches with demonstrated execution experience — not just polished profiles.",
-    href: "/coaching",
-    cta: "Explore the Exchange",
-  },
-  {
-    icon: Building2,
-    title: "Galoras for Business",
-    description: "Access execution-ready coaches and operators who have performed under real organizational pressure — without relying on reputation or guesswork.",
-    href: "/business",
-    cta: "Explore Programs",
-  },
-  {
-    icon: Compass,
-    title: "Compass AI",
-    description: "Decision-support infrastructure that strengthens signal quality, tracks progress, and supports evidence-based coaching deployment.",
-    href: "/compass",
-    cta: "See How It Works",
-  },
-];
+import { ArrowRight, Compass, Zap, Target, Brain, MessageCircle, TrendingUp } from "lucide-react";
 
 const categories = [
   { icon: Target, name: "Leadership", slug: "leadership" },
@@ -136,42 +112,6 @@ export default function Index() {
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* Three Pillars */}
-      <section className="section-padding bg-background">
-        <div className="container-wide">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-display font-bold mb-4">The Galoras Ecosystem</h2>
-            <p className="text-muted-foreground text-lg max-w-3xl mx-auto">
-              Three integrated pillars designed to identify, validate, and deploy coaching capability across individual, group, and enterprise environments.
-            </p>
-          </div>
-          
-          <div className="grid md:grid-cols-3 gap-8">
-            {pillars.map((pillar, index) => (
-              <Link
-                key={pillar.title}
-                to={pillar.href}
-                className="group relative p-8 rounded-2xl bg-card border border-border hover:border-primary/50 transition-all duration-300 card-hover"
-                style={{ animationDelay: `${index * 0.1}s` }}
-              >
-                <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                <div className="relative">
-                  <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                    <pillar.icon className="h-7 w-7 text-primary" />
-                  </div>
-                  <h3 className="text-xl font-display font-semibold mb-3">{pillar.title}</h3>
-                  <p className="text-muted-foreground mb-6">{pillar.description}</p>
-                  <span className="inline-flex items-center text-primary font-medium group-hover:gap-2 transition-all">
-                    {pillar.cta}
-                    <ArrowRight className="ml-1 h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                  </span>
-                </div>
-              </Link>
-            ))}
           </div>
         </div>
       </section>
