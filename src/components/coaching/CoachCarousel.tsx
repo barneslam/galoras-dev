@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { MessageCircle } from "lucide-react";
+import { ContactModal } from "./ContactModal";
 
 type CarouselCoach = {
   id: string;
@@ -22,6 +23,7 @@ export function CoachCarousel() {
   const navigate = useNavigate();
   const [index, setIndex] = useState(0);
   const [transitioning, setTransitioning] = useState(false);
+  const [contactCoach, setContactCoach] = useState<{ id: string; name: string } | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const { data: coaches } = useQuery({
@@ -56,11 +58,16 @@ export function CoachCarousel() {
 
   if (!coaches || coaches.length === 0) return null;
 
+  const openContact = (coach: CarouselCoach) => {
+    setContactCoach({ id: coach.id, name: coach.display_name || "Coach" });
+  };
+
   const visible = Array.from({ length: Math.min(VISIBLE, coaches.length) }, (_, i) => {
     return coaches[(index + i) % coaches.length];
   });
 
   return (
+    <>
     <section className="py-16 bg-zinc-900">
       <div className="container-wide">
         <div className="text-center mb-10">
@@ -115,21 +122,13 @@ export function CoachCarousel() {
                   >
                     View Profile
                   </button>
-                  {coach.booking_url ? (
-                    <a
-                      href={coach.booking_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center justify-center w-9 h-9 rounded-lg border border-zinc-600 hover:border-primary hover:text-primary text-zinc-400 transition-colors"
-                      title="Book a session"
-                    >
-                      <MessageCircle className="h-4 w-4" />
-                    </a>
-                  ) : (
-                    <div className="flex items-center justify-center w-9 h-9 rounded-lg border border-zinc-700 text-zinc-600">
-                      <MessageCircle className="h-4 w-4" />
-                    </div>
-                  )}
+                  <button
+                    onClick={() => openContact(coach)}
+                    className="flex items-center justify-center w-9 h-9 rounded-lg border border-zinc-600 hover:border-primary hover:text-primary text-zinc-400 transition-colors"
+                    title="Send a message"
+                  >
+                    <MessageCircle className="h-4 w-4" />
+                  </button>
                 </div>
               </div>
             </div>
@@ -137,5 +136,14 @@ export function CoachCarousel() {
         </div>
       </div>
     </section>
+
+    {contactCoach && (
+      <ContactModal
+        coachId={contactCoach.id}
+        coachName={contactCoach.name}
+        onClose={() => setContactCoach(null)}
+      />
+    )}
+    </>
   );
 }
