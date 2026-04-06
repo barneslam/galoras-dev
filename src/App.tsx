@@ -42,6 +42,7 @@ import Applicants from "./pages/admin/Applicants";
 import CoachesList from "./pages/admin/CoachesList";
 import CoachEditorDetail from "./pages/admin/CoachEditorDetail";
 import Bookings from "@/pages/admin/Bookings";
+import CompleteRegistration from "./pages/CompleteRegistration";
 
 const queryClient = new QueryClient();
 
@@ -125,6 +126,7 @@ const App = () => (
 
           {/* Payments & Subscriptions */}
           <Route path="/pricing" element={<Pricing />} />
+          <Route path="/complete-registration" element={<CompleteRegistration />} />
           <Route path="/booking-success" element={<BookingSuccess />} />
           <Route path="/subscription-success" element={<SubscriptionSuccess />} />
 
