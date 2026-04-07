@@ -178,15 +178,29 @@ Deno.serve(async (req) => {
           subject: "You're approved — Welcome to the Galoras Coach Ecosystem",
           html: `
             <div style="font-family:sans-serif;max-width:560px;margin:0 auto;color:#111">
-              <h2>Welcome to Galoras, ${reg.full_name ?? "Coach"}!</h2>
-              <p>Your application has been <strong>approved</strong>. You're now an active ${TIER_LABELS[tier]} coach on the Galoras platform.</p>
-              <p>Your subscription of <strong>$${amountCents / 100}/month</strong> has been activated.</p>
+              <h2>Congratulations, ${reg.full_name ?? "Coach"}! You're in.</h2>
+              <p>Your application has been <strong>approved</strong>. Welcome to the Galoras coaching network — you're now an active <strong>${TIER_LABELS[tier]} Coach</strong> on the platform.</p>
+              <p>Your subscription of <strong>$${amountCents / 100}/month</strong> has been activated and your profile is now live.</p>
+
+              <div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:12px;padding:20px;margin:24px 0">
+                <p style="margin:0 0 8px;font-weight:600;color:#0369a1">Next Step: Book Your Orientation Call</p>
+                <p style="margin:0 0 16px;font-size:14px;color:#374151">
+                  Schedule a 30-minute orientation with Barnes to get you set up, walk through the platform, and discuss how to get the most from your Galoras membership.
+                </p>
+                <a href="https://calendly.com/barnes-lam/galoras-initial-session-call"
+                   style="background:#0ea5e9;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600;display:inline-block">
+                  Book Your Orientation →
+                </a>
+              </div>
+
               <p style="margin:24px 0">
                 <a href="https://uat-galoras.site/coaching"
-                   style="background:#38bdf8;color:#000;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600;display:inline-block">
-                  View Your Profile →
+                   style="background:#18181b;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600;display:inline-block;border:1px solid #3f3f46">
+                  View Your Coach Profile →
                 </a>
               </p>
+
+              <p style="font-size:14px;color:#6b7280">Questions? Reply to this email or reach out to <a href="mailto:barnes@thestrategypitch.com" style="color:#0ea5e9">barnes@thestrategypitch.com</a>.</p>
               <hr style="border:none;border-top:1px solid #eee;margin:24px 0"/>
               <p style="color:#999;font-size:12px">© Galoras · uat-galoras.site</p>
             </div>

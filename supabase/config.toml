@@ -22,3 +22,6 @@ verify_jwt = false
 
 [functions.toggle-featured-coach]
 verify_jwt = false
+
+[functions.analyze-coach-application]
+verify_jwt = false

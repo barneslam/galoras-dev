@@ -183,11 +183,20 @@ export default function Apply() {
         booking_url: normalizedBooking,
       };
 
-      const { error } = await supabase
+      const { data: inserted, error } = await supabase
         .from("coach_applications")
-        .insert(payload as any);
+        .insert(payload as any)
+        .select("id")
+        .single();
 
       if (error) throw error;
+
+      // Fire-and-forget AI analysis — don't block the user
+      if (inserted?.id) {
+        supabase.functions.invoke("analyze-coach-application", {
+          body: { applicationId: inserted.id },
+        }).catch(() => {/* silent — analysis runs in background */});
+      }
 
       toast({
         title: "Application submitted!",

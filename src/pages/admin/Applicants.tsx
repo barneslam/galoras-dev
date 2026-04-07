@@ -5,8 +5,23 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import {
   CheckCircle2, XCircle, RefreshCw, Clock, User,
-  Linkedin, Globe, Mail, Phone, Loader2, AlertTriangle,
+  Linkedin, Globe, Mail, Phone, Loader2, Sparkles,
 } from "lucide-react";
+
+type FitDimension = { score: number; note: string };
+type FitDimensions = {
+  overall_score?: number;
+  dimensions?: {
+    pillar_alignment?: FitDimension;
+    professional_credibility?: FitDimension;
+    sport_of_business_fit?: FitDimension;
+    communication_quality?: FitDimension;
+    market_positioning?: FitDimension;
+    growth_potential?: FitDimension;
+  };
+  summary?: string;
+  recommendation?: string;
+};
 
 type Application = {
   id: string;
@@ -22,8 +37,8 @@ type Application = {
   reviewer_notes: string | null;
   decision_reason: string | null;
   fit_score: number;
+  fit_score_dimensions: FitDimensions | null;
   created_at: string | null;
-  // joined from profiles via email match
   user_id?: string | null;
 };
 
@@ -31,10 +46,11 @@ type PortfolioCount = { tier: string; count: number };
 
 const STATUS_BADGE: Record<string, { label: string; color: string }> = {
   pending:            { label: "Pending",          color: "bg-zinc-700 text-zinc-300" },
-  under_review:       { label: "Under Review",     color: "bg-sky-900 text-sky-300" },
+  under_review:       { label: "AI Analysing",     color: "bg-sky-900 text-sky-300" },
   approved:           { label: "Approved",         color: "bg-emerald-900 text-emerald-300" },
   revision_requested: { label: "Needs Revision",   color: "bg-amber-900 text-amber-300" },
   rejected:           { label: "Rejected",         color: "bg-red-900 text-red-300" },
+  auto_rejected:      { label: "Auto-Rejected",    color: "bg-red-950 text-red-400" },
 };
 
 function Badge({ status }: { status: string }) {
@@ -46,17 +62,22 @@ function Badge({ status }: { status: string }) {
   );
 }
 
-function ScoreBar({ label, value }: { label: string; value: number }) {
+function ScoreBar({ label, value, note }: { label: string; value: number; note?: string }) {
   return (
-    <div className="flex items-center gap-3">
-      <span className="text-xs text-zinc-400 w-32 shrink-0">{label}</span>
-      <div className="flex-1 h-1.5 bg-zinc-800 rounded-full overflow-hidden">
-        <div
-          className="h-full bg-primary rounded-full transition-all duration-500"
-          style={{ width: `${value}%` }}
-        />
+    <div className="group">
+      <div className="flex items-center gap-3">
+        <span className="text-xs text-zinc-400 w-36 shrink-0">{label}</span>
+        <div className="flex-1 h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+          <div
+            className="h-full bg-primary rounded-full transition-all duration-500"
+            style={{ width: `${value}%` }}
+          />
+        </div>
+        <span className="text-xs text-zinc-400 w-6 text-right">{value}</span>
       </div>
-      <span className="text-xs text-zinc-400 w-6 text-right">{value}</span>
+      {note && (
+        <p className="text-xs text-zinc-600 mt-0.5 pl-[9.5rem] leading-relaxed">{note}</p>
+      )}
     </div>
   );
 }
@@ -340,9 +361,16 @@ export default function Applicants() {
                   {/* Fit Score */}
                   <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
                     <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-sm font-semibold text-white uppercase tracking-wider">
-                        Ecosystem Fit Score
-                      </h3>
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-sm font-semibold text-white uppercase tracking-wider">
+                          Ecosystem Fit Score
+                        </h3>
+                        {selected.fit_score_dimensions && (
+                          <span className="flex items-center gap-1 text-xs text-primary">
+                            <Sparkles className="h-3 w-3" /> AI
+                          </span>
+                        )}
+                      </div>
                       <div className="flex items-center gap-2">
                         <input
                           type="number"
@@ -355,17 +383,61 @@ export default function Applicants() {
                         <span className="text-zinc-500 text-sm">/ 100</span>
                       </div>
                     </div>
-                    <div className="space-y-2.5">
-                      <ScoreBar label="Expertise Depth" value={Math.round(fitScore * 0.2)} />
-                      <ScoreBar label="Differentiation" value={Math.round(fitScore * 0.15)} />
-                      <ScoreBar label="Market Demand" value={Math.round(fitScore * 0.2)} />
-                      <ScoreBar label="Portfolio Gap" value={Math.round(fitScore * 0.2)} />
-                      <ScoreBar label="Enterprise Ready" value={Math.round(fitScore * 0.1)} />
-                      <ScoreBar label="Brand Alignment" value={Math.round(fitScore * 0.15)} />
-                    </div>
-                    <p className="text-xs text-zinc-600 mt-3">
-                      AI scoring will auto-populate these dimensions in a future release.
-                    </p>
+
+                    {/* AI summary */}
+                    {selected.fit_score_dimensions?.summary && (
+                      <div className="mb-4 p-3 bg-zinc-800/60 border border-zinc-700 rounded-xl">
+                        <p className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-1.5">
+                          AI Assessment
+                        </p>
+                        <p className="text-xs text-zinc-300 leading-relaxed">
+                          {selected.fit_score_dimensions.summary}
+                        </p>
+                        {selected.fit_score_dimensions.recommendation && (
+                          <p className="text-xs mt-2">
+                            <span className="text-zinc-500">Recommendation: </span>
+                            <span className={`font-semibold capitalize ${
+                              selected.fit_score_dimensions.recommendation === "approve"
+                                ? "text-emerald-400"
+                                : selected.fit_score_dimensions.recommendation === "reject"
+                                ? "text-red-400"
+                                : "text-amber-400"
+                            }`}>
+                              {selected.fit_score_dimensions.recommendation}
+                            </span>
+                          </p>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Dimension bars */}
+                    {selected.review_status === "under_review" && !selected.fit_score_dimensions ? (
+                      <div className="flex items-center gap-2 text-zinc-500 text-xs py-4">
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        AI analysis in progress…
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {([
+                          ["pillar_alignment",        "Pillar Alignment"],
+                          ["professional_credibility","Pro. Credibility"],
+                          ["sport_of_business_fit",   "Sport of Business"],
+                          ["communication_quality",   "Communication"],
+                          ["market_positioning",      "Market Position"],
+                          ["growth_potential",        "Growth Potential"],
+                        ] as const).map(([key, label]) => {
+                          const dim = selected.fit_score_dimensions?.dimensions?.[key];
+                          const score = dim?.score ?? Math.round(fitScore * 0.17);
+                          return <ScoreBar key={key} label={label} value={score} note={dim?.note} />;
+                        })}
+                      </div>
+                    )}
+
+                    {!selected.fit_score_dimensions && selected.review_status !== "under_review" && (
+                      <p className="text-xs text-zinc-600 mt-3">
+                        AI scoring pending — triggers automatically on new applications.
+                      </p>
+                    )}
                   </div>
 
                   {/* Decision Panel */}
@@ -476,11 +548,12 @@ export default function Applicants() {
                     Pipeline
                   </h3>
                   {[
-                    { label: "Pending",      status: "pending",            icon: Clock },
-                    { label: "Under Review", status: "under_review",       icon: User },
-                    { label: "Approved",     status: "approved",           icon: CheckCircle2 },
-                    { label: "Revision",     status: "revision_requested", icon: RefreshCw },
-                    { label: "Rejected",     status: "rejected",           icon: XCircle },
+                    { label: "Pending",       status: "pending",            icon: Clock },
+                    { label: "AI Analysing",  status: "under_review",       icon: Sparkles },
+                    { label: "Approved",      status: "approved",           icon: CheckCircle2 },
+                    { label: "Revision",      status: "revision_requested", icon: RefreshCw },
+                    { label: "Rejected",      status: "rejected",           icon: XCircle },
+                    { label: "Auto-Rejected", status: "auto_rejected",      icon: XCircle },
                   ].map(({ label, status, icon: Icon }) => {
                     const count = applications.filter((a) => (a.review_status ?? "pending") === status).length;
                     return (
