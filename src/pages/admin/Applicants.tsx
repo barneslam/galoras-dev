@@ -125,10 +125,20 @@ export default function Applicants() {
   const saveDraft = async () => {
     if (!selected) return;
     setSaving(true);
+    const now = new Date().toISOString();
     await supabase.from("coach_applications").update({
       fit_score: fitScore, reviewer_notes: decisionNotes,
       review_status: "under_review", status: "under_review",
     }).eq("id", selected.id);
+
+    // Stamp reviewed_at + lifecycle on coaches record if it exists
+    const { data: reg } = await supabase.from("coach_registrations").select("user_id").eq("email", selected.email).maybeSingle();
+    if (reg?.user_id) {
+      await supabase.from("coaches")
+        .update({ reviewed_at: now, lifecycle_status: "under_review" })
+        .eq("user_id", reg.user_id);
+    }
+
     toast({ title: "Saved", description: "Notes and score updated." });
     setSaving(false);
     fetchAll();
@@ -142,6 +152,7 @@ export default function Applicants() {
     }
     setSaving(true);
     const { data: { session } } = await supabase.auth.getSession();
+    const now = new Date().toISOString();
 
     if (action === "approved") {
       const { data: reg } = await supabase.from("coach_registrations").select("user_id").eq("email", selected.email).maybeSingle();
@@ -159,12 +170,33 @@ export default function Applicants() {
         setSaving(false);
         return;
       }
+      // Stamp reviewed_at + published_at on coaches record
+      await supabase.from("coaches")
+        .update({ reviewed_at: now, published_at: now, reviewer_notes: decisionNotes || null })
+        .eq("user_id", reg.user_id);
       toast({ title: "Coach approved!", description: "Subscription activated and coach published." });
     } else {
       await supabase.from("coach_applications").update({
         review_status: action, status: action,
         reviewer_notes: decisionNotes, decision_reason: decisionNotes, fit_score: fitScore,
       }).eq("id", selected.id);
+
+      // Stamp reviewed_at + lifecycle on coaches record if it exists
+      const lifecycleMap: Record<string, string> = {
+        revision_requested: "revision_required",
+        rejected: "rejected",
+      };
+      const { data: reg } = await supabase.from("coach_registrations").select("user_id").eq("email", selected.email).maybeSingle();
+      if (reg?.user_id) {
+        await supabase.from("coaches")
+          .update({
+            reviewed_at: now,
+            lifecycle_status: lifecycleMap[action] ?? action,
+            reviewer_notes: decisionNotes,
+          })
+          .eq("user_id", reg.user_id);
+      }
+
       toast({ title: action === "rejected" ? "Application rejected" : "Revision requested", description: "Application status updated." });
     }
     setSaving(false);
