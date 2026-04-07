@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { Layout } from "@/components/layout";
+import { AdminLayout } from "@/components/AdminLayout";
 import { supabase } from "@/integrations/supabase/client";
 
 export default function CoachEditorDetail() {
@@ -86,15 +86,15 @@ export default function CoachEditorDetail() {
 
   if (loading) {
     return (
-      <Layout>
+      <AdminLayout>
         <div style={{ padding: 40 }}>Loading...</div>
-      </Layout>
+      </AdminLayout>
     );
   }
 
   if (!coach) {
     return (
-      <Layout>
+      <AdminLayout>
         <div style={{ padding: 40 }}>
           <div style={{ marginBottom: 16 }}>
             <Link to="/admin/coaches">← Back to Coaches</Link>
@@ -103,12 +103,12 @@ export default function CoachEditorDetail() {
           <div>ID: {id}</div>
           <pre>{debugError}</pre>
         </div>
-      </Layout>
+      </AdminLayout>
     );
   }
 
   return (
-    <Layout>
+    <AdminLayout>
       <div style={{ padding: 40, maxWidth: 800 }}>
         <div style={{ marginBottom: 16 }}>
           <Link to="/admin/coaches">← Back to Coaches</Link>
@@ -280,6 +280,6 @@ export default function CoachEditorDetail() {
           </button>
         </div>
       </div>
-    </Layout>
+    </AdminLayout>
   );
 }

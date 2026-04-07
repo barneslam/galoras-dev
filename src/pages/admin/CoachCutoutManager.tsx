@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Layout } from "@/components/layout";
+import { AdminLayout } from "@/components/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -130,7 +130,7 @@ export default function CoachCutoutManager() {
   const isProcessingAny = processingCoaches.size > 0 || regenerateAllMutation.isPending;
 
   return (
-    <Layout>
+    <AdminLayout>
       <div className="container py-12 max-w-7xl">
         <div className="flex flex-col gap-6">
           {/* Header */}
@@ -300,6 +300,6 @@ export default function CoachCutoutManager() {
           )}
         </div>
       </div>
-    </Layout>
+    </AdminLayout>
   );
 }

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Layout } from "@/components/layout";
+import { AdminLayout } from "@/components/AdminLayout";
 import { supabase } from "@/integrations/supabase/client";
 
 type CoachRow = {
@@ -91,7 +91,7 @@ export default function CoachesList() {
   } as const;
 
   return (
-    <Layout>
+    <AdminLayout>
       <div style={{ padding: 40 }}>
         <h1 style={{ marginBottom: 24 }}>Coaches</h1>
 
@@ -314,6 +314,6 @@ export default function CoachesList() {
           </div>
         )}
       </div>
-    </Layout>
+    </AdminLayout>
   );
 }

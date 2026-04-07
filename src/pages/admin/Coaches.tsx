@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Layout } from "@/components/layout";
+import { AdminLayout } from "@/components/AdminLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 
@@ -66,8 +66,8 @@ export default function CoachesAdmin() {
   };
 
   return (
-    <Layout>
-      <section className="relative pt-28 pb-12">
+    <AdminLayout>
+      <section className="p-6">
         <div className="container-wide">
           <div className="max-w-6xl mx-auto">
             <div className="mb-8">
@@ -195,6 +195,6 @@ export default function CoachesAdmin() {
           </div>
         </div>
       </section>
-    </Layout>
+    </AdminLayout>
   );
 }
