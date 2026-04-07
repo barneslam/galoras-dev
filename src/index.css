@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Sora:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -12,113 +12,83 @@
 
 @layer base {
   :root {
-    /* Core palette - Light mode */
-    --background: 0 0% 100%;
-    --foreground: 222 47% 11%;
+    /* Galoras Dark Athletic Palette */
+    
+    /* Core - Electric Lime + Near-Black */
+    --background: 0 7% 6%;        /* #0B0B0B - near-black */
+    --foreground: 0 0% 100%;       /* #FFFFFF - white text */
 
-    --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    --card: 0 10% 10%;             /* #1A1A1A - dark card bg */
+    --card-foreground: 0 0% 100%;  /* white text on card */
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
+    --popover: 0 10% 10%;
+    --popover-foreground: 0 0% 100%;
 
-    /* Primary - Light blue from logo */
-    --primary: 199 85% 70%;
-    --primary-foreground: 222 47% 8%;
+    /* Primary - Electric Lime */
+    --primary: 76 100% 50%;        /* #C3FF00 - electric lime */
+    --primary-foreground: 0 7% 6%; /* near-black text on lime */
 
-    /* Secondary - Navy */
-    --secondary: 222 47% 11%;
+    /* Secondary - Dark Gray */
+    --secondary: 0 0% 20%;         /* #333333 - dark gray */
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 220 14% 96%;
-    --muted-foreground: 220 9% 46%;
+    --muted: 0 0% 25%;             /* #404040 - muted dark */
+    --muted-foreground: 0 0% 70%;  /* lighter gray text */
 
-    /* Accent - Bright electric blue */
-    --accent: 199 100% 55%;
-    --accent-foreground: 222 47% 8%;
+    /* Accent - Lime (same as primary) */
+    --accent: 76 100% 50%;         /* #C3FF00 */
+    --accent-foreground: 0 7% 6%;
 
-    --destructive: 0 84% 60%;
+    --destructive: 0 84% 60%;      /* keep red for errors */
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 199 85% 70%;
+    --border: 0 0% 20%;            /* #333333 - dark border */
+    --input: 0 0% 20%;             /* dark input bg */
+    --ring: 76 100% 50%;           /* lime focus ring */
 
-    --radius: 0.75rem;
+    --radius: 0px;                 /* BRUTAL - no rounding */
 
     /* Custom Galoras tokens */
-    --navy: 222 47% 8%;
-    --navy-light: 222 35% 15%;
-    --sky: 199 85% 70%;
-    --sky-bright: 199 100% 55%;
-    --sky-glow: 199 100% 80%;
+    --lime: 76 100% 50%;           /* #C3FF00 */
+    --lime-hover: 76 80% 45%;      /* #A8E600 - hover state */
+    --black: 0 7% 6%;              /* #0B0B0B */
+    --gray-dark: 0 0% 20%;         /* #333333 */
+    --white: 0 0% 100%;            /* #FFFFFF */
     
-    /* Gradients */
-    --gradient-hero: linear-gradient(135deg, hsl(222 47% 8%) 0%, hsl(222 35% 15%) 50%, hsl(222 47% 8%) 100%);
-    --gradient-accent: linear-gradient(135deg, hsl(199 100% 55%) 0%, hsl(199 85% 70%) 100%);
-    --gradient-glow: radial-gradient(ellipse at center, hsl(199 100% 55% / 0.15) 0%, transparent 70%);
+    /* Shadows - minimal, dark-appropriate */
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+    --shadow-glow: 0 0 20px rgba(195, 255, 0, 0.15);
     
-    /* Shadows */
-    --shadow-sm: 0 1px 2px 0 hsl(222 47% 11% / 0.05);
-    --shadow-md: 0 4px 6px -1px hsl(222 47% 11% / 0.1), 0 2px 4px -2px hsl(222 47% 11% / 0.1);
-    --shadow-lg: 0 10px 15px -3px hsl(222 47% 11% / 0.1), 0 4px 6px -4px hsl(222 47% 11% / 0.1);
-    --shadow-glow: 0 0 40px hsl(199 100% 55% / 0.3);
-
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 199 85% 70%;
+    /* Sidebar (for admin) */
+    --sidebar-background: 0 7% 6%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 76 100% 50%;
+    --sidebar-primary-foreground: 0 7% 6%;
+    --sidebar-accent: 0 0% 20%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 0 0% 20%;
+    --sidebar-ring: 76 100% 50%;
   }
 
   .dark {
-    /* Core palette - Dark mode (Primary mode for Galoras) */
-    /* Warmer navy with subtle warm undertones */
-    --background: 220 30% 10%;
-    --foreground: 210 40% 98%;
-
-    --card: 220 28% 14%;
-    --card-foreground: 210 40% 98%;
-
-    --popover: 220 28% 14%;
-    --popover-foreground: 210 40% 98%;
-
-    /* Primary - Light blue stays vibrant */
-    --primary: 199 85% 70%;
-    --primary-foreground: 220 30% 8%;
-
-    /* Secondary - Warmer navy */
-    --secondary: 220 25% 20%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 220 25% 18%;
-    --muted-foreground: 215 20% 70%;
-
-    --accent: 199 100% 55%;
-    --accent-foreground: 220 30% 8%;
-
-    --destructive: 0 62% 30%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 220 25% 22%;
-    --input: 220 25% 22%;
-    --ring: 199 85% 70%;
-
-    /* Custom Galoras tokens - Dark - Warmer tones */
-    --navy: 220 30% 10%;
-    --navy-light: 220 25% 16%;
-    
-    --sidebar-background: 220 30% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 199 85% 70%;
-    --sidebar-primary-foreground: 220 30% 8%;
-    --sidebar-accent: 220 25% 18%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 220 25% 22%;
-    --sidebar-ring: 199 85% 70%;
+    /* Dark mode is PRIMARY for Galoras */
+    --background: 0 7% 6%;
+    --foreground: 0 0% 100%;
+    --card: 0 10% 10%;
+    --card-foreground: 0 0% 100%;
+    --primary: 76 100% 50%;
+    --primary-foreground: 0 7% 6%;
+    --secondary: 0 0% 20%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 0 0% 25%;
+    --muted-foreground: 0 0% 70%;
+    --accent: 76 100% 50%;
+    --accent-foreground: 0 7% 6%;
+    --border: 0 0% 20%;
+    --input: 0 0% 20%;
+    --ring: 76 100% 50%;
   }
 }
 
@@ -132,7 +102,7 @@
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply font-display font-semibold tracking-tight;
+    @apply font-display font-semibold tracking-tight uppercase;
   }
 }
 
