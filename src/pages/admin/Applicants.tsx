@@ -4,8 +4,12 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import {
+  Radar, RadarChart, PolarGrid, PolarAngleAxis, ResponsiveContainer,
+} from "recharts";
+import {
   CheckCircle2, XCircle, RefreshCw, Clock, User,
-  Linkedin, Globe, Mail, Phone, Loader2, Sparkles,
+  Linkedin, Globe, Mail, Phone, Loader2, Sparkles, Zap,
+  AlertTriangle, TrendingUp,
 } from "lucide-react";
 
 type FitDimension = { score: number; note: string };
@@ -32,6 +36,11 @@ type Application = {
   website_url: string | null;
   bio: string | null;
   why_galoras: string | null;
+  coaching_philosophy: string | null;
+  coach_background: string | null;
+  coaching_experience_years: number | null;
+  coaching_experience_level: string | null;
+  avatar_url: string | null;
   status: string | null;
   review_status: string;
   reviewer_notes: string | null;
@@ -45,42 +54,31 @@ type Application = {
 type PortfolioCount = { tier: string; count: number };
 
 const STATUS_BADGE: Record<string, { label: string; color: string }> = {
-  pending:            { label: "Pending",          color: "bg-zinc-700 text-zinc-300" },
-  under_review:       { label: "AI Analysing",     color: "bg-sky-900 text-sky-300" },
-  approved:           { label: "Approved",         color: "bg-emerald-900 text-emerald-300" },
-  revision_requested: { label: "Needs Revision",   color: "bg-amber-900 text-amber-300" },
-  rejected:           { label: "Rejected",         color: "bg-red-900 text-red-300" },
-  auto_rejected:      { label: "Auto-Rejected",    color: "bg-red-950 text-red-400" },
+  pending:            { label: "Pending",        color: "bg-zinc-700/60 text-zinc-300 border-zinc-600" },
+  under_review:       { label: "AI Analysing",   color: "bg-sky-900/60 text-sky-300 border-sky-700" },
+  approved:           { label: "Approved",       color: "bg-emerald-900/60 text-emerald-300 border-emerald-700" },
+  revision_requested: { label: "Needs Revision", color: "bg-amber-900/60 text-amber-300 border-amber-700" },
+  rejected:           { label: "Rejected",       color: "bg-red-900/60 text-red-400 border-red-800" },
+  auto_rejected:      { label: "Auto-Rejected",  color: "bg-red-950/80 text-red-400 border-red-900" },
 };
 
 function Badge({ status }: { status: string }) {
   const b = STATUS_BADGE[status] ?? STATUS_BADGE.pending;
   return (
-    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${b.color}`}>
+    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${b.color}`}>
       {b.label}
     </span>
   );
 }
 
-function ScoreBar({ label, value, note }: { label: string; value: number; note?: string }) {
-  return (
-    <div className="group">
-      <div className="flex items-center gap-3">
-        <span className="text-xs text-zinc-400 w-36 shrink-0">{label}</span>
-        <div className="flex-1 h-1.5 bg-zinc-800 rounded-full overflow-hidden">
-          <div
-            className="h-full bg-primary rounded-full transition-all duration-500"
-            style={{ width: `${value}%` }}
-          />
-        </div>
-        <span className="text-xs text-zinc-400 w-6 text-right">{value}</span>
-      </div>
-      {note && (
-        <p className="text-xs text-zinc-600 mt-0.5 pl-[9.5rem] leading-relaxed">{note}</p>
-      )}
-    </div>
-  );
-}
+const RADAR_DIMS = [
+  { key: "pillar_alignment",        label: "Pillar Align" },
+  { key: "professional_credibility",label: "Credibility" },
+  { key: "sport_of_business_fit",   label: "Sport of Biz" },
+  { key: "communication_quality",   label: "Communication" },
+  { key: "market_positioning",      label: "Positioning" },
+  { key: "growth_potential",        label: "Growth" },
+] as const;
 
 export default function Applicants() {
   const { toast } = useToast();
@@ -95,14 +93,8 @@ export default function Applicants() {
   const fetchAll = useCallback(async () => {
     setLoading(true);
     const [{ data: apps }, { data: coaches }] = await Promise.all([
-      supabase
-        .from("coach_applications")
-        .select("*")
-        .order("created_at", { ascending: false }),
-      supabase
-        .from("coaches")
-        .select("tier")
-        .eq("lifecycle_status", "published"),
+      supabase.from("coach_applications").select("*").order("created_at", { ascending: false }),
+      supabase.from("coaches").select("tier").eq("lifecycle_status", "published"),
     ]);
 
     const rows = (apps as unknown as Application[]) ?? [];
@@ -113,7 +105,6 @@ export default function Applicants() {
       setDecisionNotes(rows[0].reviewer_notes ?? "");
     }
 
-    // Portfolio density
     const counts: Record<string, number> = {};
     (coaches ?? []).forEach((c: any) => {
       const t = c.tier ?? "unset";
@@ -131,418 +122,333 @@ export default function Applicants() {
     setDecisionNotes(app.reviewer_notes ?? "");
   };
 
-  // ── Save fit score + notes without making a decision ──────────────────────
   const saveDraft = async () => {
     if (!selected) return;
     setSaving(true);
-    await supabase
-      .from("coach_applications")
-      .update({
-        fit_score: fitScore,
-        reviewer_notes: decisionNotes,
-        review_status: "under_review",
-        status: "under_review",
-      })
-      .eq("id", selected.id);
+    await supabase.from("coach_applications").update({
+      fit_score: fitScore, reviewer_notes: decisionNotes,
+      review_status: "under_review", status: "under_review",
+    }).eq("id", selected.id);
     toast({ title: "Saved", description: "Notes and score updated." });
     setSaving(false);
     fetchAll();
   };
 
-  // ── Decision handler ───────────────────────────────────────────────────────
   const decide = async (action: "approved" | "revision_requested" | "rejected") => {
     if (!selected) return;
     if (action !== "approved" && !decisionNotes.trim()) {
-      toast({
-        title: "Notes required",
-        description: "Please provide a reason before rejecting or requesting revision.",
-        variant: "destructive",
-      });
+      toast({ title: "Notes required", description: "Please provide a reason before rejecting or requesting revision.", variant: "destructive" });
       return;
     }
-
     setSaving(true);
-
-    // Get the coach's user_id from auth.users via email match
-    const { data: authUsers } = await supabase
-      .from("profiles")
-      .select("id")
-      .eq("full_name", selected.full_name ?? "")
-      .maybeSingle();
-
     const { data: { session } } = await supabase.auth.getSession();
 
     if (action === "approved") {
-      // Find the coach's user_id via email in profiles
-      const { data: profileByEmail } = await supabase
-        .from("profiles")
-        .select("id")
-        .limit(100);
-
-      // Try to find by coach_registrations email
-      const { data: reg } = await supabase
-        .from("coach_registrations")
-        .select("user_id")
-        .eq("email", selected.email)
-        .maybeSingle();
-
+      const { data: reg } = await supabase.from("coach_registrations").select("user_id").eq("email", selected.email).maybeSingle();
       if (!reg?.user_id) {
-        toast({
-          title: "No registration found",
-          description: "This coach hasn't completed the payment setup yet.",
-          variant: "destructive",
-        });
+        toast({ title: "No registration found", description: "This coach hasn't completed payment setup yet.", variant: "destructive" });
         setSaving(false);
         return;
       }
-
       const { error: fnError } = await supabase.functions.invoke("approve-coach", {
-        body: {
-          applicationId: selected.id,
-          coachUserId: reg.user_id,
-          decisionReason: decisionNotes,
-        },
+        body: { applicationId: selected.id, coachUserId: reg.user_id, decisionReason: decisionNotes },
         headers: { Authorization: `Bearer ${session?.access_token}` },
       });
-
       if (fnError) {
         toast({ title: "Approval failed", description: fnError.message, variant: "destructive" });
         setSaving(false);
         return;
       }
-
       toast({ title: "Coach approved!", description: "Subscription activated and coach published." });
     } else {
-      // Reject or revision — update application only
-      await supabase
-        .from("coach_applications")
-        .update({
-          review_status: action,
-          status: action,
-          reviewer_notes: decisionNotes,
-          decision_reason: decisionNotes,
-          fit_score: fitScore,
-        })
-        .eq("id", selected.id);
-
-      toast({
-        title: action === "rejected" ? "Application rejected" : "Revision requested",
-        description: "Application status updated.",
-      });
+      await supabase.from("coach_applications").update({
+        review_status: action, status: action,
+        reviewer_notes: decisionNotes, decision_reason: decisionNotes, fit_score: fitScore,
+      }).eq("id", selected.id);
+      toast({ title: action === "rejected" ? "Application rejected" : "Revision requested", description: "Application status updated." });
     }
-
     setSaving(false);
     fetchAll();
   };
 
+  // Radar data
+  const radarData = RADAR_DIMS.map(({ key, label }) => ({
+    subject: label,
+    value: selected?.fit_score_dimensions?.dimensions?.[key]?.score ?? Math.round((selected?.fit_score ?? 0) * 0.17),
+    fullMark: 100,
+  }));
+
+  // Portfolio saturation signals
   const totalCoaches = portfolio.reduce((s, p) => s + p.count, 0);
+  const saturationAlerts = portfolio
+    .filter(p => totalCoaches > 0 && p.count / totalCoaches > 0.35)
+    .map(p => ({ type: "warning" as const, label: `High Saturation in ${p.tier.charAt(0).toUpperCase() + p.tier.slice(1)}` }));
+  const gapAlerts = ["pro", "elite", "master"]
+    .filter(t => !portfolio.find(p => p.tier === t) || (portfolio.find(p => p.tier === t)?.count ?? 0) < 2)
+    .map(t => ({ type: "gap" as const, label: `Priority Gap in ${t.charAt(0).toUpperCase() + t.slice(1)}` }));
+
+  // Comparative rank
+  const rank = applications.length > 0
+    ? Math.round(((applications.filter(a => (a.fit_score ?? 0) <= fitScore).length) / applications.length) * 100)
+    : 0;
 
   return (
     <AdminLayout title="Coach Approval">
-      <section className="p-6">
-        <div className="max-w-7xl mx-auto">
-
-          <div className="mb-6">
-            <h2 className="text-xl font-display font-black text-white uppercase tracking-tight">
+      {/* ── Page header ── */}
+      <div className="px-6 pt-5 pb-3 border-b border-[#1e2d45]">
+        <div className="flex items-center gap-3">
+          <Zap className="h-5 w-5 text-amber-400 fill-amber-400" />
+          <div>
+            <h2 className="text-lg font-black text-white tracking-wide uppercase">
               Coach Approval Dashboard
             </h2>
-            <p className="text-zinc-500 text-sm mt-0.5">
-              Intelligent selection for the Galoras performance network.
+            <p className="text-xs text-slate-400 italic">
+              Intelligent Selection for Elite <em>Performance Network</em>
             </p>
           </div>
+        </div>
+      </div>
 
-          {loading ? (
-            <div className="flex items-center justify-center py-24 gap-3 text-zinc-400">
-              <Loader2 className="h-5 w-5 animate-spin" />
-              <span>Loading applications…</span>
-            </div>
-          ) : (
-            <div className="grid grid-cols-[260px_1fr_220px] gap-5">
+      <section className="p-5 bg-[#0a1628] min-h-full">
+        {loading ? (
+          <div className="flex items-center justify-center py-24 gap-3 text-slate-400">
+            <Loader2 className="h-5 w-5 animate-spin" />
+            <span>Loading applications…</span>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-4">
 
-              {/* ── LEFT: Applicant list ── */}
-              <div className="space-y-2">
-                <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-3">
+            {/* ── TOP ROW: 3 columns ── */}
+            <div className="grid grid-cols-[260px_1fr_220px] gap-4">
+
+              {/* LEFT: Applicant list + snapshot */}
+              <div className="space-y-3">
+                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
                   Applications ({applications.length})
                 </p>
-                {applications.length === 0 && (
-                  <p className="text-zinc-600 text-sm">No applications yet.</p>
-                )}
-                {applications.map((app) => (
-                  <button
-                    key={app.id}
-                    onClick={() => selectApp(app)}
-                    className={`w-full text-left rounded-xl border px-4 py-3 transition-all ${
-                      selected?.id === app.id
-                        ? "border-primary bg-primary/10"
-                        : "border-zinc-800 bg-zinc-900 hover:border-zinc-600"
-                    }`}
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0">
-                        <p className="text-sm font-semibold text-white truncate">
-                          {app.full_name || "Unnamed"}
-                        </p>
-                        <p className="text-xs text-zinc-500 truncate mt-0.5">{app.email}</p>
+                <div className="space-y-1.5">
+                  {applications.map((app) => (
+                    <button
+                      key={app.id}
+                      onClick={() => selectApp(app)}
+                      className={`w-full text-left rounded-xl border px-3 py-2.5 transition-all ${
+                        selected?.id === app.id
+                          ? "border-amber-500/60 bg-amber-500/10"
+                          : "border-[#1e3a5f] bg-[#0d1f35] hover:border-[#2a4a6f]"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-white truncate">{app.full_name || "Unnamed"}</p>
+                          <p className="text-xs text-slate-500 truncate mt-0.5">{app.email}</p>
+                        </div>
+                        {app.fit_score > 0 && (
+                          <span className="text-sm font-black text-amber-400 shrink-0">{app.fit_score}</span>
+                        )}
                       </div>
-                      {app.fit_score > 0 && (
-                        <span className="text-xs font-bold text-primary shrink-0">{app.fit_score}</span>
-                      )}
-                    </div>
-                    <div className="mt-2">
-                      <Badge status={app.review_status ?? "pending"} />
-                    </div>
-                  </button>
-                ))}
-              </div>
-
-              {/* ── CENTER: Coach snapshot + decision ── */}
-              {selected ? (
-                <div className="space-y-4">
-
-                  {/* Snapshot card */}
-                  <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
-                    <div className="flex items-start justify-between mb-4">
-                      <div>
-                        <h2 className="text-xl font-bold text-white">{selected.full_name}</h2>
-                        <p className="text-zinc-400 text-sm mt-0.5">
-                          Applied {selected.created_at
-                            ? new Date(selected.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
-                            : "—"}
-                        </p>
+                      <div className="mt-1.5">
+                        <Badge status={app.review_status ?? "pending"} />
                       </div>
-                      <Badge status={selected.review_status ?? "pending"} />
-                    </div>
+                    </button>
+                  ))}
+                </div>
 
-                    <div className="grid grid-cols-2 gap-x-6 gap-y-2 mb-5">
-                      <div className="flex items-center gap-2 text-sm text-zinc-400">
-                        <Mail className="h-3.5 w-3.5 shrink-0" />
-                        <span className="truncate">{selected.email}</span>
-                      </div>
-                      {selected.phone && (
-                        <div className="flex items-center gap-2 text-sm text-zinc-400">
-                          <Phone className="h-3.5 w-3.5 shrink-0" />
-                          <span>{selected.phone}</span>
+                {/* Coach Snapshot card */}
+                {selected && (
+                  <div className="rounded-xl border border-[#1e3a5f] bg-[#0d1f35] p-4 mt-3">
+                    <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">
+                      Coach Snapshot
+                    </p>
+
+                    {/* Avatar */}
+                    <div className="flex justify-center mb-3">
+                      {selected.avatar_url ? (
+                        <img src={selected.avatar_url} alt={selected.full_name ?? ""} className="w-20 h-20 rounded-xl object-cover border border-[#1e3a5f]" />
+                      ) : (
+                        <div className="w-20 h-20 rounded-xl bg-[#1a2f4a] border border-[#1e3a5f] flex items-center justify-center">
+                          <User className="h-8 w-8 text-slate-600" />
                         </div>
                       )}
+                    </div>
+
+                    <p className="text-sm font-bold text-white text-center mb-3">{selected.full_name}</p>
+
+                    {/* Credential list */}
+                    <div className="space-y-1.5">
+                      {[
+                        { label: "Experience", value: selected.coaching_experience_years ? `${selected.coaching_experience_years}+ Years` : null },
+                        { label: "Level", value: selected.coaching_experience_level },
+                        { label: "Background", value: selected.coach_background },
+                      ].filter(r => r.value).map(({ label, value }) => (
+                        <div key={label} className="flex items-start gap-2 text-xs">
+                          <CheckCircle2 className="h-3.5 w-3.5 text-amber-400 shrink-0 mt-0.5" />
+                          <span className="text-slate-400">{label}:</span>
+                          <span className="text-slate-200 font-medium">{value}</span>
+                        </div>
+                      ))}
                       {selected.linkedin_url && (
-                        <a href={selected.linkedin_url} target="_blank" rel="noopener noreferrer"
-                          className="flex items-center gap-2 text-sm text-primary hover:underline">
-                          <Linkedin className="h-3.5 w-3.5 shrink-0" />
-                          <span className="truncate">LinkedIn</span>
-                        </a>
+                        <div className="flex items-center gap-2 text-xs">
+                          <Linkedin className="h-3.5 w-3.5 text-amber-400 shrink-0" />
+                          <a href={selected.linkedin_url} target="_blank" rel="noopener noreferrer" className="text-amber-400 hover:underline">LinkedIn Profile</a>
+                        </div>
                       )}
                       {selected.website_url && (
-                        <a href={selected.website_url} target="_blank" rel="noopener noreferrer"
-                          className="flex items-center gap-2 text-sm text-primary hover:underline">
-                          <Globe className="h-3.5 w-3.5 shrink-0" />
-                          <span className="truncate">Website</span>
-                        </a>
+                        <div className="flex items-center gap-2 text-xs">
+                          <Globe className="h-3.5 w-3.5 text-amber-400 shrink-0" />
+                          <a href={selected.website_url} target="_blank" rel="noopener noreferrer" className="text-amber-400 hover:underline">Website</a>
+                        </div>
                       )}
                     </div>
 
                     {selected.bio && (
-                      <div className="mb-4">
-                        <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1">Bio</p>
-                        <p className="text-sm text-zinc-300 leading-relaxed">{selected.bio}</p>
-                      </div>
-                    )}
-                    {selected.why_galoras && (
-                      <div>
-                        <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1">Why Galoras</p>
-                        <p className="text-sm text-zinc-300 leading-relaxed">{selected.why_galoras}</p>
+                      <div className="mt-3 pt-3 border-t border-[#1e3a5f]">
+                        <p className="text-xs text-slate-500 line-clamp-4 leading-relaxed">{selected.bio}</p>
                       </div>
                     )}
                   </div>
+                )}
+              </div>
 
-                  {/* Fit Score */}
-                  <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
+              {/* CENTER: Radar + AI + score */}
+              {selected ? (
+                <div className="space-y-4">
+
+                  {/* Fit Score card */}
+                  <div className="rounded-xl border border-[#1e3a5f] bg-[#0d1f35] p-5">
                     <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-base font-black text-white uppercase tracking-wide">
+                        Ecosystem Fit Score:
+                        <span className="text-amber-400 ml-2">{fitScore}</span>
+                      </h3>
                       <div className="flex items-center gap-2">
-                        <h3 className="text-sm font-semibold text-white uppercase tracking-wider">
-                          Ecosystem Fit Score
-                        </h3>
                         {selected.fit_score_dimensions && (
-                          <span className="flex items-center gap-1 text-xs text-primary">
-                            <Sparkles className="h-3 w-3" /> AI
+                          <span className="flex items-center gap-1 text-xs text-amber-400">
+                            <Sparkles className="h-3 w-3" /> AI Scored
                           </span>
                         )}
-                      </div>
-                      <div className="flex items-center gap-2">
                         <input
-                          type="number"
-                          min={0}
-                          max={100}
-                          value={fitScore}
+                          type="number" min={0} max={100} value={fitScore}
                           onChange={(e) => setFitScore(Math.min(100, Math.max(0, parseInt(e.target.value) || 0)))}
-                          className="w-16 text-center bg-zinc-800 border border-zinc-700 text-primary font-bold text-xl rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-primary"
+                          className="w-14 text-center bg-[#1a2f4a] border border-[#2a4a6f] text-amber-400 font-black text-lg rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-amber-500/50"
                         />
-                        <span className="text-zinc-500 text-sm">/ 100</span>
                       </div>
                     </div>
 
-                    {/* AI summary */}
-                    {selected.fit_score_dimensions?.summary && (
-                      <div className="mb-4 p-3 bg-zinc-800/60 border border-zinc-700 rounded-xl">
-                        <p className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-1.5">
-                          AI Assessment
-                        </p>
-                        <p className="text-xs text-zinc-300 leading-relaxed">
-                          {selected.fit_score_dimensions.summary}
-                        </p>
-                        {selected.fit_score_dimensions.recommendation && (
-                          <p className="text-xs mt-2">
-                            <span className="text-zinc-500">Recommendation: </span>
-                            <span className={`font-semibold capitalize ${
-                              selected.fit_score_dimensions.recommendation === "approve"
-                                ? "text-emerald-400"
-                                : selected.fit_score_dimensions.recommendation === "reject"
-                                ? "text-red-400"
-                                : "text-amber-400"
-                            }`}>
-                              {selected.fit_score_dimensions.recommendation}
-                            </span>
-                          </p>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Dimension bars */}
-                    {selected.review_status === "under_review" && !selected.fit_score_dimensions ? (
-                      <div className="flex items-center gap-2 text-zinc-500 text-xs py-4">
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                        AI analysis in progress…
-                      </div>
-                    ) : (
-                      <div className="space-y-3">
-                        {([
-                          ["pillar_alignment",        "Pillar Alignment"],
-                          ["professional_credibility","Pro. Credibility"],
-                          ["sport_of_business_fit",   "Sport of Business"],
-                          ["communication_quality",   "Communication"],
-                          ["market_positioning",      "Market Position"],
-                          ["growth_potential",        "Growth Potential"],
-                        ] as const).map(([key, label]) => {
-                          const dim = selected.fit_score_dimensions?.dimensions?.[key];
-                          const score = dim?.score ?? Math.round(fitScore * 0.17);
-                          return <ScoreBar key={key} label={label} value={score} note={dim?.note} />;
-                        })}
-                      </div>
-                    )}
-
-                    {!selected.fit_score_dimensions && selected.review_status !== "under_review" && (
-                      <p className="text-xs text-zinc-600 mt-3">
-                        AI scoring pending — triggers automatically on new applications.
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Decision Panel */}
-                  <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
-                    <h3 className="text-sm font-semibold text-white uppercase tracking-wider mb-4">
-                      Decision Panel
-                    </h3>
-
-                    <div className="mb-4">
-                      <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider block mb-2">
-                        Notes / Reason
-                        <span className="text-zinc-600 font-normal ml-1">(required for reject or revision)</span>
-                      </label>
-                      <textarea
-                        value={decisionNotes}
-                        onChange={(e) => setDecisionNotes(e.target.value)}
-                        rows={3}
-                        placeholder="Internal notes about this application…"
-                        className="w-full bg-zinc-800 border border-zinc-700 text-zinc-200 text-sm rounded-xl px-3 py-2.5 placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-primary resize-none"
-                      />
+                    {/* Radar chart */}
+                    <div className="h-56 w-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <RadarChart data={radarData} margin={{ top: 10, right: 30, bottom: 10, left: 30 }}>
+                          <PolarGrid stroke="#1e3a5f" />
+                          <PolarAngleAxis
+                            dataKey="subject"
+                            tick={{ fill: "#94a3b8", fontSize: 10, fontWeight: 600 }}
+                          />
+                          <Radar
+                            name="Score"
+                            dataKey="value"
+                            stroke="#f59e0b"
+                            fill="#f59e0b"
+                            fillOpacity={0.25}
+                            strokeWidth={2}
+                          />
+                        </RadarChart>
+                      </ResponsiveContainer>
                     </div>
 
-                    <div className="grid grid-cols-3 gap-3 mb-4">
-                      <Button
-                        onClick={() => decide("approved")}
-                        disabled={saving}
-                        className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold h-12"
-                      >
-                        {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : (
-                          <><CheckCircle2 className="h-4 w-4 mr-2" />Approve</>
-                        )}
-                      </Button>
-                      <Button
-                        onClick={() => decide("revision_requested")}
-                        disabled={saving}
-                        className="bg-amber-600 hover:bg-amber-500 text-white font-bold h-12"
-                      >
-                        <RefreshCw className="h-4 w-4 mr-2" />Revision
-                      </Button>
-                      <Button
-                        onClick={() => decide("rejected")}
-                        disabled={saving}
-                        className="bg-red-700 hover:bg-red-600 text-white font-bold h-12"
-                      >
-                        <XCircle className="h-4 w-4 mr-2" />Reject
-                      </Button>
-                    </div>
-
-                    <button
-                      onClick={saveDraft}
-                      disabled={saving}
-                      className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
-                    >
-                      Save notes without deciding
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex items-center justify-center text-zinc-600">
-                  <p>Select an application to review.</p>
-                </div>
-              )}
-
-              {/* ── RIGHT: Portfolio density ── */}
-              <div className="space-y-4">
-                <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5">
-                  <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-4">
-                    Portfolio Density
-                  </h3>
-                  <p className="text-xs text-zinc-500 mb-3">
-                    Published coaches: <span className="text-white font-semibold">{totalCoaches}</span>
-                  </p>
-
-                  {portfolio.length === 0 ? (
-                    <p className="text-xs text-zinc-600">No published coaches yet.</p>
-                  ) : (
-                    <div className="space-y-3">
-                      {["master", "elite", "pro"].map((tier) => {
-                        const count = portfolio.find((p) => p.tier === tier)?.count ?? 0;
-                        const pct = totalCoaches > 0 ? Math.round((count / totalCoaches) * 100) : 0;
-                        const colors: Record<string, string> = {
-                          master: "bg-amber-500",
-                          elite:  "bg-primary",
-                          pro:    "bg-zinc-500",
-                        };
+                    {/* Dimension list */}
+                    <div className="mt-3 space-y-1.5 border-t border-[#1e3a5f] pt-3">
+                      {RADAR_DIMS.map(({ key, label }) => {
+                        const dim = selected.fit_score_dimensions?.dimensions?.[key];
+                        const score = dim?.score ?? Math.round(fitScore * 0.17);
                         return (
-                          <div key={tier}>
-                            <div className="flex justify-between text-xs mb-1">
-                              <span className="text-zinc-400 capitalize">{tier}</span>
-                              <span className="text-zinc-400">{count} · {pct}%</span>
-                            </div>
-                            <div className="h-2 bg-zinc-800 rounded-full overflow-hidden">
-                              <div
-                                className={`h-full rounded-full transition-all ${colors[tier]}`}
-                                style={{ width: `${pct}%` }}
-                              />
-                            </div>
+                          <div key={key} className="flex items-start gap-2 text-xs">
+                            <span className="text-amber-400 shrink-0 mt-0.5">◆</span>
+                            <span className="text-slate-300 font-semibold w-28 shrink-0">{label}</span>
+                            <span className="text-amber-400 font-bold w-8 shrink-0">{score}</span>
+                            {dim?.note && <span className="text-slate-500 line-clamp-1">{dim.note}</span>}
                           </div>
                         );
                       })}
                     </div>
-                  )}
+
+                    {/* AI summary */}
+                    {selected.fit_score_dimensions?.summary && (
+                      <div className="mt-3 pt-3 border-t border-[#1e3a5f]">
+                        <p className="text-xs font-semibold text-amber-400/70 uppercase tracking-wider mb-1">AI Assessment</p>
+                        <p className="text-xs text-slate-400 leading-relaxed">{selected.fit_score_dimensions.summary}</p>
+                      </div>
+                    )}
+
+                    {selected.review_status === "under_review" && !selected.fit_score_dimensions && (
+                      <div className="flex items-center gap-2 text-slate-500 text-xs mt-3">
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        AI analysis in progress…
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center justify-center text-slate-600 rounded-xl border border-[#1e3a5f] bg-[#0d1f35]">
+                  <p>Select an application to review.</p>
+                </div>
+              )}
+
+              {/* RIGHT: Portfolio density + pipeline */}
+              <div className="space-y-3">
+                <div className="rounded-xl border border-[#1e3a5f] bg-[#0d1f35] p-4">
+                  <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">
+                    Portfolio Density
+                  </h3>
+                  <p className="text-xs text-slate-500 mb-3">
+                    Current Coach Mix:
+                    <span className="text-white font-semibold ml-1">{totalCoaches} active</span>
+                  </p>
+
+                  <div className="space-y-2.5 mb-4">
+                    {[
+                      { tier: "master", color: "bg-amber-500" },
+                      { tier: "elite",  color: "bg-sky-500" },
+                      { tier: "pro",    color: "bg-emerald-500" },
+                    ].map(({ tier, color }) => {
+                      const count = portfolio.find(p => p.tier === tier)?.count ?? 0;
+                      const pct = totalCoaches > 0 ? Math.round((count / totalCoaches) * 100) : 0;
+                      return (
+                        <div key={tier}>
+                          <div className="flex justify-between text-xs mb-1">
+                            <span className="text-slate-400 capitalize">{tier}</span>
+                            <span className="text-slate-300 font-semibold">{pct}%</span>
+                          </div>
+                          <div className="h-2.5 bg-[#1a2f4a] rounded-full overflow-hidden">
+                            <div className={`h-full rounded-full ${color}`} style={{ width: `${pct}%` }} />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Saturation / gap alerts */}
+                  <div className="space-y-1.5">
+                    {saturationAlerts.map((a, i) => (
+                      <div key={i} className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-amber-900/30 border border-amber-700/40 text-xs text-amber-300">
+                        <AlertTriangle className="h-3 w-3 shrink-0" />
+                        {a.label}
+                      </div>
+                    ))}
+                    {gapAlerts.map((a, i) => (
+                      <div key={i} className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-emerald-900/30 border border-emerald-700/40 text-xs text-emerald-300">
+                        <TrendingUp className="h-3 w-3 shrink-0" />
+                        {a.label}
+                      </div>
+                    ))}
+                    {saturationAlerts.length === 0 && gapAlerts.length === 0 && (
+                      <p className="text-xs text-slate-600 italic">Portfolio balanced.</p>
+                    )}
+                  </div>
                 </div>
 
-                {/* Quick stats */}
-                <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5">
-                  <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-3">
-                    Pipeline
-                  </h3>
+                {/* Pipeline */}
+                <div className="rounded-xl border border-[#1e3a5f] bg-[#0d1f35] p-4">
+                  <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Pipeline</h3>
                   {[
                     { label: "Pending",       status: "pending",            icon: Clock },
                     { label: "AI Analysing",  status: "under_review",       icon: Sparkles },
@@ -551,32 +457,85 @@ export default function Applicants() {
                     { label: "Rejected",      status: "rejected",           icon: XCircle },
                     { label: "Auto-Rejected", status: "auto_rejected",      icon: XCircle },
                   ].map(({ label, status, icon: Icon }) => {
-                    const count = applications.filter((a) => (a.review_status ?? "pending") === status).length;
+                    const count = applications.filter(a => (a.review_status ?? "pending") === status).length;
                     return (
-                      <div key={status} className="flex items-center justify-between py-1.5 border-b border-zinc-800 last:border-0">
+                      <div key={status} className="flex items-center justify-between py-1.5 border-b border-[#1e3a5f] last:border-0">
                         <div className="flex items-center gap-2">
-                          <Icon className="h-3.5 w-3.5 text-zinc-600" />
-                          <span className="text-xs text-zinc-400">{label}</span>
+                          <Icon className="h-3.5 w-3.5 text-slate-600" />
+                          <span className="text-xs text-slate-400">{label}</span>
                         </div>
-                        <span className="text-xs font-semibold text-white">{count}</span>
+                        <span className="text-xs font-bold text-white">{count}</span>
                       </div>
                     );
                   })}
                 </div>
-
-                {selected?.decision_reason && (
-                  <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5">
-                    <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2">
-                      Last Decision
-                    </h3>
-                    <p className="text-xs text-zinc-400 leading-relaxed">{selected.decision_reason}</p>
-                  </div>
-                )}
               </div>
-
             </div>
-          )}
-        </div>
+
+            {/* ── BOTTOM: Decision Panel ── */}
+            {selected && (
+              <div className="rounded-xl border border-[#1e3a5f] bg-[#0d1f35] p-5">
+                <h3 className="text-sm font-black text-white uppercase tracking-widest text-center mb-4">
+                  Decision Panel
+                </h3>
+
+                <div className="mb-4">
+                  <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-2">
+                    Action Notes
+                    <span className="text-slate-600 font-normal ml-1">(required for reject or revision)</span>
+                  </label>
+                  <textarea
+                    value={decisionNotes}
+                    onChange={(e) => setDecisionNotes(e.target.value)}
+                    rows={2}
+                    placeholder="Internal notes about this application…"
+                    className="w-full bg-[#1a2f4a] border border-[#2a4a6f] text-slate-200 text-sm rounded-xl px-3 py-2.5 placeholder:text-slate-600 focus:outline-none focus:ring-1 focus:ring-amber-500/50 resize-none"
+                  />
+                </div>
+
+                {/* Big decision buttons */}
+                <div className="grid grid-cols-3 gap-4 mb-4">
+                  <button
+                    onClick={() => decide("approved")}
+                    disabled={saving}
+                    className="flex items-center justify-center gap-2 h-14 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-base uppercase tracking-wider transition-colors disabled:opacity-50"
+                  >
+                    {saving ? <Loader2 className="h-5 w-5 animate-spin" /> : <><CheckCircle2 className="h-5 w-5" /> Approve</>}
+                  </button>
+                  <button
+                    onClick={() => decide("revision_requested")}
+                    disabled={saving}
+                    className="flex items-center justify-center gap-2 h-14 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-black text-base uppercase tracking-wider transition-colors disabled:opacity-50"
+                  >
+                    <RefreshCw className="h-5 w-5" /> Rewrite
+                  </button>
+                  <button
+                    onClick={() => decide("rejected")}
+                    disabled={saving}
+                    className="flex items-center justify-center gap-2 h-14 rounded-xl bg-red-700 hover:bg-red-600 text-white font-black text-base uppercase tracking-wider transition-colors disabled:opacity-50"
+                  >
+                    <XCircle className="h-5 w-5" /> Reject
+                  </button>
+                </div>
+
+                {/* Status bar */}
+                <div className="flex items-center justify-between pt-3 border-t border-[#1e3a5f] text-xs text-slate-500">
+                  <span>● <span className="text-slate-400">Comparative Rank:</span> Top {rank}%</span>
+                  <span>● <span className="text-slate-400">Review Status:</span> <span className="capitalize">{selected.review_status?.replace("_", " ") ?? "Pending"}</span></span>
+                  <span>● <span className="text-slate-400">AI Rec:</span> <span className={
+                    selected.fit_score_dimensions?.recommendation === "approve" ? "text-emerald-400 capitalize" :
+                    selected.fit_score_dimensions?.recommendation === "reject" ? "text-red-400 capitalize" :
+                    "text-amber-400 capitalize"
+                  }>{selected.fit_score_dimensions?.recommendation ?? "Pending"}</span></span>
+                  <button onClick={saveDraft} disabled={saving} className="hover:text-slate-300 transition-colors">
+                    ● Save draft
+                  </button>
+                </div>
+              </div>
+            )}
+
+          </div>
+        )}
       </section>
     </AdminLayout>
   );
