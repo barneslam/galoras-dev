@@ -36,10 +36,15 @@ const goalFilters = [
 ];
 
 export default function CoachingDirectory() {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [activeFilter, setActiveFilter] = useState(FILTER_ALL);
   const [searchParams] = useSearchParams();
+  const filterParam = searchParams.get("filter");
   const categoryParam = searchParams.get("category");
+  const matchedParam = searchParams.get("matched") === "1";
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeFilter, setActiveFilter] = useState(
+    filterParam && goalFilters.some(f => f.value === filterParam) ? filterParam : FILTER_ALL
+  );
   const [contactCoach, setContactCoach] = useState<{ id: string; name: string } | null>(null);
   const { isLoggedIn, profile } = useAuth();
   const navigate = useNavigate();
@@ -162,6 +167,25 @@ export default function CoachingDirectory() {
                 className="ml-auto text-xs font-semibold text-primary hover:underline whitespace-nowrap"
               >
                 {isLoggedIn ? "Complete profile →" : "Get started →"}
+              </button>
+            </div>
+          )}
+
+          {/* Matched banner */}
+          {matchedParam && (
+            <div className="flex items-center gap-3 mb-6 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 max-w-2xl">
+              <Sparkles className="h-4 w-4 text-emerald-400 shrink-0" />
+              <p className="text-sm text-emerald-300">
+                Coaches matched to your context.
+                {activeFilter !== FILTER_ALL && (
+                  <> Showing <span className="font-semibold">{goalFilters.find(f => f.value === activeFilter)?.label}</span> coaches.</>
+                )}
+              </p>
+              <button
+                onClick={() => { setActiveFilter(FILTER_ALL); navigate("/coaching", { replace: true }); }}
+                className="ml-auto text-xs text-zinc-500 hover:text-zinc-300 whitespace-nowrap"
+              >
+                Clear match
               </button>
             </div>
           )}

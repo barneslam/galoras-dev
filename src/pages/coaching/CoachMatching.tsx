@@ -9,7 +9,25 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
-import { ArrowRight, UserCircle2, BarChart3, Sparkles, Target } from "lucide-react";
+import { ArrowRight, UserCircle2, BarChart3, Sparkles, Target, CheckCircle2 } from "lucide-react";
+
+// Maps form answers → coaching directory filter values
+const SITUATION_FILTER: Record<string, string> = {
+  scaling:     "strategy",
+  transition:  "transitions",
+  performance: "performance",
+  leadership:  "leadership",
+};
+
+const OUTCOME_FILTER: Record<string, string> = {
+  clarity:    "mindset",
+  growth:     "strategy",
+  execution:  "performance",
+  transition: "transitions",
+};
+
+// These values map exactly to goalFilters in CoachingDirectory
+const GOAL_FILTER_VALUES = new Set(["transitions", "performance", "leadership", "career", "mindset", "communication"]);
 
 const matchingFactors = [
   {
@@ -41,6 +59,7 @@ const matchingFactors = [
 export default function CoachMatching() {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
+  const [matched, setMatched] = useState(false);
 
   const [form, setForm] = useState({
     situation: "",
@@ -51,6 +70,20 @@ export default function CoachMatching() {
 
   const update = (field: string, value: string) => {
     setForm({ ...form, [field]: value });
+  };
+
+  const goToMatches = () => {
+    const filterValue = SITUATION_FILTER[form.situation] || OUTCOME_FILTER[form.outcome] || "";
+    const params = new URLSearchParams();
+    if (GOAL_FILTER_VALUES.has(filterValue)) {
+      params.set("filter", filterValue);
+    } else if (filterValue) {
+      params.set("category", filterValue);
+    }
+    params.set("matched", "1");
+    // Show brief matched state before navigating
+    setMatched(true);
+    setTimeout(() => navigate(`/coaching?${params.toString()}`), 900);
   };
 
   return (
@@ -235,7 +268,7 @@ export default function CoachMatching() {
               )}
 
               {/* STEP 4 */}
-              {step === 4 && (
+              {step === 4 && !matched && (
                 <div className="space-y-5">
                   <div>
                     <h3 className="text-lg font-bold text-white mb-1">What outcome do you want?</h3>
@@ -255,7 +288,7 @@ export default function CoachMatching() {
                   <div className="flex gap-3">
                     <Button variant="outline" onClick={() => setStep(3)} className="flex-1 border-zinc-700 text-zinc-300 h-11">Back</Button>
                     <Button
-                      onClick={() => navigate(`/coaching?context=${encodeURIComponent(form.situation)}`)}
+                      onClick={goToMatches}
                       className="flex-1 bg-primary text-zinc-950 font-bold h-11"
                       disabled={!form.outcome}
                     >
@@ -263,6 +296,15 @@ export default function CoachMatching() {
                       <Sparkles className="ml-2 h-4 w-4" />
                     </Button>
                   </div>
+                </div>
+              )}
+
+              {/* Matched flash */}
+              {matched && (
+                <div className="flex flex-col items-center justify-center py-8 gap-3">
+                  <CheckCircle2 className="h-10 w-10 text-emerald-400" />
+                  <p className="text-white font-semibold text-lg">Finding your coaches…</p>
+                  <p className="text-zinc-500 text-sm">Matched to your context</p>
                 </div>
               )}
 

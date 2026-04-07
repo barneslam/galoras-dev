@@ -1,154 +1,184 @@
 import { useQuery } from "@tanstack/react-query";
+import { format, parseISO } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
-import { Layout } from "@/components/layout";
+import { AdminLayout } from "@/components/AdminLayout";
+import { Calendar, Clock, User, CheckCircle2, XCircle, AlertCircle, Loader2 } from "lucide-react";
 
 type BookingRow = {
   id: string;
   coach_id: string | null;
-  product_id: string | null;
+  client_name: string | null;
+  client_email: string | null;
+  scheduled_date: string | null;
+  scheduled_time: string | null;
+  duration_minutes: number | null;
   status: string | null;
+  notes: string | null;
   created_at: string | null;
+  coach_name?: string;
 };
 
-type CoachRow = {
-  id: string;
-  display_name: string | null;
+const STATUS_STYLE: Record<string, { color: string; icon: typeof CheckCircle2 }> = {
+  confirmed:  { color: "bg-emerald-900/60 text-emerald-300 border-emerald-800", icon: CheckCircle2 },
+  pending:    { color: "bg-zinc-800 text-zinc-300 border-zinc-700",             icon: AlertCircle },
+  completed:  { color: "bg-sky-900/60 text-sky-300 border-sky-800",             icon: CheckCircle2 },
+  cancelled:  { color: "bg-red-900/60 text-red-400 border-red-800",             icon: XCircle },
 };
 
-type ProductRow = {
-  id: string;
-  title: string | null;
-};
+function StatusBadge({ status }: { status: string | null }) {
+  const s = STATUS_STYLE[status ?? ""] ?? STATUS_STYLE.pending;
+  const Icon = s.icon;
+  return (
+    <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium border ${s.color}`}>
+      <Icon className="h-3 w-3" />
+      {status ?? "unknown"}
+    </span>
+  );
+}
 
 export default function Bookings() {
   const { data, isLoading, error } = useQuery({
-    queryKey: ["admin-bookings"],
+    queryKey: ["admin-session-bookings"],
     queryFn: async () => {
       const { data: bookings, error: bookingsError } = await supabase
-        .from("bookings")
-        .select("id, coach_id, product_id, status, created_at")
-        .order("created_at", { ascending: false });
+        .from("session_bookings")
+        .select("id, coach_id, client_name, client_email, scheduled_date, scheduled_time, duration_minutes, status, notes, created_at")
+        .order("scheduled_date", { ascending: false });
 
       if (bookingsError) throw bookingsError;
 
       const safeBookings = (bookings || []) as BookingRow[];
 
-      const coachIds = [
-        ...new Set(
-          safeBookings.map((b) => b.coach_id).filter(Boolean) as string[]
-        ),
-      ];
+      const coachIds = [...new Set(safeBookings.map((b) => b.coach_id).filter(Boolean) as string[])];
 
-      const productIds = [
-        ...new Set(
-          safeBookings.map((b) => b.product_id).filter(Boolean) as string[]
-        ),
-      ];
-
-      let coaches: CoachRow[] = [];
-      let products: ProductRow[] = [];
-
+      let coachMap = new Map<string, string>();
       if (coachIds.length > 0) {
-        const { data: coachData, error: coachError } = await supabase
+        const { data: coaches } = await supabase
           .from("coaches")
           .select("id, display_name")
           .in("id", coachIds);
-
-        if (coachError) throw coachError;
-        coaches = (coachData || []) as CoachRow[];
+        (coaches || []).forEach((c: any) => coachMap.set(c.id, c.display_name ?? "Unknown"));
       }
 
-      if (productIds.length > 0) {
-        const { data: productData, error: productError } = await supabase
-          .from("coach_products")
-          .select("id, title")
-          .in("id", productIds);
-
-        if (productError) throw productError;
-        products = (productData || []) as ProductRow[];
-      }
-
-      const coachMap = new Map(coaches.map((c) => [c.id, c.display_name]));
-      const productMap = new Map(products.map((p) => [p.id, p.title]));
-
-      return safeBookings.map((booking) => ({
-        ...booking,
-        coach_name: booking.coach_id
-          ? coachMap.get(booking.coach_id) || "Unknown Coach"
-          : "Unknown Coach",
-        product_title: booking.product_id
-          ? productMap.get(booking.product_id) || "Unknown Product"
-          : "Unknown Product",
+      return safeBookings.map((b) => ({
+        ...b,
+        coach_name: b.coach_id ? coachMap.get(b.coach_id) ?? "Unknown Coach" : "Unknown Coach",
       }));
     },
   });
 
-  return (
-    <Layout>
-      <section className="relative pt-28 pb-12">
-        <div className="container-wide">
-          <div className="max-w-6xl mx-auto">
-            <div className="mb-8">
-              <h1 className="text-3xl md:text-4xl font-display font-bold mb-2">
-                Admin Booking Log
-              </h1>
-              <p className="text-muted-foreground">
-                Simulated checkout and booking records.
-              </p>
-            </div>
+  const stats = {
+    total:     data?.length ?? 0,
+    confirmed: data?.filter(b => b.status === "confirmed").length ?? 0,
+    pending:   data?.filter(b => b.status === "pending").length ?? 0,
+    completed: data?.filter(b => b.status === "completed").length ?? 0,
+    cancelled: data?.filter(b => b.status === "cancelled").length ?? 0,
+  };
 
-            <div className="rounded-2xl border border-border bg-card overflow-hidden">
-              {isLoading ? (
-                <div className="p-8 text-center text-muted-foreground">
-                  Loading bookings...
-                </div>
-              ) : error ? (
-                <div className="p-8 text-center text-red-500">
-                  Failed to load bookings.
-                </div>
-              ) : data && data.length > 0 ? (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead className="bg-muted/40 border-b border-border">
-                      <tr>
-                        <th className="text-left px-6 py-4 font-semibold">Coach</th>
-                        <th className="text-left px-6 py-4 font-semibold">Package</th>
-                        <th className="text-left px-6 py-4 font-semibold">Status</th>
-                        <th className="text-left px-6 py-4 font-semibold">Created</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {data.map((booking) => (
-                        <tr
-                          key={booking.id}
-                          className="border-b border-border last:border-b-0"
-                        >
-                          <td className="px-6 py-4">{booking.coach_name}</td>
-                          <td className="px-6 py-4">{booking.product_title}</td>
-                          <td className="px-6 py-4">
-                            <span className="inline-flex items-center rounded-full border border-border px-3 py-1 text-xs">
-                              {booking.status || "unknown"}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4">
-                            {booking.created_at
-                              ? new Date(booking.created_at).toLocaleString()
-                              : "-"}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              ) : (
-                <div className="p-8 text-center text-muted-foreground">
-                  No bookings recorded yet.
-                </div>
-              )}
-            </div>
+  return (
+    <AdminLayout title="Bookings">
+      <section className="p-6">
+        <div className="max-w-7xl mx-auto">
+
+          <div className="mb-6">
+            <h2 className="text-xl font-display font-black text-white uppercase tracking-tight">
+              Session Bookings
+            </h2>
+            <p className="text-zinc-500 text-sm mt-0.5">All client sessions across the platform.</p>
           </div>
+
+          {/* Stats row */}
+          <div className="grid grid-cols-5 gap-3 mb-8">
+            {[
+              { label: "Total",     value: stats.total,     color: "text-white" },
+              { label: "Confirmed", value: stats.confirmed, color: "text-emerald-400" },
+              { label: "Pending",   value: stats.pending,   color: "text-zinc-400" },
+              { label: "Completed", value: stats.completed, color: "text-sky-400" },
+              { label: "Cancelled", value: stats.cancelled, color: "text-red-400" },
+            ].map(({ label, value, color }) => (
+              <div key={label} className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
+                <p className={`text-2xl font-black ${color}`}>{value}</p>
+                <p className="text-xs text-zinc-500 mt-0.5">{label}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Table */}
+          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden">
+            {isLoading ? (
+              <div className="flex items-center justify-center gap-3 py-20 text-zinc-500">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Loading bookings…
+              </div>
+            ) : error ? (
+              <div className="py-20 text-center text-red-400 text-sm">Failed to load bookings.</div>
+            ) : !data || data.length === 0 ? (
+              <div className="py-20 text-center">
+                <Calendar className="h-10 w-10 text-zinc-700 mx-auto mb-3" />
+                <p className="text-zinc-500 text-sm">No sessions booked yet.</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="border-b border-zinc-800">
+                    <tr>
+                      {["Client", "Coach", "Date & Time", "Duration", "Status", "Booked"].map(h => (
+                        <th key={h} className="text-left px-5 py-3.5 text-xs font-semibold text-zinc-500 uppercase tracking-wider">
+                          {h}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.map((b) => (
+                      <tr key={b.id} className="border-b border-zinc-800/60 last:border-0 hover:bg-zinc-800/30 transition-colors">
+                        <td className="px-5 py-4">
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-7 h-7 rounded-full bg-zinc-700 flex items-center justify-center shrink-0">
+                              <User className="h-3.5 w-3.5 text-zinc-400" />
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-white font-medium truncate">{b.client_name || "—"}</p>
+                              <p className="text-zinc-500 text-xs truncate">{b.client_email || ""}</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-5 py-4 text-zinc-300">{b.coach_name}</td>
+                        <td className="px-5 py-4">
+                          {b.scheduled_date ? (
+                            <div className="flex items-center gap-3">
+                              <div className="flex items-center gap-1.5 text-zinc-300">
+                                <Calendar className="h-3.5 w-3.5 text-zinc-500" />
+                                {format(parseISO(b.scheduled_date), "MMM d, yyyy")}
+                              </div>
+                              {b.scheduled_time && (
+                                <div className="flex items-center gap-1.5 text-zinc-500">
+                                  <Clock className="h-3.5 w-3.5" />
+                                  {b.scheduled_time.slice(0, 5)}
+                                </div>
+                              )}
+                            </div>
+                          ) : "—"}
+                        </td>
+                        <td className="px-5 py-4 text-zinc-400">
+                          {b.duration_minutes ? `${b.duration_minutes} min` : "—"}
+                        </td>
+                        <td className="px-5 py-4">
+                          <StatusBadge status={b.status} />
+                        </td>
+                        <td className="px-5 py-4 text-zinc-500 text-xs">
+                          {b.created_at ? format(new Date(b.created_at), "MMM d, yyyy") : "—"}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+
         </div>
       </section>
-    </Layout>
+    </AdminLayout>
   );
 }
