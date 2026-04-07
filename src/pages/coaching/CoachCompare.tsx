@@ -10,12 +10,23 @@ import {
   Sparkles,
   CheckCircle2,
   Globe,
+  Loader2,
+  AlertCircle,
+  TrendingUp,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { ContactModal } from "@/components/coaching/ContactModal";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { AuthGate } from "@/components/AuthGate";
+
+type CoachFit = {
+  id: string;
+  summary: string;
+  strengths: string[];
+  consideration: string;
+  matchScore: number;
+};
 
 type CompareCoach = {
   id: string;
@@ -54,6 +65,10 @@ export default function CoachCompare() {
 
   const ids = (searchParams.get("ids") || "").split(",").filter(Boolean).slice(0, 3);
 
+  const [fits, setFits] = useState<CoachFit[]>([]);
+  const [fitsLoading, setFitsLoading] = useState(false);
+  const [fitsError, setFitsError] = useState(false);
+
   const { data: coaches = [], isLoading } = useQuery({
     queryKey: ["compare-coaches", ids.join(",")],
     enabled: ids.length > 0,
@@ -71,6 +86,33 @@ export default function CoachCompare() {
         .filter(Boolean) as CompareCoach[];
     },
   });
+
+  // Fire AI needs-fit analysis once coaches are loaded
+  useEffect(() => {
+    if (coaches.length === 0) return;
+    setFitsLoading(true);
+    setFitsError(false);
+
+    supabase.functions
+      .invoke("compare-coach-fit", {
+        body: {
+          coachIds: coaches.map((c) => c.id),
+          userGoals: profile?.goals || [],
+          userChallenges: profile?.challenges || "",
+          userIndustry: profile?.industry || "",
+          userRole: profile?.user_role || "",
+          coachingAreas: profile?.coaching_areas || [],
+        },
+      })
+      .then(({ data, error }) => {
+        if (error || !data?.fits) { setFitsError(true); return; }
+        setFits(data.fits as CoachFit[]);
+      })
+      .catch(() => setFitsError(true))
+      .finally(() => setFitsLoading(false));
+  }, [coaches.map((c) => c.id).join(",")]);
+
+  const fitFor = (id: string) => fits.find((f) => f.id === id);
 
   const coachProfilePath = (c: CompareCoach) =>
     c.slug ? `/coach/${c.slug}` : `/coaching/${c.id}`;
@@ -142,6 +184,109 @@ export default function CoachCompare() {
             <div className="text-center py-20 text-slate-500 text-sm">Loading coaches…</div>
           ) : (
             <>
+              {/* ── Needs-Fit Summary banner ── */}
+              <div className="mb-8 rounded-2xl border border-[#1e3a5f] bg-[#0d1f35] overflow-hidden">
+                <div className="flex items-center gap-3 px-5 py-3.5 border-b border-[#1e3a5f] bg-[#0a1628]">
+                  <Sparkles className="h-4 w-4 text-amber-400 shrink-0" />
+                  <p className="text-sm font-black text-amber-400 uppercase tracking-wider">
+                    How Each Coach Addresses Your Needs
+                  </p>
+                  {fitsLoading && (
+                    <Loader2 className="h-3.5 w-3.5 text-slate-500 animate-spin ml-auto" />
+                  )}
+                  {!fitsLoading && !isLoggedIn && (
+                    <span className="ml-auto text-xs text-slate-500">
+                      <Link to="/signup" className="text-amber-400 hover:underline">Sign in</Link> for a personalised analysis
+                    </span>
+                  )}
+                  {!fitsLoading && fitsError && (
+                    <span className="ml-auto flex items-center gap-1 text-xs text-red-400">
+                      <AlertCircle className="h-3 w-3" /> Analysis unavailable
+                    </span>
+                  )}
+                </div>
+
+                {fitsLoading ? (
+                  <div className="px-5 py-6 text-slate-500 text-sm text-center">
+                    Galoras Compass is analysing how each coach fits your goals…
+                  </div>
+                ) : fits.length > 0 ? (
+                  <div className={`grid ${colClass} divide-x divide-[#1e3a5f]`}>
+                    {coaches.map((coach) => {
+                      const fit = fitFor(coach.id);
+                      if (!fit) return (
+                        <div key={coach.id} className="px-5 py-5 text-xs text-slate-600 italic">
+                          No analysis available
+                        </div>
+                      );
+                      return (
+                        <div key={coach.id} className="px-5 py-5 space-y-3">
+                          {/* Match score bar */}
+                          <div>
+                            <div className="flex items-center justify-between mb-1.5">
+                              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                                {coach.display_name}
+                              </span>
+                              <span className={`text-sm font-black ${
+                                fit.matchScore >= 75 ? "text-emerald-400" :
+                                fit.matchScore >= 50 ? "text-amber-400" : "text-red-400"
+                              }`}>
+                                {fit.matchScore}% fit
+                              </span>
+                            </div>
+                            <div className="h-2 bg-[#1a2f4a] rounded-full overflow-hidden">
+                              <div
+                                className={`h-full rounded-full transition-all ${
+                                  fit.matchScore >= 75 ? "bg-emerald-500" :
+                                  fit.matchScore >= 50 ? "bg-amber-500" : "bg-red-500"
+                                }`}
+                                style={{ width: `${fit.matchScore}%` }}
+                              />
+                            </div>
+                          </div>
+
+                          {/* Summary */}
+                          <p className="text-sm text-slate-300 leading-relaxed">
+                            {fit.summary}
+                          </p>
+
+                          {/* Strengths */}
+                          <div>
+                            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
+                              Strengths for you
+                            </p>
+                            <div className="flex flex-wrap gap-1.5">
+                              {fit.strengths.map((s, i) => (
+                                <span key={i} className="flex items-center gap-1 text-xs text-emerald-300 bg-emerald-900/30 border border-emerald-700/40 px-2 py-0.5 rounded-full">
+                                  <TrendingUp className="h-2.5 w-2.5" />
+                                  {s}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Consideration */}
+                          <div className="flex items-start gap-2 px-3 py-2 rounded-lg bg-amber-900/20 border border-amber-700/30">
+                            <AlertCircle className="h-3.5 w-3.5 text-amber-400 shrink-0 mt-0.5" />
+                            <p className="text-xs text-amber-300 leading-relaxed">{fit.consideration}</p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : !fitsError && isLoggedIn ? (
+                  <div className="px-5 py-6 text-slate-500 text-sm text-center">
+                    Complete your profile to get a personalised needs analysis.{" "}
+                    <Link to="/onboarding" className="text-amber-400 hover:underline">Update profile →</Link>
+                  </div>
+                ) : !isLoggedIn ? (
+                  <div className="px-5 py-6 text-sm text-center text-slate-400">
+                    <Link to="/signup" className="text-amber-400 hover:underline font-semibold">Create a free profile</Link>{" "}
+                    to see how these coaches address your specific goals and challenges.
+                  </div>
+                ) : null}
+              </div>
+
               {/* ── Coach columns ── */}
               <div className={`grid ${colClass} gap-6 mb-10`}>
                 {coaches.map((coach) => (

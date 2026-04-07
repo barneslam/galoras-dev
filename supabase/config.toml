@@ -25,3 +25,6 @@ verify_jwt = false
 
 [functions.analyze-coach-application]
 verify_jwt = false
+
+[functions.compare-coach-fit]
+verify_jwt = false
