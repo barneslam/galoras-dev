@@ -386,6 +386,64 @@ export default function Applicants() {
                       </div>
                     )}
                   </div>
+
+                  {/* Decision Panel — directly below fit score */}
+                  <div className="rounded-xl border border-[#1e3a5f] bg-[#0d1f35] p-5">
+                    <h3 className="text-sm font-black text-white uppercase tracking-widest text-center mb-4">
+                      Decision Panel
+                    </h3>
+
+                    <div className="mb-4">
+                      <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-2">
+                        Action Notes
+                        <span className="text-slate-600 font-normal ml-1">(required for reject or revision)</span>
+                      </label>
+                      <textarea
+                        value={decisionNotes}
+                        onChange={(e) => setDecisionNotes(e.target.value)}
+                        rows={2}
+                        placeholder="Internal notes about this application…"
+                        className="w-full bg-[#1a2f4a] border border-[#2a4a6f] text-slate-200 text-sm rounded-xl px-3 py-2.5 placeholder:text-slate-600 focus:outline-none focus:ring-1 focus:ring-amber-500/50 resize-none"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-3 mb-4">
+                      <button
+                        onClick={() => decide("approved")}
+                        disabled={saving}
+                        className="flex items-center justify-center gap-2 h-14 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-base uppercase tracking-wider transition-colors disabled:opacity-50"
+                      >
+                        {saving ? <Loader2 className="h-5 w-5 animate-spin" /> : <><CheckCircle2 className="h-5 w-5" /> Approve</>}
+                      </button>
+                      <button
+                        onClick={() => decide("revision_requested")}
+                        disabled={saving}
+                        className="flex items-center justify-center gap-2 h-14 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-black text-base uppercase tracking-wider transition-colors disabled:opacity-50"
+                      >
+                        <RefreshCw className="h-5 w-5" /> Rewrite
+                      </button>
+                      <button
+                        onClick={() => decide("rejected")}
+                        disabled={saving}
+                        className="flex items-center justify-center gap-2 h-14 rounded-xl bg-red-700 hover:bg-red-600 text-white font-black text-base uppercase tracking-wider transition-colors disabled:opacity-50"
+                      >
+                        <XCircle className="h-5 w-5" /> Reject
+                      </button>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-3 border-t border-[#1e3a5f] text-xs text-slate-500">
+                      <span>● <span className="text-slate-400">Rank:</span> Top {rank}%</span>
+                      <span>● <span className="text-slate-400">Status:</span> <span className="capitalize">{selected.review_status?.replace("_", " ") ?? "Pending"}</span></span>
+                      <span>● <span className="text-slate-400">AI Rec:</span> <span className={
+                        selected.fit_score_dimensions?.recommendation === "approve" ? "text-emerald-400 capitalize" :
+                        selected.fit_score_dimensions?.recommendation === "reject" ? "text-red-400 capitalize" :
+                        "text-amber-400 capitalize"
+                      }>{selected.fit_score_dimensions?.recommendation ?? "—"}</span></span>
+                      <button onClick={saveDraft} disabled={saving} className="hover:text-slate-300 transition-colors">
+                        ● Save draft
+                      </button>
+                    </div>
+                  </div>
                 </div>
               ) : (
                 <div className="flex items-center justify-center text-slate-600 rounded-xl border border-[#1e3a5f] bg-[#0d1f35]">
@@ -471,68 +529,6 @@ export default function Applicants() {
                 </div>
               </div>
             </div>
-
-            {/* ── BOTTOM: Decision Panel ── */}
-            {selected && (
-              <div className="rounded-xl border border-[#1e3a5f] bg-[#0d1f35] p-5">
-                <h3 className="text-sm font-black text-white uppercase tracking-widest text-center mb-4">
-                  Decision Panel
-                </h3>
-
-                <div className="mb-4">
-                  <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-2">
-                    Action Notes
-                    <span className="text-slate-600 font-normal ml-1">(required for reject or revision)</span>
-                  </label>
-                  <textarea
-                    value={decisionNotes}
-                    onChange={(e) => setDecisionNotes(e.target.value)}
-                    rows={2}
-                    placeholder="Internal notes about this application…"
-                    className="w-full bg-[#1a2f4a] border border-[#2a4a6f] text-slate-200 text-sm rounded-xl px-3 py-2.5 placeholder:text-slate-600 focus:outline-none focus:ring-1 focus:ring-amber-500/50 resize-none"
-                  />
-                </div>
-
-                {/* Big decision buttons */}
-                <div className="grid grid-cols-3 gap-4 mb-4">
-                  <button
-                    onClick={() => decide("approved")}
-                    disabled={saving}
-                    className="flex items-center justify-center gap-2 h-14 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-base uppercase tracking-wider transition-colors disabled:opacity-50"
-                  >
-                    {saving ? <Loader2 className="h-5 w-5 animate-spin" /> : <><CheckCircle2 className="h-5 w-5" /> Approve</>}
-                  </button>
-                  <button
-                    onClick={() => decide("revision_requested")}
-                    disabled={saving}
-                    className="flex items-center justify-center gap-2 h-14 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-black text-base uppercase tracking-wider transition-colors disabled:opacity-50"
-                  >
-                    <RefreshCw className="h-5 w-5" /> Rewrite
-                  </button>
-                  <button
-                    onClick={() => decide("rejected")}
-                    disabled={saving}
-                    className="flex items-center justify-center gap-2 h-14 rounded-xl bg-red-700 hover:bg-red-600 text-white font-black text-base uppercase tracking-wider transition-colors disabled:opacity-50"
-                  >
-                    <XCircle className="h-5 w-5" /> Reject
-                  </button>
-                </div>
-
-                {/* Status bar */}
-                <div className="flex items-center justify-between pt-3 border-t border-[#1e3a5f] text-xs text-slate-500">
-                  <span>● <span className="text-slate-400">Comparative Rank:</span> Top {rank}%</span>
-                  <span>● <span className="text-slate-400">Review Status:</span> <span className="capitalize">{selected.review_status?.replace("_", " ") ?? "Pending"}</span></span>
-                  <span>● <span className="text-slate-400">AI Rec:</span> <span className={
-                    selected.fit_score_dimensions?.recommendation === "approve" ? "text-emerald-400 capitalize" :
-                    selected.fit_score_dimensions?.recommendation === "reject" ? "text-red-400 capitalize" :
-                    "text-amber-400 capitalize"
-                  }>{selected.fit_score_dimensions?.recommendation ?? "Pending"}</span></span>
-                  <button onClick={saveDraft} disabled={saving} className="hover:text-slate-300 transition-colors">
-                    ● Save draft
-                  </button>
-                </div>
-              </div>
-            )}
 
           </div>
         )}
