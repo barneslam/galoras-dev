@@ -119,6 +119,23 @@ Deno.serve(async (req) => {
         break;
       }
 
+      case "charge.refunded": {
+        const charge = event.data.object as Stripe.Charge;
+        const paymentIntentId = typeof charge.payment_intent === "string"
+          ? charge.payment_intent
+          : charge.payment_intent?.id;
+
+        if (!paymentIntentId) break;
+
+        await supabase
+          .from("bookings")
+          .update({ status: "refunded" })
+          .eq("stripe_payment_intent_id", paymentIntentId);
+
+        console.log(`Booking refunded for payment_intent ${paymentIntentId}`);
+        break;
+      }
+
       // ── SUBSCRIPTIONS ────────────────────────────────────────────────────
       case "customer.subscription.created":
       case "customer.subscription.updated": {
