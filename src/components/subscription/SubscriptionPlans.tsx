@@ -77,6 +77,9 @@ export function SubscriptionPlans() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [activeTier, setActiveTier] = useState<Plan | null>(null);
+  const [selectedPlan, setSelectedPlan] = useState<Plan>(
+    (["pro", "elite", "master"].includes(searchParams.get("tier") ?? "") ? searchParams.get("tier") as Plan : "elite")
+  );
 
   // If returning from coach-signup with ?tier=, auto-open payment modal
   useEffect(() => {
@@ -108,13 +111,16 @@ export function SubscriptionPlans() {
       <div className="space-y-10">
         {/* Tier cards */}
         <div className="grid gap-6 md:grid-cols-3 items-start">
-          {PLANS.map((plan) => (
+          {PLANS.map((plan) => {
+            const isSelected = selectedPlan === plan.key;
+            return (
             <div
               key={plan.key}
-              className={`relative rounded-2xl border flex flex-col overflow-hidden ${
-                plan.highlighted
-                  ? "border-primary shadow-lg shadow-primary/10"
-                  : "border-zinc-700 bg-zinc-900"
+              onClick={() => setSelectedPlan(plan.key)}
+              className={`relative rounded-2xl border flex flex-col overflow-hidden cursor-pointer transition-all duration-200 ${
+                isSelected
+                  ? "border-primary shadow-lg shadow-primary/20 ring-1 ring-primary/40"
+                  : "border-zinc-700 bg-zinc-900 hover:border-zinc-500"
               }`}
             >
               {plan.badge && (
@@ -123,7 +129,7 @@ export function SubscriptionPlans() {
                 </div>
               )}
 
-              <div className={`p-6 border-b border-zinc-700 ${plan.highlighted ? "bg-primary/5" : ""}`}>
+              <div className={`p-6 border-b border-zinc-700 ${isSelected ? "bg-primary/5" : ""}`}>
                 <p className="text-xs font-semibold text-primary uppercase tracking-wider mb-1">{plan.name}</p>
                 <p className="text-sm text-zinc-400 italic mb-3">"{plan.tagline}"</p>
                 <div className="flex items-end gap-1 mb-1">
@@ -145,18 +151,19 @@ export function SubscriptionPlans() {
 
                 <Button
                   className={`w-full font-semibold ${
-                    plan.highlighted
+                    isSelected
                       ? "bg-primary text-primary-foreground hover:bg-primary/90"
                       : "bg-zinc-700 text-white hover:bg-zinc-600"
                   }`}
                   variant="default"
-                  onClick={() => handleJoin(plan.key)}
+                  onClick={(e) => { e.stopPropagation(); handleJoin(plan.key); }}
                 >
                   Join Galoras →
                 </Button>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Comparison table */}
