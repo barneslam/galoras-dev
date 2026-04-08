@@ -13,6 +13,10 @@ type FeaturedCoach = {
   current_role: string | null;
 };
 
+const CARD_W = 240;
+const CARD_GAP = 20;
+const CARD_STEP = CARD_W + CARD_GAP;
+
 export function FeaturedCoaches() {
   const navigate = useNavigate();
   const [activeIndex, setActiveIndex] = useState(0);
@@ -38,39 +42,48 @@ export function FeaturedCoaches() {
   const prev = () => setActiveIndex(i => Math.max(0, i - 1));
   const next = () => setActiveIndex(i => Math.min(coaches.length - 1, i + 1));
 
-  const handleCardClick = (coach: FeaturedCoach, offset: number) => {
+  const handleCardClick = (i: number, offset: number) => {
     if (offset === 0) {
+      const coach = coaches[i];
       const path = coach.slug ? `/coach/${coach.slug}` : `/coaching/${coach.id}`;
       navigate(path);
     } else {
-      setActiveIndex(coaches.indexOf(coach));
+      setActiveIndex(i);
     }
   };
 
   const getCardStyle = (offset: number): React.CSSProperties => {
-    const sign = offset < 0 ? -1 : 1;
     const abs = Math.abs(offset);
-    const clamped = Math.min(abs, 2);
+    const sign = offset < 0 ? -1 : 1;
 
-    const rotateY   = sign * clamped * 42;
-    const translateX = sign * clamped * 52;
-    const scale     = 1 - clamped * 0.2;
-    const translateZ = -clamped * 110;
-    const brightness = Math.max(0.35, 1 - clamped * 0.3);
+    // Horizontal position relative to center
+    const xPos = offset * CARD_STEP;
+
+    // 3D tilt + depth — clamp effect at ±2 so distant cards don't over-rotate
+    const tilt = Math.min(abs, 2);
+    const rotateY = sign * tilt * 38;
+    const scale = 1 - Math.min(abs, 4) * 0.13;
+    const brightness = Math.max(0.25, 1 - Math.min(abs, 4) * 0.22);
+    // Cards more than 3 away fade to invisible
+    const opacity = abs > 3 ? 0 : 1;
 
     return {
-      transform: `perspective(1400px) translateX(${translateX}%) translateZ(${translateZ}px) rotateY(${rotateY}deg) scale(${scale})`,
-      zIndex: 20 - abs * 5,
+      position: "absolute",
+      left: `calc(50% - ${CARD_W / 2}px + ${xPos}px)`,
+      bottom: 0,
+      width: `${CARD_W}px`,
+      transform: `perspective(1200px) rotateY(${rotateY}deg) scale(${scale})`,
+      zIndex: 30 - Math.min(abs * 4, 28),
       filter: `brightness(${brightness})`,
-      transition: "all 0.55s cubic-bezier(0.4, 0, 0.2, 1)",
-      opacity: abs > 2 ? 0 : 1,
-      pointerEvents: abs > 2 ? "none" : "auto",
+      opacity,
+      transition: "all 0.5s cubic-bezier(0.4, 0, 0.2, 1)",
+      pointerEvents: abs > 3 ? "none" : "auto",
     };
   };
 
   return (
     <section
-      className="py-16 relative overflow-hidden"
+      className="py-16 relative"
       style={{
         background:
           "radial-gradient(ellipse at 50% 60%, #2e3138 0%, #1a1d22 45%, #0d0f12 100%)",
@@ -91,7 +104,7 @@ export function FeaturedCoaches() {
         className="absolute inset-0 pointer-events-none"
         style={{
           background:
-            "radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.55) 100%)",
+            "radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.6) 100%)",
         }}
       />
 
@@ -107,137 +120,128 @@ export function FeaturedCoaches() {
         </div>
       </div>
 
-      {/* 3D stage */}
-      <div className="container-wide relative z-10">
-        <div className="relative" style={{ height: "500px" }}>
-          {/* Left arrow */}
-          <button
-            onClick={prev}
-            disabled={activeIndex === 0}
-            className="absolute left-0 top-1/2 -translate-y-1/2 z-30 w-12 h-12 rounded-full bg-black/70 border border-zinc-700 flex items-center justify-center text-white hover:bg-primary/20 hover:border-primary transition-all disabled:opacity-20 disabled:cursor-not-allowed"
-            aria-label="Previous coach"
-          >
-            <ChevronLeft className="h-6 w-6" />
-          </button>
+      {/* Carousel stage */}
+      <div className="relative z-10">
+        {/* Left / right fade masks */}
+        <div className="absolute left-0 top-0 bottom-0 w-32 z-20 pointer-events-none"
+          style={{ background: "linear-gradient(to right, #0d0f12 0%, transparent 100%)" }} />
+        <div className="absolute right-0 top-0 bottom-0 w-32 z-20 pointer-events-none"
+          style={{ background: "linear-gradient(to left, #0d0f12 0%, transparent 100%)" }} />
 
-          {/* Right arrow */}
-          <button
-            onClick={next}
-            disabled={activeIndex === coaches.length - 1}
-            className="absolute right-0 top-1/2 -translate-y-1/2 z-30 w-12 h-12 rounded-full bg-black/70 border border-zinc-700 flex items-center justify-center text-white hover:bg-primary/20 hover:border-primary transition-all disabled:opacity-20 disabled:cursor-not-allowed"
-            aria-label="Next coach"
-          >
-            <ChevronRight className="h-6 w-6" />
-          </button>
+        {/* Arrows */}
+        <button
+          onClick={prev}
+          disabled={activeIndex === 0}
+          className="absolute left-4 top-1/2 -translate-y-1/2 z-30 w-12 h-12 rounded-full bg-black/70 border border-zinc-700 flex items-center justify-center text-white hover:bg-primary/20 hover:border-primary transition-all disabled:opacity-20 disabled:cursor-not-allowed"
+          aria-label="Previous coach"
+        >
+          <ChevronLeft className="h-6 w-6" />
+        </button>
+        <button
+          onClick={next}
+          disabled={activeIndex === coaches.length - 1}
+          className="absolute right-4 top-1/2 -translate-y-1/2 z-30 w-12 h-12 rounded-full bg-black/70 border border-zinc-700 flex items-center justify-center text-white hover:bg-primary/20 hover:border-primary transition-all disabled:opacity-20 disabled:cursor-not-allowed"
+          aria-label="Next coach"
+        >
+          <ChevronRight className="h-6 w-6" />
+        </button>
 
-          {/* Cards — absolutely centred, fan out via 3D transforms */}
-          <div className="absolute inset-0 flex items-end justify-center">
-            {coaches.map((coach, i) => {
-              const offset = i - activeIndex;
-              if (Math.abs(offset) > 2) return null;
+        {/* Cards — all in DOM, positioned by offset */}
+        <div className="relative overflow-hidden" style={{ height: "500px" }}>
+          {coaches.map((coach, i) => {
+            const offset = i - activeIndex;
 
-              return (
-                <div
-                  key={coach.id}
-                  className="absolute"
-                  style={{
-                    ...getCardStyle(offset),
-                    width: "240px",
-                    bottom: 0,
-                  }}
+            return (
+              <div key={coach.id} style={getCardStyle(offset)}>
+                <button
+                  onClick={() => handleCardClick(i, offset)}
+                  className="group relative cursor-pointer focus:outline-none w-full"
+                  aria-label={
+                    offset === 0
+                      ? `View ${coach.display_name || "coach"} profile`
+                      : `Select ${coach.display_name || "coach"}`
+                  }
                 >
-                  <button
-                    onClick={() => handleCardClick(coach, offset)}
-                    className="group relative cursor-pointer focus:outline-none w-full"
-                    aria-label={
-                      offset === 0
-                        ? `View ${coach.display_name || "coach"} profile`
-                        : `Select ${coach.display_name || "coach"}`
-                    }
-                  >
-                    <div className="relative overflow-hidden rounded-t-lg">
-                      {coach.avatar_url ? (
-                        <img
-                          src={coach.avatar_url}
-                          alt={coach.display_name || "Coach"}
-                          className="w-full h-[440px] object-cover object-top"
-                          style={{
-                            filter:
-                              offset === 0 ? "grayscale(0%)" : "grayscale(55%)",
-                            transition: "filter 0.55s ease",
-                          }}
-                        />
-                      ) : (
-                        <div className="w-full h-[440px] bg-zinc-800 flex items-center justify-center">
-                          <span className="text-7xl font-bold text-zinc-500">
-                            {(coach.display_name || "C").charAt(0)}
-                          </span>
-                        </div>
-                      )}
-
-                      {/* Bottom gradient */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/10 to-transparent" />
-
-                      {/* Active glow ring */}
-                      {offset === 0 && (
-                        <div className="absolute inset-0 ring-2 ring-primary/70 rounded-t-lg pointer-events-none" />
-                      )}
-
-                      {/* Name + role — always visible for active, hover for others */}
-                      <div
-                        className="absolute bottom-0 left-0 right-0 p-4 transition-all duration-300"
+                  <div className="relative overflow-hidden rounded-t-lg">
+                    {coach.avatar_url ? (
+                      <img
+                        src={coach.avatar_url}
+                        alt={coach.display_name || "Coach"}
+                        className="w-full h-[440px] object-cover object-top"
                         style={{
-                          opacity: offset === 0 ? 1 : 0,
-                          transform:
-                            offset === 0
-                              ? "translateY(0)"
-                              : "translateY(6px)",
+                          filter:
+                            offset === 0 ? "grayscale(0%)" : "grayscale(60%)",
+                          transition: "filter 0.5s ease",
                         }}
-                      >
-                        <p className="text-white font-semibold text-sm leading-tight">
-                          {coach.display_name}
-                        </p>
-                        {(coach.current_role || coach.headline) && (
-                          <p className="text-zinc-300 text-xs mt-0.5 line-clamp-1">
-                            {coach.current_role || coach.headline}
-                          </p>
-                        )}
-                        <p className="text-primary text-xs mt-1 font-medium">
-                          View Profile →
-                        </p>
+                      />
+                    ) : (
+                      <div className="w-full h-[440px] bg-zinc-800 flex items-center justify-center">
+                        <span className="text-7xl font-bold text-zinc-500">
+                          {(coach.display_name || "C").charAt(0)}
+                        </span>
                       </div>
+                    )}
 
-                      {/* Side-card "select" hint */}
-                      {offset !== 0 && (
-                        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                          <span className="text-white/80 text-xs font-medium bg-black/50 px-3 py-1.5 rounded-full">
-                            Select
-                          </span>
-                        </div>
+                    {/* Bottom gradient */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/10 to-transparent" />
+
+                    {/* Active glow ring */}
+                    {offset === 0 && (
+                      <div className="absolute inset-0 ring-2 ring-primary/70 rounded-t-lg pointer-events-none" />
+                    )}
+
+                    {/* Name + role — active card always visible */}
+                    <div
+                      className="absolute bottom-0 left-0 right-0 p-4 transition-all duration-300"
+                      style={{
+                        opacity: offset === 0 ? 1 : 0,
+                        transform:
+                          offset === 0 ? "translateY(0)" : "translateY(6px)",
+                      }}
+                    >
+                      <p className="text-white font-semibold text-sm leading-tight">
+                        {coach.display_name}
+                      </p>
+                      {(coach.current_role || coach.headline) && (
+                        <p className="text-zinc-300 text-xs mt-0.5 line-clamp-1">
+                          {coach.current_role || coach.headline}
+                        </p>
                       )}
+                      <p className="text-primary text-xs mt-1 font-medium">
+                        View Profile →
+                      </p>
                     </div>
-                  </button>
-                </div>
-              );
-            })}
-          </div>
-        </div>
 
-        {/* Dot indicators */}
-        <div className="flex justify-center gap-2 mt-6">
-          {coaches.map((_, i) => (
-            <button
-              key={i}
-              onClick={() => setActiveIndex(i)}
-              className={`h-2 rounded-full transition-all duration-300 ${
-                i === activeIndex
-                  ? "w-6 bg-primary"
-                  : "w-2 bg-zinc-600 hover:bg-zinc-400"
-              }`}
-              aria-label={`Go to coach ${i + 1}`}
-            />
-          ))}
+                    {/* Side-card hover hint */}
+                    {offset !== 0 && (
+                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <span className="text-white/90 text-xs font-medium bg-black/60 px-3 py-1.5 rounded-full">
+                          Select
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </button>
+              </div>
+            );
+          })}
         </div>
+      </div>
+
+      {/* Dot indicators */}
+      <div className="relative z-10 flex justify-center gap-2 mt-6">
+        {coaches.map((_, i) => (
+          <button
+            key={i}
+            onClick={() => setActiveIndex(i)}
+            className={`h-2 rounded-full transition-all duration-300 ${
+              i === activeIndex
+                ? "w-6 bg-primary"
+                : "w-2 bg-zinc-600 hover:bg-zinc-400"
+            }`}
+            aria-label={`Go to coach ${i + 1}`}
+          />
+        ))}
       </div>
     </section>
   );
