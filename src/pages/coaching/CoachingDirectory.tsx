@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
-import { Search, MessageCircle, Sparkles, UserCircle2, ArrowRight, CalendarCheck, GitCompareArrows, X } from "lucide-react";
+import { Search, MessageCircle, Sparkles, UserCircle2, ArrowRight, CalendarCheck, GitCompareArrows, X, SlidersHorizontal, Building2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,6 +11,8 @@ import { AuthGate } from "@/components/AuthGate";
 import { useAuth } from "@/hooks/useAuth";
 import { useProductTypes } from "@/hooks/useProductTypes";
 import { useTags } from "@/hooks/useTags";
+
+// ── Types ─────────────────────────────────────────────────────────────────────
 
 type PublicCoach = {
   id: string;
@@ -23,58 +25,97 @@ type PublicCoach = {
   avatar_url: string | null;
   booking_url: string | null;
   tier: string | null;
-  coach_products?: { product_type: string }[] | null;
+  coach_products?: {
+    product_type: string;
+    title: string;
+    price_type: string;
+    price_amount: number | null;
+    enterprise_ready: boolean;
+  }[] | null;
 };
 
-const FILTER_ALL = "All";
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
-const goalFilters = [
-  { label: "All Coaches", value: FILTER_ALL },
-  { label: "Leading a Team", value: "leadership" },
-  { label: "Career Change", value: "career" },
-  { label: "Managing Pressure", value: "performance" },
-  { label: "Mental Resilience", value: "mindset" },
-  { label: "Executive Presence", value: "communication" },
-  { label: "Making a Move", value: "transitions" },
-];
+/** Toggle a value in/out of a multi-select set */
+function toggle(set: string[], value: string): string[] {
+  return set.includes(value) ? set.filter(v => v !== value) : [...set, value];
+}
+
+/** Format price for card display */
+function priceAnchor(products: PublicCoach["coach_products"]): string | null {
+  if (!products || products.length === 0) return null;
+  const fixed = products
+    .filter(p => p.price_type === "fixed" && p.price_amount)
+    .map(p => p.price_amount!);
+  if (fixed.length === 0) return null;
+  const min = Math.min(...fixed);
+  return `From $${(min / 100).toLocaleString()}`;
+}
+
+// ── Component ─────────────────────────────────────────────────────────────────
 
 export default function CoachingDirectory() {
   const [searchParams] = useSearchParams();
   const filterParam = searchParams.get("filter");
-  const categoryParam = searchParams.get("category");
   const matchedParam = searchParams.get("matched") === "1";
 
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeFilter, setActiveFilter] = useState(
-    filterParam && goalFilters.some(f => f.value === filterParam) ? filterParam : FILTER_ALL
+
+  // Multi-select filters
+  const [selProductTypes, setSelProductTypes] = useState<string[]>([]);
+  const [selSpecialties, setSelSpecialties] = useState<string[]>(
+    filterParam ? [filterParam] : []
   );
-  const [activeProductTypeFilter, setActiveProductTypeFilter] = useState("");
-  const [activeTagFilter, setActiveTagFilter] = useState("");
+  const [selAudience, setSelAudience] = useState<string[]>([]);
+  const [selOutcomes, setSelOutcomes] = useState<string[]>([]);
+  const [selFormats, setSelFormats] = useState<string[]>([]);
+  const [enterpriseOnly, setEnterpriseOnly] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+
   const [contactCoach, setContactCoach] = useState<{ id: string; name: string } | null>(null);
   const [compareList, setCompareList] = useState<string[]>([]);
   const { isLoggedIn, profile } = useAuth();
   const navigate = useNavigate();
   const { types: productTypes, getConfig } = useProductTypes();
   const { getTagsByFamily } = useTags();
+
   const specialtyTags = getTagsByFamily("specialty");
+  const audienceTags  = getTagsByFamily("audience");
+  const outcomeTags   = getTagsByFamily("outcome");
+  const formatTags    = getTagsByFamily("format");
 
   const toggleCompare = (id: string) => {
     setCompareList((prev) => {
       if (prev.includes(id)) return prev.filter((x) => x !== id);
-      if (prev.length >= 3) return prev; // max 3
+      if (prev.length >= 3) return prev;
       return [...prev, id];
     });
   };
+
+  const activeFilterCount =
+    selProductTypes.length + selSpecialties.length + selAudience.length +
+    selOutcomes.length + selFormats.length + (enterpriseOnly ? 1 : 0);
+
+  const clearAllFilters = () => {
+    setSelProductTypes([]);
+    setSelSpecialties([]);
+    setSelAudience([]);
+    setSelOutcomes([]);
+    setSelFormats([]);
+    setEnterpriseOnly(false);
+    setSearchQuery("");
+  };
+
+  // ── Data ───────────────────────────────────────────────────────────────────
 
   const { data: coaches, isLoading, error } = useQuery({
     queryKey: ["public-coaches-directory"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("coaches")
-        .select("id, slug, display_name, headline, bio, specialties, audience, avatar_url, booking_url, tier, coach_products(product_type)")
+        .select("id, slug, display_name, headline, bio, specialties, audience, avatar_url, booking_url, tier, coach_products(product_type, title, price_type, price_amount, enterprise_ready)")
         .eq("lifecycle_status", "published")
         .order("display_name", { ascending: true });
-
       if (error) throw error;
       return (data || []) as PublicCoach[];
     },
@@ -99,6 +140,17 @@ export default function CoachingDirectory() {
     return map;
   }, [coachTagData]);
 
+  // Build a set of all tag labels for search matching
+  const allTagLabels = useMemo(() => {
+    const labels: Record<string, string[]> = {};
+    (coachTagData || []).forEach((row: any) => {
+      if (!row.tags) return;
+      if (!labels[row.coach_id]) labels[row.coach_id] = [];
+      labels[row.coach_id].push(row.tags.tag_label.toLowerCase());
+    });
+    return labels;
+  }, [coachTagData]);
+
   const matchScore = (coach: PublicCoach): number => {
     if (!profile?.coaching_areas || profile.coaching_areas.length === 0) return 0;
     const userAreas = profile.coaching_areas.map((a) => a.toLowerCase());
@@ -107,27 +159,59 @@ export default function CoachingDirectory() {
     ).length;
   };
 
+  // ── Filtering ──────────────────────────────────────────────────────────────
+  // AND across categories, OR within category
+
   const filtered = (coaches || [])
     .filter((coach) => {
-      const text = [coach.display_name, coach.headline, coach.bio, ...(coach.specialties || [])]
-        .join(" ")
-        .toLowerCase();
-      const matchesSearch = !searchQuery || text.includes(searchQuery.toLowerCase());
-      const matchesFilter =
-        activeFilter === FILTER_ALL ||
-        (coach.specialties || []).some((s) => s.toLowerCase() === activeFilter.toLowerCase());
-      const matchesCategory =
-        !categoryParam ||
-        (coach.specialties || []).some((s) =>
-          s.toLowerCase().includes(categoryParam.toLowerCase())
-        );
-      const matchesProductType =
-        !activeProductTypeFilter ||
-        (coach.coach_products || []).some((p) => p.product_type === activeProductTypeFilter);
-      const matchesTagFilter =
-        !activeTagFilter ||
-        (coachTagLookup[coach.id] || []).some(t => t.tag_family === "specialty" && t.tag_key === activeTagFilter);
-      return matchesSearch && matchesFilter && matchesCategory && matchesProductType && matchesTagFilter;
+      // Search: match name, headline, bio, specialties, AND tag labels
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        const textFields = [coach.display_name, coach.headline, coach.bio, ...(coach.specialties || [])]
+          .join(" ")
+          .toLowerCase();
+        const tagLabels = (allTagLabels[coach.id] || []).join(" ");
+        if (!textFields.includes(q) && !tagLabels.includes(q)) return false;
+      }
+
+      // Product type filter (OR within)
+      if (selProductTypes.length > 0) {
+        const coachTypes = (coach.coach_products || []).map(p => p.product_type);
+        if (!selProductTypes.some(t => coachTypes.includes(t))) return false;
+      }
+
+      // Enterprise toggle
+      if (enterpriseOnly) {
+        const hasEnterprise = (coach.coach_products || []).some(p => p.enterprise_ready);
+        if (!hasEnterprise) return false;
+      }
+
+      // Tag-based filters: check coach_tag_map
+      const coachTags = coachTagLookup[coach.id] || [];
+
+      if (selSpecialties.length > 0) {
+        const coachSpecKeys = coachTags.filter(t => t.tag_family === "specialty").map(t => t.tag_key);
+        // Also check legacy specialties array
+        const legacySpecs = (coach.specialties || []).map(s => s.toLowerCase());
+        if (!selSpecialties.some(s => coachSpecKeys.includes(s) || legacySpecs.includes(s))) return false;
+      }
+
+      if (selAudience.length > 0) {
+        const coachAudKeys = coachTags.filter(t => t.tag_family === "audience").map(t => t.tag_key);
+        if (!selAudience.some(a => coachAudKeys.includes(a))) return false;
+      }
+
+      if (selOutcomes.length > 0) {
+        const coachOutKeys = coachTags.filter(t => t.tag_family === "outcome").map(t => t.tag_key);
+        if (!selOutcomes.some(o => coachOutKeys.includes(o))) return false;
+      }
+
+      if (selFormats.length > 0) {
+        const coachFmtKeys = coachTags.filter(t => t.tag_family === "format").map(t => t.tag_key);
+        if (!selFormats.some(f => coachFmtKeys.includes(f))) return false;
+      }
+
+      return true;
     })
     .sort((a, b) => matchScore(b) - matchScore(a));
 
@@ -136,6 +220,47 @@ export default function CoachingDirectory() {
 
   const coachProfilePath = (coach: PublicCoach) =>
     coach.slug ? `/coach/${coach.slug}` : `/coaching/${coach.id}`;
+
+  // ── Filter chip component ─────────────────────────────────────────────────
+
+  function FilterChip({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
+    return (
+      <button
+        onClick={onClick}
+        className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+          active
+            ? "bg-primary border-primary text-zinc-950"
+            : "border-zinc-700 text-zinc-400 hover:border-zinc-500 hover:text-white"
+        }`}
+      >
+        {label}
+      </button>
+    );
+  }
+
+  function FilterRow({ label, tags, selected, onToggle }: {
+    label: string;
+    tags: { tag_key: string; tag_label: string }[];
+    selected: string[];
+    onToggle: (key: string) => void;
+  }) {
+    if (tags.length === 0) return null;
+    return (
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-xs text-zinc-500 uppercase tracking-wider font-semibold mr-1 w-20 shrink-0">{label}</span>
+        {tags.map(t => (
+          <FilterChip
+            key={t.tag_key}
+            label={t.tag_label}
+            active={selected.includes(t.tag_key)}
+            onClick={() => onToggle(t.tag_key)}
+          />
+        ))}
+      </div>
+    );
+  }
+
+  // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
     <Layout>
@@ -156,7 +281,7 @@ export default function CoachingDirectory() {
             <div className="relative max-w-lg mx-auto mb-6">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
               <Input
-                placeholder="Search by name, goal, or specialty..."
+                placeholder="Search by name, specialty, or outcome..."
                 className="pl-11 bg-zinc-900 border-zinc-700 text-white placeholder:text-zinc-500 h-12 text-sm focus-visible:ring-primary rounded-xl"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -219,12 +344,9 @@ export default function CoachingDirectory() {
               <Sparkles className="h-4 w-4 text-emerald-400 shrink-0" />
               <p className="text-sm text-emerald-300">
                 Coaches matched to your context.
-                {activeFilter !== FILTER_ALL && (
-                  <> Showing <span className="font-semibold">{goalFilters.find(f => f.value === activeFilter)?.label}</span> coaches.</>
-                )}
               </p>
               <button
-                onClick={() => { setActiveFilter(FILTER_ALL); navigate("/coaching", { replace: true }); }}
+                onClick={() => { clearAllFilters(); navigate("/coaching", { replace: true }); }}
                 className="ml-auto text-xs text-zinc-500 hover:text-zinc-300 whitespace-nowrap"
               >
                 Clear match
@@ -232,92 +354,92 @@ export default function CoachingDirectory() {
             </div>
           )}
 
-          {/* Goal filters */}
-          <div className="flex flex-wrap gap-2 mb-4">
-            {goalFilters.map((f) => (
-              <button
-                key={f.value}
-                onClick={() => setActiveFilter(f.value)}
-                className={`px-4 py-2 rounded-full text-sm font-medium border transition-colors ${
-                  activeFilter === f.value
-                    ? "bg-primary border-primary text-zinc-950"
-                    : "border-zinc-700 text-zinc-400 hover:border-zinc-500 hover:text-white"
-                }`}
-              >
-                {f.label}
-              </button>
-            ))}
-          </div>
+          {/* ── Filter bar ── */}
+          <div className="mb-8 space-y-3">
 
-          {/* Product type filters */}
-          {productTypes.length > 0 && (
-            <div className="flex flex-wrap items-center gap-2 mb-10">
-              <span className="text-xs text-zinc-500 font-medium mr-1">Offering type:</span>
-              <button
-                onClick={() => setActiveProductTypeFilter("")}
-                className={`px-4 py-2 rounded-full text-sm font-medium border transition-colors ${
-                  activeProductTypeFilter === ""
-                    ? "bg-primary border-primary text-zinc-950"
-                    : "border-zinc-700 text-zinc-400 hover:border-zinc-500 hover:text-white"
-                }`}
-              >
-                All
-              </button>
-              {productTypes.map((pt) => {
-                const { label, className } = getConfig(pt.slug);
-                const isActive = activeProductTypeFilter === pt.slug;
-                return (
-                  <button
-                    key={pt.slug}
-                    onClick={() => setActiveProductTypeFilter(isActive ? "" : pt.slug)}
-                    className={`px-4 py-2 rounded-full text-sm font-medium border transition-colors ${
-                      isActive
-                        ? "bg-primary border-primary text-zinc-950"
-                        : "border-zinc-700 text-zinc-400 hover:border-zinc-500 hover:text-white"
-                    }`}
-                  >
-                    {label}
-                  </button>
-                );
-              })}
-            </div>
-          )}
-
-          {/* Specialty tag filters */}
-          {specialtyTags.length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-8 items-center">
-              <span className="text-xs text-zinc-500 uppercase tracking-wider font-semibold mr-1">Speciality:</span>
-              <button
-                onClick={() => setActiveTagFilter("")}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
-                  !activeTagFilter
-                    ? "bg-primary border-primary text-zinc-950"
-                    : "border-zinc-700 text-zinc-400 hover:border-zinc-500 hover:text-white"
-                }`}
-              >
-                All
-              </button>
-              {specialtyTags.map(t => (
-                <button
-                  key={t.tag_key}
-                  onClick={() => setActiveTagFilter(activeTagFilter === t.tag_key ? "" : t.tag_key)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
-                    activeTagFilter === t.tag_key
-                      ? "bg-primary border-primary text-zinc-950"
-                      : "border-zinc-700 text-zinc-400 hover:border-zinc-500 hover:text-white"
-                  }`}
-                >
-                  {t.tag_label}
-                </button>
+            {/* Top row: product types + enterprise toggle + filter toggle */}
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs text-zinc-500 uppercase tracking-wider font-semibold mr-1 w-20 shrink-0">Offering</span>
+              {productTypes.map(pt => (
+                <FilterChip
+                  key={pt.slug}
+                  label={pt.label}
+                  active={selProductTypes.includes(pt.slug)}
+                  onClick={() => setSelProductTypes(toggle(selProductTypes, pt.slug))}
+                />
               ))}
+
+              {/* Enterprise toggle */}
+              <button
+                onClick={() => setEnterpriseOnly(!enterpriseOnly)}
+                className={`ml-2 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                  enterpriseOnly
+                    ? "bg-orange-500 border-orange-500 text-zinc-950"
+                    : "border-zinc-700 text-zinc-400 hover:border-orange-500/50 hover:text-orange-400"
+                }`}
+              >
+                <Building2 className="h-3 w-3" />
+                Enterprise
+              </button>
+
+              {/* Expand filters */}
+              <button
+                onClick={() => setFiltersOpen(!filtersOpen)}
+                className={`ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                  filtersOpen
+                    ? "border-primary text-primary"
+                    : "border-zinc-700 text-zinc-400 hover:border-zinc-500"
+                }`}
+              >
+                <SlidersHorizontal className="h-3 w-3" />
+                Filters{activeFilterCount > 0 && ` (${activeFilterCount})`}
+              </button>
+
+              {activeFilterCount > 0 && (
+                <button
+                  onClick={clearAllFilters}
+                  className="text-xs text-zinc-500 hover:text-zinc-300 underline"
+                >
+                  Clear all
+                </button>
+              )}
             </div>
-          )}
+
+            {/* Expanded filter rows */}
+            {filtersOpen && (
+              <div className="space-y-3 p-4 rounded-xl border border-zinc-800 bg-zinc-900/50">
+                <FilterRow
+                  label="Specialty"
+                  tags={specialtyTags}
+                  selected={selSpecialties}
+                  onToggle={k => setSelSpecialties(toggle(selSpecialties, k))}
+                />
+                <FilterRow
+                  label="Audience"
+                  tags={audienceTags}
+                  selected={selAudience}
+                  onToggle={k => setSelAudience(toggle(selAudience, k))}
+                />
+                <FilterRow
+                  label="Outcome"
+                  tags={outcomeTags}
+                  selected={selOutcomes}
+                  onToggle={k => setSelOutcomes(toggle(selOutcomes, k))}
+                />
+                <FilterRow
+                  label="Format"
+                  tags={formatTags}
+                  selected={selFormats}
+                  onToggle={k => setSelFormats(toggle(selFormats, k))}
+                />
+              </div>
+            )}
+          </div>
 
           {/* Results count */}
           {!isLoading && !error && (
             <p className="text-xs text-zinc-600 mb-6">
               {filtered.length} coach{filtered.length !== 1 ? "es" : ""} available
-              {activeFilter !== FILTER_ALL ? ` · ${goalFilters.find(f => f.value === activeFilter)?.label}` : ""}
             </p>
           )}
 
@@ -328,12 +450,12 @@ export default function CoachingDirectory() {
             <div className="text-center py-20 text-red-400 text-sm">Failed to load coaches.</div>
           ) : filtered.length === 0 ? (
             <div className="text-center py-20">
-              <p className="text-zinc-500 text-sm mb-4">No coaches match your search.</p>
+              <p className="text-zinc-500 text-sm mb-4">No coaches match your filters.</p>
               <button
-                onClick={() => { setSearchQuery(""); setActiveFilter(FILTER_ALL); }}
+                onClick={clearAllFilters}
                 className="text-primary text-sm hover:underline"
               >
-                Clear filters
+                Clear all filters
               </button>
             </div>
           ) : (
@@ -341,6 +463,12 @@ export default function CoachingDirectory() {
               {filtered.map((coach) => {
                 const score = matchScore(coach);
                 const profilePath = coachProfilePath(coach);
+                const price = priceAnchor(coach.coach_products);
+                const featuredProduct = coach.coach_products?.[0];
+                const hasEnterprise = (coach.coach_products || []).some(p => p.enterprise_ready);
+                const coachTags = coachTagLookup[coach.id] || [];
+                const audienceLabels = coachTags.filter(t => t.tag_family === "audience").slice(0, 2);
+                const outcomeLabels = coachTags.filter(t => t.tag_family === "outcome").slice(0, 2);
 
                 return (
                   <div
@@ -366,12 +494,27 @@ export default function CoachingDirectory() {
                       {/* Gradient overlay */}
                       <div className="absolute inset-0 bg-gradient-to-t from-zinc-900/80 via-transparent to-transparent" />
 
-                      {/* Match badge */}
-                      {hasMatches && score > 0 && (
-                        <div className="absolute top-3 right-3">
+                      {/* Badges: top-right */}
+                      <div className="absolute top-3 right-3 flex flex-col gap-1.5 items-end">
+                        {hasMatches && score > 0 && (
                           <span className="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 backdrop-blur-sm">
                             <Sparkles className="h-3 w-3" />
                             Matched
+                          </span>
+                        )}
+                        {hasEnterprise && (
+                          <span className="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold bg-orange-500/20 text-orange-400 border border-orange-500/30 backdrop-blur-sm">
+                            <Building2 className="h-3 w-3" />
+                            Enterprise
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Price anchor: bottom-left */}
+                      {price && (
+                        <div className="absolute bottom-3 left-3">
+                          <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-zinc-950/80 text-white backdrop-blur-sm border border-zinc-700/50">
+                            {price}
                           </span>
                         </div>
                       )}
@@ -391,7 +534,42 @@ export default function CoachingDirectory() {
                         </p>
                       )}
 
-                      {/* Specialty tags */}
+                      {/* Featured product */}
+                      {featuredProduct && (
+                        <div className="mb-3 px-3 py-2 rounded-lg bg-zinc-800/60 border border-zinc-700/50">
+                          <div className="flex items-center gap-2 mb-0.5">
+                            {(() => {
+                              const { label, className } = getConfig(featuredProduct.product_type);
+                              return (
+                                <span className={`px-2 py-0.5 text-[10px] font-semibold rounded-full border ${className}`}>
+                                  {label}
+                                </span>
+                              );
+                            })()}
+                          </div>
+                          <p className="text-xs text-zinc-300 font-medium line-clamp-1">{featuredProduct.title}</p>
+                        </div>
+                      )}
+
+                      {/* Tags: audience + outcome */}
+                      {(audienceLabels.length > 0 || outcomeLabels.length > 0) && (
+                        <div className="flex flex-wrap gap-1 mb-3">
+                          {audienceLabels.map(t => (
+                            <span key={t.tag_key}
+                              className="px-2 py-0.5 text-[10px] rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400">
+                              {t.tag_label}
+                            </span>
+                          ))}
+                          {outcomeLabels.map(t => (
+                            <span key={t.tag_key}
+                              className="px-2 py-0.5 text-[10px] rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
+                              {t.tag_label}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Specialty tags (legacy) */}
                       {coach.specialties && coach.specialties.length > 0 && (
                         <div className="flex flex-wrap gap-1 mb-2">
                           {coach.specialties.slice(0, 2).map((s) => (
@@ -405,50 +583,12 @@ export default function CoachingDirectory() {
                         </div>
                       )}
 
-                      {/* Product type badges */}
-                      {(() => {
-                        const distinctTypes = [...new Set((coach.coach_products || []).map(p => p.product_type))].slice(0, 2);
-                        if (distinctTypes.length === 0) return null;
-                        return (
-                          <div className="flex flex-wrap gap-1 mb-4">
-                            {distinctTypes.map((slug) => {
-                              const { label, className } = getConfig(slug);
-                              return (
-                                <span
-                                  key={slug}
-                                  className={`px-2.5 py-0.5 text-xs font-semibold rounded-full border ${className}`}
-                                >
-                                  {label}
-                                </span>
-                              );
-                            })}
-                          </div>
-                        );
-                      })()}
-
-                      {/* Tag badges from coach_tag_map */}
-                      {(() => {
-                        const coachTags = (coachTagLookup[coach.id] || [])
-                          .filter(t => t.tag_family === "specialty")
-                          .slice(0, 2);
-                        return coachTags.length > 0 ? (
-                          <div className="flex flex-wrap gap-1 mb-2">
-                            {coachTags.map(t => (
-                              <span key={t.tag_key}
-                                className="px-2 py-0.5 text-xs rounded-full bg-primary/10 border border-primary/20 text-primary">
-                                {t.tag_label}
-                              </span>
-                            ))}
-                          </div>
-                        ) : null;
-                      })()}
-
                       {/* CTAs */}
                       <div className="flex gap-2 mt-auto pt-3 border-t border-zinc-800">
                         <Link to={profilePath} className="flex-1">
                           <Button className="w-full bg-primary hover:bg-primary/90 text-zinc-950 text-xs font-bold h-9 rounded-lg gap-1.5">
                             <CalendarCheck className="h-3.5 w-3.5" />
-                            Book Intro Call
+                            View & Book
                           </Button>
                         </Link>
 
