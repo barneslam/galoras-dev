@@ -39,7 +39,7 @@ const socialLinks = [
 
 export function Footer() {
   return (
-    <footer className="bg-secondary text-secondary-foreground">
+    <footer className="bg-zinc-950 text-white">
       <div className="container-wide section-padding">
         {/* Main Footer Grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-8 lg:gap-12">
@@ -146,7 +146,7 @@ export function Footer() {
         </div>
 
         {/* Bottom Bar */}
-        <div className="mt-16 pt-8 border-t border-border/20">
+        <div className="mt-16 pt-8 border-t border-zinc-800">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <p className="text-sm text-zinc-400">
               © {new Date().getFullYear()} Galoras. All rights reserved.
