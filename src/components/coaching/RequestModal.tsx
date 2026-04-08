@@ -49,17 +49,14 @@ export function RequestModal({ coachId, coachName, productId, productTitle, prod
       return;
     }
 
-    // Send notification email to coach
+    // Notify admin
     try {
-      await supabase.functions.invoke("send-booking-notification", {
+      await supabase.functions.invoke("send-admin-alert", {
         body: {
-          type: "coaching_request",
-          coachId,
-          coachName,
-          clientEmail: email,
-          clientName: name,
-          productTitle: productTitle || "General enquiry",
-          notes: `Goal: ${goal}\nContext: ${context}\nUrgency: ${urgency}`,
+          alertType: "customer_request",
+          name, email, coachName,
+          product: productTitle || "General enquiry",
+          goal, context, urgency,
         },
       });
     } catch (_) { /* non-blocking */ }

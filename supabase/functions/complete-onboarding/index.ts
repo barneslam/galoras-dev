@@ -141,6 +141,22 @@ serve(async (req) => {
       .update({ used_at: new Date().toISOString() })
       .eq("onboarding_token", token);
 
+    // Notify admin of new coach application
+    try {
+      await supabase.functions.invoke("send-admin-alert", {
+        body: {
+          alertType: "coach_application",
+          name: fullName,
+          email: app.email,
+          linkedin: linkedinUrl,
+          specialties: (specialtyTags || []).join(", "),
+          headline: bio ? bio.substring(0, 120) : "",
+        },
+      });
+    } catch (alertErr) {
+      console.error("Admin alert failed (non-blocking):", alertErr);
+    }
+
     return new Response(
       JSON.stringify({ success: true }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }

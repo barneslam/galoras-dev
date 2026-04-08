@@ -53,17 +53,14 @@ export function EnterpriseRequestModal({ coachId, coachName, productId, productT
       return;
     }
 
-    // Notify coach + admin (Conor)
+    // Notify admin
     try {
-      await supabase.functions.invoke("send-booking-notification", {
+      await supabase.functions.invoke("send-admin-alert", {
         body: {
-          type: "enterprise_request",
-          coachId,
-          coachName,
-          clientEmail: email,
-          clientName: `${name} (${company})`,
-          productTitle: productTitle || "Enterprise Engagement",
-          notes: `Company: ${company}\nTeam size: ${teamSize}\nProblem: ${problem}\nPhone: ${phone || "N/A"}`,
+          alertType: "enterprise_request",
+          name, email, company, teamSize, coachName,
+          product: productTitle || "Enterprise Engagement",
+          problem, phone: phone || undefined,
         },
       });
     } catch (_) { /* non-blocking */ }

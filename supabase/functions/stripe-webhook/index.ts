@@ -100,6 +100,23 @@ Deno.serve(async (req) => {
           });
         }
 
+        // Notify admin of payment
+        try {
+          await supabase.functions.invoke("send-admin-alert", {
+            body: {
+              alertType: "payment_received",
+              clientName: userName || userEmail,
+              clientEmail: userEmail,
+              product: productTitle,
+              coachName: coach?.display_name || "Unknown",
+              amount: intent.amount,
+              currency: intent.currency,
+            },
+          });
+        } catch (alertErr) {
+          console.error("Admin payment alert failed:", alertErr);
+        }
+
         console.log(`Booking ${bookingId} confirmed for user ${userId}`);
         break;
       }
