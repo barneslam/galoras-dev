@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { LayoutGrid, Users, BookOpen, Package, LogOut, ChevronRight } from "lucide-react";
+import { LayoutGrid, Users, BookOpen, Package, LogOut, ChevronRight, Gauge } from "lucide-react";
 
 const NAV = [
+  { label: "Portal",     href: "/admin/portal",     icon: Gauge },
   { label: "Applicants", href: "/admin/applicants", icon: Users },
   { label: "Coaches",    href: "/admin/coaches",    icon: LayoutGrid },
   { label: "Products",   href: "/admin/products",   icon: Package },

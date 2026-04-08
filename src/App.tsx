@@ -44,6 +44,7 @@ import CoachesList from "./pages/admin/CoachesList";
 import CoachEditorDetail from "./pages/admin/CoachEditorDetail";
 import Bookings from "@/pages/admin/Bookings";
 import ProductManager from "@/pages/admin/ProductManager";
+import Portal from "./pages/admin/Portal";
 import CompleteRegistration from "./pages/CompleteRegistration";
 
 // Legal pages
@@ -162,6 +163,16 @@ const App = () => (
             element={
               <ProtectedRoute>
                 <CoachProfileEdit />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Admin Portal (dev-only guard is inside the component) */}
+          <Route
+            path="/admin/portal"
+            element={
+              <ProtectedRoute requireAdmin>
+                <Portal />
               </ProtectedRoute>
             }
           />
