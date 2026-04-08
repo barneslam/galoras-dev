@@ -31,7 +31,7 @@ const GALORAS_PLATFORM_PRODUCTS: CoachProduct[] = [
     duration_minutes: 60,
     duration_weeks:   null,
     price_type:       "fixed",
-    price_amount:     25000,
+    price_amount:     100,  // $1 for live testing — revert to 25000 ($250) after
     price_range_min:  null,
     price_range_max:  null,
     enterprise_ready: false,
