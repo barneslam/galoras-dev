@@ -10,6 +10,54 @@ import { ContactModal } from "@/components/coaching/ContactModal";
 import { ProductCard, CoachProduct } from "@/components/coaching/ProductCard";
 import { useProductTypes } from "@/hooks/useProductTypes";
 
+// ── Galoras Platform Sessions ─────────────────────────────────────────────────
+// Standard offerings available on every qualified coach's profile.
+
+const GALORAS_PLATFORM_PRODUCTS: CoachProduct[] = [
+  {
+    id:               "galoras-discovery",
+    product_type:     "single_session",
+    title:            "Discovery Session",
+    outcome_statement:
+      "A focused 1-on-1 session to assess where you are, clarify what's holding you back, and map the fastest path to your next performance breakthrough. You'll walk away with a clear picture of your leadership gaps and a concrete action plan — no fluff, just signal.",
+    target_audience:  ["Leaders ready to stop guessing and start executing with clarity"],
+    delivery_format:  "online",
+    session_count:    1,
+    duration_minutes: 60,
+    duration_weeks:   null,
+    price_type:       "fixed",
+    price_amount:     25000,
+    price_range_min:  null,
+    price_range_max:  null,
+    enterprise_ready: false,
+    booking_mode:     "enquiry",
+    visibility_scope: "public",
+    is_active:        true,
+    sort_order:       0,
+  },
+  {
+    id:               "galoras-workshop",
+    product_type:     "workshop_event",
+    title:            "Strategic Initiative Workshop",
+    outcome_statement:
+      "A high-intensity 90-minute working session designed to pressure-test your biggest strategic initiative. Bring your real challenge — leave with a validated plan, sharper priorities, and the blind spots you didn't know you had. Built for leaders who move fast and need thinking partners, not theory.",
+    target_audience:  ["Executives and founders navigating high-stakes decisions"],
+    delivery_format:  "online",
+    session_count:    1,
+    duration_minutes: 90,
+    duration_weeks:   null,
+    price_type:       "fixed",
+    price_amount:     45000,
+    price_range_min:  null,
+    price_range_max:  null,
+    enterprise_ready: false,
+    booking_mode:     "enquiry",
+    visibility_scope: "public",
+    is_active:        true,
+    sort_order:       1,
+  },
+];
+
 type CoachProfileData = {
   id: string;
   slug: string | null;
@@ -251,13 +299,38 @@ export default function CoachProfile() {
 
                 <div className="grid gap-6">
 
-                  {/* ── Products / Sessions ── */}
+                  {/* ── Galoras Platform Sessions ── */}
+                  <section className="rounded-2xl border border-primary/20 bg-card p-8">
+                    <div className="flex items-center gap-3 mb-2">
+                      <Sparkles className="h-5 w-5 text-primary" />
+                      <h2 className="text-2xl font-semibold">Galoras Sessions</h2>
+                    </div>
+                    <p className="text-sm text-muted-foreground mb-6">
+                      Standard sessions available through the Galoras Coaching Exchange.
+                    </p>
+                    <div className="grid sm:grid-cols-2 gap-4">
+                      {GALORAS_PLATFORM_PRODUCTS.map((product) => (
+                        <ProductCard
+                          key={product.id}
+                          product={product}
+                          coachName={coach.display_name || ""}
+                          bookingUrl={coach.booking_url}
+                          getTypeConfig={getTypeConfig}
+                        />
+                      ))}
+                    </div>
+                  </section>
+
+                  {/* ── Coach's Own Products ── */}
                   {products.length > 0 && (
                     <section className="rounded-2xl border border-border bg-card p-8">
-                      <div className="flex items-center gap-3 mb-6">
+                      <div className="flex items-center gap-3 mb-2">
                         <Package className="h-5 w-5 text-primary" />
-                        <h2 className="text-2xl font-semibold">Sessions & Engagements</h2>
+                        <h2 className="text-2xl font-semibold">{coach.display_name ? `${coach.display_name}'s` : "Coach"} Sessions & Engagements</h2>
                       </div>
+                      <p className="text-sm text-muted-foreground mb-6">
+                        Custom offerings designed by this coach.
+                      </p>
                       <div className="grid sm:grid-cols-2 gap-4">
                         {products.map((product) => (
                           <ProductCard
