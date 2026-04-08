@@ -115,7 +115,7 @@ export default function CoachProfile() {
   // Products
   const [products, setProducts] = useState<CoachProduct[]>([]);
 
-  // Stripe checkout for platform products
+  // Stripe checkout for platform products and coach products with booking_mode=stripe
   const [checkoutProduct, setCheckoutProduct] = useState<CoachProduct | null>(null);
   const [checkoutSecret, setCheckoutSecret] = useState("");
   const [checkoutLoading, setCheckoutLoading] = useState(false);
@@ -393,6 +393,11 @@ export default function CoachProfile() {
                             coachName={coach.display_name || ""}
                             bookingUrl={coach.booking_url}
                             getTypeConfig={getTypeConfig}
+                            onCtaClick={
+                              product.booking_mode === "stripe" && product.price_amount
+                                ? () => handlePlatformCheckout(product)
+                                : undefined
+                            }
                           />
                         ))}
                       </div>
