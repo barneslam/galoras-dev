@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -14,7 +14,7 @@ type FeaturedCoach = {
 };
 
 const CARD_W = 240;
-const CARD_GAP = 20;
+const CARD_GAP = 32;
 const CARD_STEP = CARD_W + CARD_GAP;
 
 export function FeaturedCoaches() {
@@ -37,6 +37,13 @@ export function FeaturedCoaches() {
     retry: 1,
   });
 
+  // Start at centre card once data loads
+  useEffect(() => {
+    if (coaches && coaches.length > 1) {
+      setActiveIndex(Math.floor(coaches.length / 2));
+    }
+  }, [coaches?.length]); // eslint-disable-line react-hooks/exhaustive-deps
+
   if (isLoading || isError || !coaches || coaches.length === 0) return null;
 
   const prev = () => setActiveIndex(i => Math.max(0, i - 1));
@@ -55,16 +62,13 @@ export function FeaturedCoaches() {
   const getCardStyle = (offset: number): React.CSSProperties => {
     const abs = Math.abs(offset);
     const sign = offset < 0 ? -1 : 1;
-
-    // Horizontal position relative to center
     const xPos = offset * CARD_STEP;
 
-    // 3D tilt + depth — clamp effect at ±2 so distant cards don't over-rotate
-    const tilt = Math.min(abs, 2);
-    const rotateY = sign * tilt * 38;
-    const scale = 1 - Math.min(abs, 4) * 0.13;
-    const brightness = Math.max(0.25, 1 - Math.min(abs, 4) * 0.22);
-    // Cards more than 3 away fade to invisible
+    // ±1 cards are clearly visible, ±2+ start to fade
+    const rotateY = sign * Math.min(abs, 2) * 28;
+    const scale = abs === 0 ? 1 : abs === 1 ? 0.88 : Math.max(0.72, 1 - abs * 0.13);
+    // Bright enough to read clearly; only cards 3+ away go very dark
+    const brightness = abs === 0 ? 1 : abs === 1 ? 0.82 : abs === 2 ? 0.65 : Math.max(0.3, 0.65 - (abs - 2) * 0.18);
     const opacity = abs > 3 ? 0 : 1;
 
     return {
@@ -122,10 +126,10 @@ export function FeaturedCoaches() {
 
       {/* Carousel stage */}
       <div className="relative z-10">
-        {/* Left / right fade masks */}
-        <div className="absolute left-0 top-0 bottom-0 w-32 z-20 pointer-events-none"
+        {/* Narrow edge masks — only hide coaches that scroll far off-screen */}
+        <div className="absolute left-0 top-0 bottom-0 w-16 z-20 pointer-events-none"
           style={{ background: "linear-gradient(to right, #0d0f12 0%, transparent 100%)" }} />
-        <div className="absolute right-0 top-0 bottom-0 w-32 z-20 pointer-events-none"
+        <div className="absolute right-0 top-0 bottom-0 w-16 z-20 pointer-events-none"
           style={{ background: "linear-gradient(to left, #0d0f12 0%, transparent 100%)" }} />
 
         {/* Arrows */}
@@ -169,8 +173,7 @@ export function FeaturedCoaches() {
                         alt={coach.display_name || "Coach"}
                         className="w-full h-[440px] object-cover object-top"
                         style={{
-                          filter:
-                            offset === 0 ? "grayscale(0%)" : "grayscale(60%)",
+                          filter: offset === 0 ? "grayscale(0%)" : "grayscale(100%)",
                           transition: "filter 0.5s ease",
                         }}
                       />
