@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { usePageTracker } from "@/hooks/usePageTracker";
 
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
@@ -92,13 +93,10 @@ function CoachOnboardingRedirect() {
   return <Navigate to={`/coaching/onboarding${location.search}`} replace />;
 }
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
+function AppRoutes() {
+  usePageTracker();
+  return (
+    <Routes>
           {/* Home */}
           <Route path="/" element={<Index />} />
 
@@ -245,7 +243,16 @@ const App = () => (
           {/* Always last */}
           <Route path="*" element={<NotFound />} />
         </Routes>
-      </BrowserRouter>
+  );
+}
+
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <TooltipProvider>
+      <Toaster />
+      <Sonner />
+      <BrowserRouter>
+        <AppRoutes />
     </TooltipProvider>
   </QueryClientProvider>
 );

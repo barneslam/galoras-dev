@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Zap, Mail, Lock, User as UserIcon, KeyRound, ArrowRight, CheckCircle2 } from "lucide-react";
+import { Zap, Mail, Lock, User as UserIcon, KeyRound, ArrowRight, CheckCircle2, Phone } from "lucide-react";
 import { LegalConsentCheckboxes } from "@/components/legal/LegalConsentCheckboxes";
 import { recordAgreements } from "@/lib/legal";
 
@@ -24,6 +24,8 @@ export default function Auth() {
   // Login state
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
+  const [loginStep, setLoginStep] = useState<"credentials" | "otp">("credentials");
+  const [loginOtpCode, setLoginOtpCode] = useState("");
 
   // Signup multi-step state
   const [signupStep, setSignupStep] = useState<SignupStep>("email");
@@ -31,6 +33,7 @@ export default function Auth() {
   const [otpCode, setOtpCode] = useState("");
   const [fullName, setFullName] = useState("");
   const [password, setPassword] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
 
   // Legal consent state
   const [consentValid, setConsentValid] = useState(false);
@@ -47,14 +50,45 @@ export default function Auth() {
     });
   }, [navigate]);
 
-  // ── LOGIN ──────────────────────────────────────────────────────────────────
-  const handleLogin = async (e: React.FormEvent) => {
+  // ── LOGIN STEP 1 — verify credentials, then send OTP ───────────────────
+  const handleLoginCredentials = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
+      // Validate credentials first
+      const { error: pwError } = await supabase.auth.signInWithPassword({
         email: loginEmail,
         password: loginPassword,
+      });
+      if (pwError) throw pwError;
+
+      // Credentials valid — sign out immediately, then send OTP
+      await supabase.auth.signOut();
+
+      const { error: otpError } = await supabase.auth.signInWithOtp({
+        email: loginEmail,
+        options: { shouldCreateUser: false },
+      });
+      if (otpError) throw otpError;
+
+      toast({ title: "Verification code sent!", description: `Check ${loginEmail} for your 6-digit code.` });
+      setLoginStep("otp");
+    } catch (err: any) {
+      toast({ title: "Login failed", description: err.message, variant: "destructive" });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // ── LOGIN STEP 2 — verify OTP ─────────────────────────────────────────
+  const handleLoginOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase.auth.verifyOtp({
+        email: loginEmail,
+        token: loginOtpCode,
+        type: "email",
       });
       if (error) throw error;
 
@@ -62,7 +96,7 @@ export default function Auth() {
       toast({ title: `Welcome back, ${name}!` });
       navigate(redirectParam || "/");
     } catch (err: any) {
-      toast({ title: "Login failed", description: err.message, variant: "destructive" });
+      toast({ title: "Invalid code", description: "Please check the code and try again.", variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
@@ -125,7 +159,7 @@ export default function Auth() {
       // Update profile with full name
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        await supabase.from("profiles").update({ full_name: fullName }).eq("id", user.id);
+        await supabase.from("profiles").update({ full_name: fullName, phone: phoneNumber || null }).eq("id", user.id);
       }
 
       // Record legal agreements
@@ -164,11 +198,15 @@ export default function Auth() {
                   Welcome to Galoras
                 </div>
                 <h1 className="text-3xl font-display font-bold mb-2">
-                  {tab === "login" ? "Welcome back" : stepLabels[signupStep]}
+                  {tab === "login"
+                    ? loginStep === "otp" ? "Verify your identity" : "Welcome back"
+                    : stepLabels[signupStep]}
                 </h1>
                 <p className="text-muted-foreground text-sm">
                   {tab === "login"
-                    ? "Sign in to access your coaching dashboard"
+                    ? loginStep === "otp"
+                      ? `Enter the 6-digit code we sent to ${loginEmail}`
+                      : "Sign in to access your coaching dashboard"
                     : signupStep === "email"
                     ? "We'll send a verification code to confirm it's you"
                     : signupStep === "otp"
@@ -182,7 +220,7 @@ export default function Auth() {
                 {(["login", "signup"] as const).map((t) => (
                   <button
                     key={t}
-                    onClick={() => { setTab(t); setSignupStep("email"); }}
+                    onClick={() => { setTab(t); setSignupStep("email"); setLoginStep("credentials"); setLoginOtpCode(""); }}
                     className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
                       tab === t
                         ? "bg-background text-foreground shadow-sm"
@@ -194,9 +232,9 @@ export default function Auth() {
                 ))}
               </div>
 
-              {/* ── LOGIN FORM ── */}
-              {tab === "login" && (
-                <form onSubmit={handleLogin} className="space-y-4">
+              {/* ── LOGIN STEP 1: credentials ── */}
+              {tab === "login" && loginStep === "credentials" && (
+                <form onSubmit={handleLoginCredentials} className="space-y-4">
                   <div>
                     <Label htmlFor="login-email" className="mb-1.5 block">Email</Label>
                     <div className="relative">
@@ -214,7 +252,44 @@ export default function Auth() {
                     </div>
                   </div>
                   <Button type="submit" className="w-full bg-primary text-primary-foreground hover:bg-primary/90" disabled={isLoading}>
-                    {isLoading ? "Signing in..." : "Log In"}
+                    {isLoading ? "Verifying..." : "Log In"}
+                  </Button>
+                </form>
+              )}
+
+              {/* ── LOGIN STEP 2: OTP verification ── */}
+              {tab === "login" && loginStep === "otp" && (
+                <form onSubmit={handleLoginOtp} className="space-y-4">
+                  <div className="flex items-center gap-2 p-3 rounded-lg bg-primary/10 border border-primary/20 mb-2">
+                    <Mail className="h-4 w-4 text-primary shrink-0" />
+                    <p className="text-xs text-primary">Verification code sent to {loginEmail}</p>
+                  </div>
+                  <div>
+                    <Label htmlFor="login-otp" className="mb-1.5 block">Verification code</Label>
+                    <div className="relative">
+                      <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="login-otp"
+                        type="text"
+                        inputMode="numeric"
+                        maxLength={6}
+                        required
+                        className="pl-10 tracking-widest text-lg font-mono text-center"
+                        placeholder="000000"
+                        value={loginOtpCode}
+                        onChange={(e) => setLoginOtpCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1.5">
+                      Didn't receive it?{" "}
+                      <button type="button" className="text-primary hover:underline" onClick={() => { setLoginStep("credentials"); setLoginOtpCode(""); }}>
+                        Try again
+                      </button>
+                    </p>
+                  </div>
+                  <Button type="submit" className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
+                    disabled={isLoading || loginOtpCode.length < 6}>
+                    {isLoading ? "Verifying..." : <>Verify & sign in <ArrowRight className="ml-2 h-4 w-4" /></>}
                   </Button>
                 </form>
               )}
@@ -291,6 +366,15 @@ export default function Auth() {
                       <Input id="password" type="password" required className="pl-10" placeholder="At least 6 characters" minLength={6}
                         value={password} onChange={(e) => setPassword(e.target.value)} />
                     </div>
+                  </div>
+                  <div>
+                    <Label htmlFor="phone" className="mb-1.5 block">Phone number <span className="text-muted-foreground font-normal">(optional)</span></Label>
+                    <div className="relative">
+                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input id="phone" type="tel" className="pl-10" placeholder="+1 (555) 000-0000"
+                        value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} />
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">For SMS verification — we'll text you a code to confirm.</p>
                   </div>
                   <LegalConsentCheckboxes context="user_signup" onChange={handleConsentChange} variant="light" />
                   <Button type="submit" className="w-full bg-primary text-primary-foreground hover:bg-primary/90" disabled={isLoading || !consentValid}>
