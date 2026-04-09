@@ -253,6 +253,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AppRoutes />
+      </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
 );
