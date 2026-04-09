@@ -118,29 +118,20 @@ export default function CoachingDirectory() {
     return labels;
   }, [coachTagData]);
 
-  // ── DB-driven filter options (derived from published coaches) ───────────
-  const dbPillars = useMemo(() => {
-    const set = new Set<string>();
-    (coaches || []).forEach(c => { if (c.primary_pillar) set.add(c.primary_pillar); });
-    return [...set].sort();
-  }, [coaches]);
-
-  const dbTiers = useMemo(() => {
-    const set = new Set<string>();
-    (coaches || []).forEach(c => { if (c.tier) set.add(c.tier); });
-    return [...set].sort();
-  }, [coaches]);
-
-  const dbEngagementFormats = useMemo(() => {
-    const set = new Set<string>();
-    (coaches || []).forEach(c => { if (c.engagement_format) set.add(c.engagement_format); });
-    return [...set].sort();
-  }, [coaches]);
-
-  const dbAudiences = useMemo(() => {
-    const set = new Set<string>();
-    (coaches || []).forEach(c => { (c.audience || []).forEach(a => set.add(a)); });
-    return [...set].sort();
+  // DB-driven filter options (derived from published coaches)
+  const { dbPillars, dbTiers, dbEngagementFormats, dbAudiences } = useMemo(() => {
+    const pillars = new Set<string>(), tiers = new Set<string>();
+    const formats = new Set<string>(), audiences = new Set<string>();
+    (coaches || []).forEach(c => {
+      if (c.primary_pillar) pillars.add(c.primary_pillar);
+      if (c.tier) tiers.add(c.tier);
+      if (c.engagement_format) formats.add(c.engagement_format);
+      (c.audience || []).forEach(a => audiences.add(a));
+    });
+    return {
+      dbPillars: [...pillars].sort(), dbTiers: [...tiers].sort(),
+      dbEngagementFormats: [...formats].sort(), dbAudiences: [...audiences].sort(),
+    };
   }, [coaches]);
 
   const matchScore = (coach: DirectoryCoach): number => {
@@ -151,76 +142,33 @@ export default function CoachingDirectory() {
     ).length;
   };
 
-  // ── Filtering ──────────────────────────────────────────────────────────────
-  // AND across categories, OR within category
-
-  const filtered = (coaches || [])
-    .filter((coach) => {
-      // Search: match name, headline, bio, specialties, AND tag labels
-      if (searchQuery) {
-        const q = searchQuery.toLowerCase();
-        const textFields = [coach.display_name, coach.headline, coach.bio, ...(coach.specialties || [])]
-          .join(" ")
-          .toLowerCase();
-        const tagLabels = (allTagLabels[coach.id] || []).join(" ");
-        if (!textFields.includes(q) && !tagLabels.includes(q)) return false;
-      }
-
-      // Product type filter (OR within)
-      if (selProductTypes.length > 0) {
-        const coachTypes = (coach.coach_products || []).map(p => p.product_type);
-        if (!selProductTypes.some(t => coachTypes.includes(t))) return false;
-      }
-
-      // Enterprise toggle
-      if (enterpriseOnly) {
-        const hasEnterprise = (coach.coach_products || []).some(p => p.enterprise_ready);
-        if (!hasEnterprise) return false;
-      }
-
-      // Tag-based filters: check coach_tag_map
-      const coachTags = coachTagLookup[coach.id] || [];
-
-      if (selSpecialties.length > 0) {
-        const coachSpecKeys = coachTags.filter(t => t.tag_family === "specialty").map(t => t.tag_key);
-        // Also check legacy specialties array
-        const legacySpecs = (coach.specialties || []).map(s => s.toLowerCase());
-        if (!selSpecialties.some(s => coachSpecKeys.includes(s) || legacySpecs.includes(s))) return false;
-      }
-
-      if (selAudience.length > 0) {
-        const coachAudKeys = coachTags.filter(t => t.tag_family === "audience").map(t => t.tag_key);
-        if (!selAudience.some(a => coachAudKeys.includes(a))) return false;
-      }
-
-      if (selOutcomes.length > 0) {
-        const coachOutKeys = coachTags.filter(t => t.tag_family === "outcome").map(t => t.tag_key);
-        if (!selOutcomes.some(o => coachOutKeys.includes(o))) return false;
-      }
-
-      if (selFormats.length > 0) {
-        const coachFmtKeys = coachTags.filter(t => t.tag_family === "format").map(t => t.tag_key);
-        if (!selFormats.some(f => coachFmtKeys.includes(f))) return false;
-      }
-
-      // Primary pillar filter
-      if (selPillars.length > 0) {
-        if (!coach.primary_pillar || !selPillars.includes(coach.primary_pillar)) return false;
-      }
-
-      // Tier filter
-      if (selTiers.length > 0) {
-        if (!coach.tier || !selTiers.includes(coach.tier)) return false;
-      }
-
-      // Engagement format filter
-      if (selEngagementFormats.length > 0) {
-        if (!coach.engagement_format || !selEngagementFormats.includes(coach.engagement_format)) return false;
-      }
-
-      return true;
-    })
-    .sort((a, b) => matchScore(b) - matchScore(a));
+  // Filtering: AND across categories, OR within category
+  const filtered = (coaches || []).filter((coach) => {
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      const text = [coach.display_name, coach.headline, coach.bio, ...(coach.specialties || [])].join(" ").toLowerCase();
+      const tags = (allTagLabels[coach.id] || []).join(" ");
+      if (!text.includes(q) && !tags.includes(q)) return false;
+    }
+    if (selProductTypes.length > 0) {
+      const types = (coach.coach_products || []).map(p => p.product_type);
+      if (!selProductTypes.some(t => types.includes(t))) return false;
+    }
+    if (enterpriseOnly && !(coach.coach_products || []).some(p => p.enterprise_ready)) return false;
+    const ct = coachTagLookup[coach.id] || [];
+    if (selSpecialties.length > 0) {
+      const keys = ct.filter(t => t.tag_family === "specialty").map(t => t.tag_key);
+      const legacy = (coach.specialties || []).map(s => s.toLowerCase());
+      if (!selSpecialties.some(s => keys.includes(s) || legacy.includes(s))) return false;
+    }
+    if (selAudience.length > 0 && !selAudience.some(a => ct.filter(t => t.tag_family === "audience").map(t => t.tag_key).includes(a))) return false;
+    if (selOutcomes.length > 0 && !selOutcomes.some(o => ct.filter(t => t.tag_family === "outcome").map(t => t.tag_key).includes(o))) return false;
+    if (selFormats.length > 0 && !selFormats.some(f => ct.filter(t => t.tag_family === "format").map(t => t.tag_key).includes(f))) return false;
+    if (selPillars.length > 0 && (!coach.primary_pillar || !selPillars.includes(coach.primary_pillar))) return false;
+    if (selTiers.length > 0 && (!coach.tier || !selTiers.includes(coach.tier))) return false;
+    if (selEngagementFormats.length > 0 && (!coach.engagement_format || !selEngagementFormats.includes(coach.engagement_format))) return false;
+    return true;
+  }).sort((a, b) => matchScore(b) - matchScore(a));
 
   const hasProfile = isLoggedIn && profile?.onboarding_complete;
   const hasMatches = isLoggedIn && profile?.coaching_areas && profile.coaching_areas.length > 0;
