@@ -50,26 +50,16 @@ export default function Auth() {
     });
   }, [navigate]);
 
-  // ── LOGIN STEP 1 — verify credentials, then send OTP ───────────────────
-  const handleLoginCredentials = async (e: React.FormEvent) => {
+  // ── LOGIN STEP 1 — send OTP to email ────────────────────────────────────
+  const handleLoginSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     try {
-      // Validate credentials first
-      const { error: pwError } = await supabase.auth.signInWithPassword({
-        email: loginEmail,
-        password: loginPassword,
-      });
-      if (pwError) throw pwError;
-
-      // Credentials valid — sign out immediately, then send OTP
-      await supabase.auth.signOut();
-
-      const { error: otpError } = await supabase.auth.signInWithOtp({
+      const { error } = await supabase.auth.signInWithOtp({
         email: loginEmail,
         options: { shouldCreateUser: false },
       });
-      if (otpError) throw otpError;
+      if (error) throw error;
 
       toast({ title: "Verification code sent!", description: `Check ${loginEmail} for your 6-digit code.` });
       setLoginStep("otp");
@@ -206,7 +196,7 @@ export default function Auth() {
                   {tab === "login"
                     ? loginStep === "otp"
                       ? `Enter the 6-digit code we sent to ${loginEmail}`
-                      : "Sign in to access your coaching dashboard"
+                      : "We'll send a verification code to confirm it's you"
                     : signupStep === "email"
                     ? "We'll send a verification code to confirm it's you"
                     : signupStep === "otp"
@@ -232,27 +222,19 @@ export default function Auth() {
                 ))}
               </div>
 
-              {/* ── LOGIN STEP 1: credentials ── */}
+              {/* ── LOGIN STEP 1: enter email ── */}
               {tab === "login" && loginStep === "credentials" && (
-                <form onSubmit={handleLoginCredentials} className="space-y-4">
+                <form onSubmit={handleLoginSendOtp} className="space-y-4">
                   <div>
-                    <Label htmlFor="login-email" className="mb-1.5 block">Email</Label>
+                    <Label htmlFor="login-email" className="mb-1.5 block">Email address</Label>
                     <div className="relative">
                       <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <Input id="login-email" type="email" required className="pl-10" placeholder="you@example.com"
                         value={loginEmail} onChange={(e) => setLoginEmail(e.target.value)} />
                     </div>
                   </div>
-                  <div>
-                    <Label htmlFor="login-password" className="mb-1.5 block">Password</Label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input id="login-password" type="password" required className="pl-10" placeholder="••••••••"
-                        value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} />
-                    </div>
-                  </div>
                   <Button type="submit" className="w-full bg-primary text-primary-foreground hover:bg-primary/90" disabled={isLoading}>
-                    {isLoading ? "Verifying..." : "Log In"}
+                    {isLoading ? "Sending code..." : <>Send verification code <ArrowRight className="ml-2 h-4 w-4" /></>}
                   </Button>
                 </form>
               )}
