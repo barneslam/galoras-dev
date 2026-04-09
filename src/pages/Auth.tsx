@@ -30,8 +30,15 @@ export default function Auth() {
   const { toast } = useToast();
   const redirectParam = searchParams.get("redirect") || "";
   const defaultTab = searchParams.get("tab") === "signup" ? "signup" : "login";
-  const [tab, setTab] = useState<"login" | "signup">(defaultTab as "login" | "signup");
+  const [tab, setTab] = useState<"login" | "signup" | "reset">(defaultTab as "login" | "signup");
   const [isLoading, setIsLoading] = useState(false);
+
+  // Reset password state
+  const [resetEmail, setResetEmail] = useState("");
+  const [resetStep, setResetStep] = useState<"email" | "code" | "newpass">("email");
+  const [resetCode, setResetCode] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
 
   // Login state
   const [loginEmail, setLoginEmail] = useState("");
@@ -183,6 +190,55 @@ export default function Auth() {
     }
   };
 
+  // ── RESET PASSWORD STEP 1 — send code ───────────────────────────────────
+  const handleResetSendCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    try {
+      await callFunction("send-password-reset", { email: resetEmail });
+      toast({ title: "Reset code sent!", description: `Check ${resetEmail} for your 6-digit code.` });
+      setResetStep("code");
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // ── RESET PASSWORD STEP 2 — verify code ────────────────────────────────
+  const handleResetVerifyCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setResetStep("newpass");
+  };
+
+  // ── RESET PASSWORD STEP 3 — set new password ──────────────────────────
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newPassword.length < 6) {
+      toast({ title: "Password too short", description: "Must be at least 6 characters.", variant: "destructive" });
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast({ title: "Passwords don't match", description: "Please re-enter your new password.", variant: "destructive" });
+      return;
+    }
+    setIsLoading(true);
+    try {
+      await callFunction("verify-password-reset", { email: resetEmail, code: resetCode, newPassword });
+      toast({ title: "Password reset!", description: "You can now log in with your new password." });
+      setTab("login");
+      setLoginEmail(resetEmail);
+      setResetStep("email");
+      setResetCode("");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (err: any) {
+      toast({ title: "Reset failed", description: err.message, variant: "destructive" });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const stepLabels: Record<SignupStep, string> = {
     email: "Enter your email",
     otp: "Verify your email",
@@ -205,12 +261,20 @@ export default function Auth() {
                   Welcome to Galoras
                 </div>
                 <h1 className="text-3xl font-display font-bold mb-2">
-                  {tab === "login"
+                  {tab === "reset"
+                    ? resetStep === "email" ? "Reset your password" : resetStep === "code" ? "Enter reset code" : "Set new password"
+                    : tab === "login"
                     ? loginStep === "otp" ? "Verify your identity" : "Welcome back"
                     : stepLabels[signupStep]}
                 </h1>
                 <p className="text-muted-foreground text-sm">
-                  {tab === "login"
+                  {tab === "reset"
+                    ? resetStep === "email"
+                      ? "We'll send a code to verify it's you"
+                      : resetStep === "code"
+                      ? `Enter the 6-digit code we sent to ${resetEmail}`
+                      : "Choose a new password for your account"
+                    : tab === "login"
                     ? loginStep === "otp"
                       ? `Enter the 6-digit code we sent to ${loginEmail}`
                       : "Sign in to access your coaching dashboard"
@@ -261,6 +325,11 @@ export default function Auth() {
                   <Button type="submit" className="w-full bg-primary text-primary-foreground hover:bg-primary/90" disabled={isLoading}>
                     {isLoading ? "Verifying..." : "Log In"}
                   </Button>
+                  <p className="text-center text-sm text-muted-foreground mt-3">
+                    <button type="button" className="text-primary hover:underline" onClick={() => { setTab("reset"); setResetEmail(loginEmail); setResetStep("email"); }}>
+                      Forgot your password?
+                    </button>
+                  </p>
                 </form>
               )}
 
@@ -386,6 +455,80 @@ export default function Auth() {
                   <LegalConsentCheckboxes context="user_signup" onChange={handleConsentChange} variant="light" />
                   <Button type="submit" className="w-full bg-primary text-primary-foreground hover:bg-primary/90" disabled={isLoading || !consentValid}>
                     {isLoading ? "Creating account..." : "Create account & get started"}
+                  </Button>
+                </form>
+              )}
+
+              {/* ── RESET PASSWORD STEP 1: enter email ── */}
+              {tab === "reset" && resetStep === "email" && (
+                <form onSubmit={handleResetSendCode} className="space-y-4">
+                  <div>
+                    <Label htmlFor="reset-email" className="mb-1.5 block">Email address</Label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input id="reset-email" type="email" required className="pl-10" placeholder="you@example.com"
+                        value={resetEmail} onChange={(e) => setResetEmail(e.target.value)} />
+                    </div>
+                  </div>
+                  <Button type="submit" className="w-full bg-primary text-primary-foreground hover:bg-primary/90" disabled={isLoading}>
+                    {isLoading ? "Sending code..." : <>Send reset code <ArrowRight className="ml-2 h-4 w-4" /></>}
+                  </Button>
+                  <p className="text-center text-sm text-muted-foreground">
+                    <button type="button" className="text-primary hover:underline" onClick={() => setTab("login")}>
+                      Back to login
+                    </button>
+                  </p>
+                </form>
+              )}
+
+              {/* ── RESET PASSWORD STEP 2: enter code ── */}
+              {tab === "reset" && resetStep === "code" && (
+                <form onSubmit={handleResetVerifyCode} className="space-y-4">
+                  <div className="flex items-center gap-2 p-3 rounded-lg bg-primary/10 border border-primary/20 mb-2">
+                    <Mail className="h-4 w-4 text-primary shrink-0" />
+                    <p className="text-xs text-primary">Reset code sent to {resetEmail}</p>
+                  </div>
+                  <div>
+                    <Label htmlFor="reset-code" className="mb-1.5 block">Verification code</Label>
+                    <div className="relative">
+                      <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input id="reset-code" type="text" inputMode="numeric" maxLength={6} required
+                        className="pl-10 tracking-widest text-lg font-mono text-center" placeholder="000000"
+                        value={resetCode} onChange={(e) => setResetCode(e.target.value.replace(/\D/g, "").slice(0, 6))} />
+                    </div>
+                  </div>
+                  <Button type="submit" className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
+                    disabled={resetCode.length < 6}>
+                    <>Verify code <ArrowRight className="ml-2 h-4 w-4" /></>
+                  </Button>
+                </form>
+              )}
+
+              {/* ── RESET PASSWORD STEP 3: new password ── */}
+              {tab === "reset" && resetStep === "newpass" && (
+                <form onSubmit={handleResetPassword} className="space-y-4">
+                  <div className="flex items-center gap-2 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 mb-2">
+                    <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
+                    <p className="text-xs text-emerald-400">Code verified. Set your new password.</p>
+                  </div>
+                  <div>
+                    <Label htmlFor="new-password" className="mb-1.5 block">New password</Label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input id="new-password" type="password" required className="pl-10" placeholder="At least 6 characters" minLength={6}
+                        value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
+                    </div>
+                  </div>
+                  <div>
+                    <Label htmlFor="confirm-password" className="mb-1.5 block">Confirm password</Label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input id="confirm-password" type="password" required className="pl-10" placeholder="Re-enter your new password"
+                        value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
+                    </div>
+                  </div>
+                  <Button type="submit" className="w-full bg-primary text-primary-foreground hover:bg-primary/90" disabled={isLoading}>
+                    {isLoading ? "Resetting..." : "Reset password"}
                   </Button>
                 </form>
               )}
