@@ -7,6 +7,18 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Zap, Mail, Lock, User as UserIcon, KeyRound, ArrowRight, CheckCircle2, Phone } from "lucide-react";
+
+const FUNCTIONS_BASE = "https://qbjuomsmnrclsjhdsjcz.supabase.co/functions/v1";
+const callFunction = async (name: string, body: Record<string, unknown>) => {
+  const res = await fetch(`${FUNCTIONS_BASE}/${name}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  const data = await res.json();
+  if (!res.ok || data.error) throw new Error(data.error || "Request failed");
+  return data;
+};
 import { LegalConsentCheckboxes } from "@/components/legal/LegalConsentCheckboxes";
 import { recordAgreements } from "@/lib/legal";
 
@@ -66,10 +78,7 @@ export default function Auth() {
       await supabase.auth.signOut();
 
       // Send custom OTP via our edge function + Resend
-      const res = await supabase.functions.invoke("send-login-otp", {
-        body: { email: loginEmail },
-      });
-      if (res.error) throw new Error("Failed to send verification code");
+      await callFunction("send-login-otp", { email: loginEmail });
 
       toast({ title: "Verification code sent!", description: `Check ${loginEmail} for your 6-digit code.` });
       setLoginStep("otp");
@@ -85,16 +94,12 @@ export default function Auth() {
     e.preventDefault();
     setIsLoading(true);
     try {
-      const res = await supabase.functions.invoke("verify-login-otp", {
-        body: { email: loginEmail, code: loginOtpCode, password: loginPassword },
+      const result = await callFunction("verify-login-otp", {
+        email: loginEmail, code: loginOtpCode, password: loginPassword,
       });
 
-      if (res.error || res.data?.error) {
-        throw new Error(res.data?.error || "Verification failed");
-      }
-
       // Set the session from the edge function response
-      const { session } = res.data;
+      const { session } = result;
       if (session) {
         await supabase.auth.setSession({
           access_token: session.access_token,
@@ -102,7 +107,7 @@ export default function Auth() {
         });
       }
 
-      const name = res.data.user?.user_metadata?.full_name || loginEmail.split("@")[0] || "there";
+      const name = result.user?.user_metadata?.full_name || loginEmail.split("@")[0] || "there";
       toast({ title: `Welcome back, ${name}!` });
       navigate(redirectParam || "/");
     } catch (err: any) {
@@ -117,10 +122,7 @@ export default function Auth() {
     e.preventDefault();
     setIsLoading(true);
     try {
-      const res = await supabase.functions.invoke("send-signup-otp", {
-        body: { email: signupEmail },
-      });
-      if (res.error || res.data?.error) throw new Error(res.data?.error || "Failed to send code");
+      await callFunction("send-signup-otp", { email: signupEmail });
       toast({ title: "Code sent!", description: `Check ${signupEmail} for your 6-digit code.` });
       setSignupStep("otp");
     } catch (err: any) {
@@ -135,10 +137,7 @@ export default function Auth() {
     e.preventDefault();
     setIsLoading(true);
     try {
-      const res = await supabase.functions.invoke("verify-signup-otp", {
-        body: { email: signupEmail, code: otpCode },
-      });
-      if (res.error || res.data?.error) throw new Error(res.data?.error || "Verification failed");
+      await callFunction("verify-signup-otp", { email: signupEmail, code: otpCode });
       toast({ title: "Email verified!", description: "Now complete your account setup." });
       setSignupStep("complete");
     } catch (err: any) {
@@ -158,16 +157,15 @@ export default function Auth() {
     setIsLoading(true);
     try {
       // Complete signup via edge function — sets password and signs in
-      const res = await supabase.functions.invoke("complete-signup", {
-        body: { email: signupEmail, password, fullName, phone: phoneNumber || null },
+      const signupResult = await callFunction("complete-signup", {
+        email: signupEmail, password, fullName, phone: phoneNumber || null,
       });
-      if (res.error || res.data?.error) throw new Error(res.data?.error || "Failed to complete signup");
 
       // Set session from the response
-      if (res.data?.session) {
+      if (signupResult.session) {
         await supabase.auth.setSession({
-          access_token: res.data.session.access_token,
-          refresh_token: res.data.session.refresh_token,
+          access_token: signupResult.session.access_token,
+          refresh_token: signupResult.session.refresh_token,
         });
       }
 
