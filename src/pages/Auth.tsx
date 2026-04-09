@@ -50,22 +50,63 @@ export default function Auth() {
     });
   }, [navigate]);
 
-  // ── LOGIN — password-based (OTP ready when SMTP is configured) ──────────
-  const handleLogin = async (e: React.FormEvent) => {
+  // ── LOGIN STEP 1 — enter email + password, send custom OTP via Resend ──
+  const handleLoginCredentials = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
+      // Validate password first (don't complete sign-in yet)
+      const { error: pwError } = await supabase.auth.signInWithPassword({
         email: loginEmail,
         password: loginPassword,
       });
-      if (error) throw error;
+      if (pwError) throw pwError;
 
-      const name = data.user?.user_metadata?.full_name || data.user?.email?.split("@")[0] || "there";
+      // Password valid — sign out (we'll sign back in after OTP)
+      await supabase.auth.signOut();
+
+      // Send custom OTP via our edge function + Resend
+      const res = await supabase.functions.invoke("send-login-otp", {
+        body: { email: loginEmail },
+      });
+      if (res.error) throw new Error("Failed to send verification code");
+
+      toast({ title: "Verification code sent!", description: `Check ${loginEmail} for your 6-digit code.` });
+      setLoginStep("otp");
+    } catch (err: any) {
+      toast({ title: "Login failed", description: err.message, variant: "destructive" });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // ── LOGIN STEP 2 — verify custom OTP + sign in ────────────────────────
+  const handleLoginOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    try {
+      const res = await supabase.functions.invoke("verify-login-otp", {
+        body: { email: loginEmail, code: loginOtpCode, password: loginPassword },
+      });
+
+      if (res.error || res.data?.error) {
+        throw new Error(res.data?.error || "Verification failed");
+      }
+
+      // Set the session from the edge function response
+      const { session } = res.data;
+      if (session) {
+        await supabase.auth.setSession({
+          access_token: session.access_token,
+          refresh_token: session.refresh_token,
+        });
+      }
+
+      const name = res.data.user?.user_metadata?.full_name || loginEmail.split("@")[0] || "there";
       toast({ title: `Welcome back, ${name}!` });
       navigate(redirectParam || "/");
     } catch (err: any) {
-      toast({ title: "Login failed", description: err.message, variant: "destructive" });
+      toast({ title: "Invalid code", description: err.message, variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
@@ -167,11 +208,15 @@ export default function Auth() {
                   Welcome to Galoras
                 </div>
                 <h1 className="text-3xl font-display font-bold mb-2">
-                  {tab === "login" ? "Welcome back" : stepLabels[signupStep]}
+                  {tab === "login"
+                    ? loginStep === "otp" ? "Verify your identity" : "Welcome back"
+                    : stepLabels[signupStep]}
                 </h1>
                 <p className="text-muted-foreground text-sm">
                   {tab === "login"
-                    ? "Sign in to access your coaching dashboard"
+                    ? loginStep === "otp"
+                      ? `Enter the 6-digit code we sent to ${loginEmail}`
+                      : "Sign in to access your coaching dashboard"
                     : signupStep === "email"
                     ? "We'll send a verification code to confirm it's you"
                     : signupStep === "otp"
@@ -197,9 +242,9 @@ export default function Auth() {
                 ))}
               </div>
 
-              {/* ── LOGIN FORM ── */}
-              {tab === "login" && (
-                <form onSubmit={handleLogin} className="space-y-4">
+              {/* ── LOGIN STEP 1: email + password ── */}
+              {tab === "login" && loginStep === "credentials" && (
+                <form onSubmit={handleLoginCredentials} className="space-y-4">
                   <div>
                     <Label htmlFor="login-email" className="mb-1.5 block">Email</Label>
                     <div className="relative">
@@ -217,7 +262,44 @@ export default function Auth() {
                     </div>
                   </div>
                   <Button type="submit" className="w-full bg-primary text-primary-foreground hover:bg-primary/90" disabled={isLoading}>
-                    {isLoading ? "Signing in..." : "Log In"}
+                    {isLoading ? "Verifying..." : "Log In"}
+                  </Button>
+                </form>
+              )}
+
+              {/* ── LOGIN STEP 2: OTP verification ── */}
+              {tab === "login" && loginStep === "otp" && (
+                <form onSubmit={handleLoginOtp} className="space-y-4">
+                  <div className="flex items-center gap-2 p-3 rounded-lg bg-primary/10 border border-primary/20 mb-2">
+                    <Mail className="h-4 w-4 text-primary shrink-0" />
+                    <p className="text-xs text-primary">Verification code sent to {loginEmail}</p>
+                  </div>
+                  <div>
+                    <Label htmlFor="login-otp" className="mb-1.5 block">Verification code</Label>
+                    <div className="relative">
+                      <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="login-otp"
+                        type="text"
+                        inputMode="numeric"
+                        maxLength={6}
+                        required
+                        className="pl-10 tracking-widest text-lg font-mono text-center"
+                        placeholder="000000"
+                        value={loginOtpCode}
+                        onChange={(e) => setLoginOtpCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1.5">
+                      Didn't receive it?{" "}
+                      <button type="button" className="text-primary hover:underline" onClick={() => { setLoginStep("credentials"); setLoginOtpCode(""); }}>
+                        Try again
+                      </button>
+                    </p>
+                  </div>
+                  <Button type="submit" className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
+                    disabled={isLoading || loginOtpCode.length < 6}>
+                    {isLoading ? "Verifying..." : <>Verify & sign in <ArrowRight className="ml-2 h-4 w-4" /></>}
                   </Button>
                 </form>
               )}
