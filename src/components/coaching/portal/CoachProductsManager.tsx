@@ -156,11 +156,11 @@ export function CoachProductsManager({ coachProfile }: CoachProductsManagerProps
     setDraft({
       title: p.title,
       product_type: p.product_type,
-      summary: (p as any).summary ?? '',
+      summary: '',
       outcome_statement: p.outcome_statement ?? '',
       target_audience: Array.isArray(p.target_audience) ? p.target_audience.join(', ') : '',
       duration_minutes: p.duration_minutes ?? 60,
-      format: p.format ?? 'online',
+      format: p.delivery_format ?? 'online',
       delivery_format: p.delivery_format ?? '',
       price_type: p.price_type,
       price_amount: p.price_amount ?? '',
@@ -168,8 +168,8 @@ export function CoachProductsManager({ coachProfile }: CoachProductsManagerProps
       price_range_max: p.price_range_max ?? '',
       booking_mode: p.booking_mode,
       is_active: p.is_active,
-      sessions: (p as any).sessions ?? '',
-      weeks: (p as any).weeks ?? '',
+      sessions: (p as any).session_count ?? '',
+      weeks: (p as any).duration_weeks ?? '',
     });
   };
 
@@ -191,12 +191,12 @@ export function CoachProductsManager({ coachProfile }: CoachProductsManagerProps
     const payload: Record<string, unknown> = {
       product_type: draft.product_type,
       title: draft.title.trim(),
-      summary: draft.summary || null,
       outcome_statement: draft.outcome_statement || null,
       target_audience: audience.length > 0 ? audience : null,
       duration_minutes: draft.duration_minutes || null,
-      format: draft.format,
-      delivery_format: draft.delivery_format || draft.format,
+      delivery_format: draft.format || 'online',
+      session_count: draft.sessions || null,
+      duration_weeks: draft.weeks || null,
       price_type: draft.price_type,
       price_amount: draft.price_type === 'fixed' ? (draft.price_amount || null) : null,
       price_range_min: draft.price_type === 'range' ? (draft.price_range_min || null) : null,
