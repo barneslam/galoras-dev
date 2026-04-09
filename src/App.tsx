@@ -140,14 +140,7 @@ function AppRoutes() {
           <Route path="/subscription-success" element={<SubscriptionSuccess />} />
 
           {/* Dashboard Routes */}
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            }
-          />
+          <Route path="/dashboard" element={<Navigate to="/coach-dashboard" replace />} />
           <Route
             path="/coach-dashboard"
             element={
