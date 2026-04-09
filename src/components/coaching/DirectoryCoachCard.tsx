@@ -81,8 +81,11 @@ export function DirectoryCoachCard({
           className="absolute inset-0 rounded-2xl overflow-hidden border border-border bg-card flex flex-col"
           style={{ backfaceVisibility: "hidden" }}
         >
-          {/* Photo */}
-          <div className="relative h-[260px] bg-background overflow-hidden">
+          {/* Photo — double-click to flip */}
+          <div
+            className="relative h-[260px] bg-background overflow-hidden cursor-pointer"
+            onDoubleClick={() => setFlipped(true)}
+          >
             {coach.avatar_url ? (
               <img
                 src={coach.avatar_url}
