@@ -46,7 +46,8 @@ export function PortalSidebar({ activeTab, onNavigate }: PortalSidebarProps) {
         {NAV_ITEMS.map((item) => {
           const isActive =
             item.id === activeTab ||
-            (item.id === 'engagement' && (activeTab === 'bookings' || activeTab === 'availability' || activeTab === 'products'));
+            (item.id === 'engagement' && (activeTab === 'pipeline' || activeTab === 'bookings' || activeTab === 'availability' || activeTab === 'products')) ||
+            (item.id === 'visibility' && activeTab === 'revenue');
           const Icon = item.icon;
 
           return (

@@ -19,11 +19,13 @@ import {
   FileText,
   Package,
 } from 'lucide-react';
-import { CoachProductsTab } from '@/components/coaching/CoachProductsTab';
 import { useNavigate } from 'react-router-dom';
 import { PortalSidebar } from '@/components/coaching/portal/PortalSidebar';
 import { PortalTopBar } from '@/components/coaching/portal/PortalTopBar';
 import { OverviewTab } from '@/components/coaching/portal/OverviewTab';
+import { CoachProductsManager } from '@/components/coaching/portal/CoachProductsManager';
+import { CoachPipelineCalendar } from '@/components/coaching/portal/CoachPipelineCalendar';
+import { CoachRevenueDashboard } from '@/components/coaching/portal/CoachRevenueDashboard';
 
 const DAYS_OF_WEEK = [
   { value: 0, label: 'Sunday' },
@@ -170,8 +172,8 @@ export default function CoachDashboard() {
       navigate('/coach-dashboard/edit');
       return;
     }
-    if (tab === 'visibility') { setActiveTab('overview'); return; }
-    if (tab === 'engagement') { setActiveTab('bookings'); return; }
+    if (tab === 'visibility') { setActiveTab('revenue'); return; }
+    if (tab === 'engagement') { setActiveTab('pipeline'); return; }
     if (tab === 'settings') { setActiveTab('settings'); return; }
     if (tab === 'labs' || tab === 'messages') {
       toast({ title: 'Coming Soon', description: `${tab.charAt(0).toUpperCase() + tab.slice(1)} is under development.` });
@@ -256,15 +258,14 @@ export default function CoachDashboard() {
             />
           )}
 
-          {/* Bookings tab */}
-          {activeTab === 'bookings' && (
-            <BookingsContent
-              todayBookings={todayBookings}
-              pendingBookings={pendingBookings}
-              upcomingBookings={upcomingBookings}
-              bookingsLoading={bookingsLoading}
-              updateStatus={updateStatus}
-            />
+          {/* Pipeline tab (bookings + calendar) */}
+          {(activeTab === 'pipeline' || activeTab === 'bookings') && (
+            <CoachPipelineCalendar coachProfile={coachProfile} />
+          )}
+
+          {/* Revenue tab */}
+          {activeTab === 'revenue' && (
+            <CoachRevenueDashboard coachProfile={coachProfile} />
           )}
 
           {/* Availability tab */}
@@ -277,7 +278,7 @@ export default function CoachDashboard() {
 
           {/* Products tab */}
           {activeTab === 'products' && (
-            <CoachProductsTab coachProfile={coachProfile} />
+            <CoachProductsManager coachProfile={coachProfile} />
           )}
 
           {/* Settings tab */}
