@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { CalendarCheck, RotateCcw } from "lucide-react";
+import { CalendarCheck, RotateCcw, GitCompareArrows } from "lucide-react";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -50,7 +50,9 @@ interface DirectoryCoachCardProps {
 export function DirectoryCoachCard({
   coach,
   profilePath,
+  compareList,
   getConfig,
+  onToggleCompare,
 }: DirectoryCoachCardProps) {
   const [flipped, setFlipped] = useState(false);
 
@@ -141,8 +143,19 @@ export function DirectoryCoachCard({
                 </Button>
               </Link>
               <button
+                onClick={(e) => { e.preventDefault(); onToggleCompare(coach.id); }}
+                title={compareList.includes(coach.id) ? "Remove from compare" : "Add to compare"}
+                className={`flex items-center justify-center w-9 h-9 rounded-lg border transition-colors ${
+                  compareList.includes(coach.id)
+                    ? "border-accent bg-accent/10 text-accent"
+                    : "border-border text-muted-foreground hover:border-accent/50 hover:text-accent"
+                }`}
+              >
+                <GitCompareArrows className="h-3.5 w-3.5" />
+              </button>
+              <button
                 onClick={(e) => { e.preventDefault(); setFlipped(true); }}
-                className="flex items-center justify-center w-9 h-9 rounded-lg border border-border text-muted-foreground hover:border-accent/50 hover:text-accent transition-colors"
+                className="flex items-center justify-center w-9 h-9 rounded-lg border border-border text-muted-foreground hover:border-primary/50 hover:text-primary transition-colors"
                 title="See details"
               >
                 <RotateCcw className="h-3.5 w-3.5" />
