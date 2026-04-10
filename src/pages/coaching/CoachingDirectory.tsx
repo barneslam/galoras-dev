@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Layout } from "@/components/layout";
-import { Search, Sparkles, UserCircle2, ArrowRight, GitCompareArrows, X } from "lucide-react";
+import { Search, Sparkles, UserCircle2, ArrowRight, GitCompareArrows, X, ChevronRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,6 +11,39 @@ import { toggle } from "@/components/coaching/DirectoryFilters";
 import { useAuth } from "@/hooks/useAuth";
 import { useProductTypes } from "@/hooks/useProductTypes";
 
+// ── Sidebar filter button ─────────────────────────────────────────────────────
+
+function SidebarFilterBtn({
+  label,
+  active,
+  color = "primary",
+  onClick,
+}: {
+  label: string;
+  active: boolean;
+  color?: "primary" | "accent" | "emerald";
+  onClick: () => void;
+}) {
+  const activeClass =
+    color === "accent"
+      ? "text-accent bg-accent/10 font-semibold"
+      : color === "emerald"
+      ? "text-emerald-400 bg-emerald-500/10 font-semibold"
+      : "text-primary bg-primary/10 font-semibold";
+
+  return (
+    <button
+      onClick={onClick}
+      className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-all text-left group ${
+        active ? activeClass : "text-zinc-400 hover:text-white hover:bg-zinc-800/60"
+      }`}
+    >
+      <span>{label}</span>
+      {active && <ChevronRight className="h-3 w-3 opacity-60" />}
+    </button>
+  );
+}
+
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function CoachingDirectory() {
@@ -19,19 +52,12 @@ export default function CoachingDirectory() {
   const matchedParam = searchParams.get("matched") === "1";
 
   const [searchQuery, setSearchQuery] = useState("");
-
-  // Multi-select filters
-  const [selProductTypes, setSelProductTypes] = useState<string[]>([]);
   const [selSpecialties, setSelSpecialties] = useState<string[]>(
     filterParam ? [filterParam] : []
   );
-  const [selAudience, setSelAudience] = useState<string[]>([]);
-  const [selOutcomes, setSelOutcomes] = useState<string[]>([]);
-  const [selFormats, setSelFormats] = useState<string[]>([]);
   const [selPillars, setSelPillars] = useState<string[]>([]);
   const [selTiers, setSelTiers] = useState<string[]>([]);
   const [selEngagementFormats, setSelEngagementFormats] = useState<string[]>([]);
-  const [enterpriseOnly, setEnterpriseOnly] = useState(false);
 
   const [contactCoach, setContactCoach] = useState<{ id: string; name: string } | null>(null);
   const [compareList, setCompareList] = useState<string[]>([]);
@@ -48,20 +74,13 @@ export default function CoachingDirectory() {
   };
 
   const activeFilterCount =
-    selProductTypes.length + selSpecialties.length + selAudience.length +
-    selOutcomes.length + selFormats.length + selPillars.length +
-    selTiers.length + selEngagementFormats.length + (enterpriseOnly ? 1 : 0);
+    selSpecialties.length + selPillars.length + selTiers.length + selEngagementFormats.length;
 
   const clearAllFilters = () => {
-    setSelProductTypes([]);
     setSelSpecialties([]);
-    setSelAudience([]);
-    setSelOutcomes([]);
-    setSelFormats([]);
     setSelPillars([]);
     setSelTiers([]);
     setSelEngagementFormats([]);
-    setEnterpriseOnly(false);
     setSearchQuery("");
   };
 
@@ -99,7 +118,6 @@ export default function CoachingDirectory() {
     return map;
   }, [coachTagData]);
 
-  // Build a set of all tag labels for search matching
   const allTagLabels = useMemo(() => {
     const labels: Record<string, string[]> = {};
     (coachTagData || []).forEach((row: any) => {
@@ -110,31 +128,26 @@ export default function CoachingDirectory() {
     return labels;
   }, [coachTagData]);
 
-  // DB-driven filter options (derived from published coaches)
-  const { dbPillars, dbTiers, dbEngagementFormats, dbAudiences } = useMemo(() => {
-    const pillars = new Set<string>(), tiers = new Set<string>();
-    const formats = new Set<string>(), audiences = new Set<string>();
+  const { dbPillars, dbTiers, dbEngagementFormats } = useMemo(() => {
+    const pillars = new Set<string>(), tiers = new Set<string>(), formats = new Set<string>();
     (coaches || []).forEach(c => {
       if (c.primary_pillar) pillars.add(c.primary_pillar);
       if (c.tier) tiers.add(c.tier);
       if (c.engagement_format) formats.add(c.engagement_format);
-      (c.audience || []).forEach(a => audiences.add(a));
     });
     return {
-      dbPillars: [...pillars].sort(), dbTiers: [...tiers].sort(),
-      dbEngagementFormats: [...formats].sort(), dbAudiences: [...audiences].sort(),
+      dbPillars: [...pillars].sort(),
+      dbTiers: [...tiers].sort(),
+      dbEngagementFormats: [...formats].sort(),
     };
   }, [coaches]);
 
   const matchScore = (coach: DirectoryCoach): number => {
     if (!profile?.coaching_areas || profile.coaching_areas.length === 0) return 0;
     const userAreas = profile.coaching_areas.map((a) => a.toLowerCase());
-    return (coach.specialties || []).filter((s) =>
-      userAreas.includes(s.toLowerCase())
-    ).length;
+    return (coach.specialties || []).filter((s) => userAreas.includes(s.toLowerCase())).length;
   };
 
-  // Filtering: AND across categories, OR within category
   const filtered = (coaches || []).filter((coach) => {
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
@@ -142,20 +155,12 @@ export default function CoachingDirectory() {
       const tags = (allTagLabels[coach.id] || []).join(" ");
       if (!text.includes(q) && !tags.includes(q)) return false;
     }
-    if (selProductTypes.length > 0) {
-      const types = (coach.coach_products || []).map(p => p.product_type);
-      if (!selProductTypes.some(t => types.includes(t))) return false;
-    }
-    if (enterpriseOnly && !(coach.coach_products || []).some(p => p.enterprise_ready)) return false;
     const ct = coachTagLookup[coach.id] || [];
     if (selSpecialties.length > 0) {
       const keys = ct.filter(t => t.tag_family === "specialty").map(t => t.tag_key);
       const legacy = (coach.specialties || []).map(s => s.toLowerCase());
       if (!selSpecialties.some(s => keys.includes(s) || legacy.includes(s))) return false;
     }
-    if (selAudience.length > 0 && !selAudience.some(a => ct.filter(t => t.tag_family === "audience").map(t => t.tag_key).includes(a))) return false;
-    if (selOutcomes.length > 0 && !selOutcomes.some(o => ct.filter(t => t.tag_family === "outcome").map(t => t.tag_key).includes(o))) return false;
-    if (selFormats.length > 0 && !selFormats.some(f => ct.filter(t => t.tag_family === "format").map(t => t.tag_key).includes(f))) return false;
     if (selPillars.length > 0 && (!coach.primary_pillar || !selPillars.includes(coach.primary_pillar))) return false;
     if (selTiers.length > 0 && (!coach.tier || !selTiers.includes(coach.tier))) return false;
     if (selEngagementFormats.length > 0 && (!coach.engagement_format || !selEngagementFormats.includes(coach.engagement_format))) return false;
@@ -168,192 +173,296 @@ export default function CoachingDirectory() {
   const coachProfilePath = (coach: DirectoryCoach) =>
     coach.slug ? `/coach/${coach.slug}` : `/coaching/${coach.id}`;
 
+  // ── Active filter label for results bar ──────────────────────────────────────
+  const activeLabel = [
+    ...selPillars,
+    ...selTiers.map(t => t.charAt(0).toUpperCase() + t.slice(1)),
+    ...selEngagementFormats.map(f => f === "in_person" ? "In-Person" : f),
+  ].join(", ");
+
   // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
     <Layout>
 
-      {/* ── Hero ── */}
-      <section className="pt-28 pb-14 bg-zinc-950">
+      {/* ══ HERO ══ */}
+      <section className="pt-20 pb-10 bg-zinc-950 border-b border-zinc-900">
         <div className="container-wide">
-          <div className="max-w-2xl mx-auto text-center">
-            <h1 className="text-4xl md:text-5xl font-display font-black tracking-tight text-white uppercase mb-4">
+          <div className="max-w-xl mx-auto text-center">
+            <p className="text-xs font-bold uppercase tracking-widest text-primary mb-3">
+              Galoras Coaching Exchange
+            </p>
+            <h1 className="text-4xl md:text-5xl font-display font-black tracking-tight text-white uppercase mb-3">
               Find a Coach for{" "}
               <span className="text-primary">Where You Are</span>
             </h1>
-            <p className="text-zinc-400 text-base mb-8 max-w-xl mx-auto">
-              Every coach on Galoras has performed at the level you're trying to reach. No generic advice — only people who've been in the room.
+            <p className="text-zinc-500 text-sm mb-7 max-w-md mx-auto leading-relaxed">
+              Every coach has performed at the level you're trying to reach. No generic advice — only people who've been in the room.
             </p>
 
             {/* Search */}
-            <div className="relative max-w-lg mx-auto mb-6">
+            <div className="relative max-w-md mx-auto">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
               <Input
-                placeholder="Search by name, specialty, or outcome..."
-                className="pl-11 bg-zinc-900 border-zinc-700 text-white placeholder:text-zinc-500 h-12 text-sm focus-visible:ring-primary rounded-xl"
+                placeholder="Search by name, specialty, or focus area..."
+                className="pl-11 bg-zinc-900 border-zinc-800 text-white placeholder:text-zinc-600 h-11 text-sm focus-visible:ring-primary rounded-xl"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
             </div>
-
-            {/* Compass nudge */}
-            <Link
-              to="/compass"
-              className="inline-flex items-center gap-1.5 text-sm text-zinc-400 hover:text-primary transition-colors"
-            >
-              <Sparkles className="h-3.5 w-3.5" />
-              Not sure who you need? Let Compass match you
-              <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
           </div>
         </div>
       </section>
 
-      {/* ── Filter Bar ── */}
-      <div className="bg-card border-y border-border sticky top-0 z-20">
-        <div className="container-wide py-4">
-          {/* Profile nudge — only if incomplete */}
-          {!hasProfile && (
-            <div className="flex items-center gap-3 mb-4 p-3 rounded-lg bg-primary/5 border border-primary/20">
-              <UserCircle2 className="h-4 w-4 text-primary shrink-0" />
-              <p className="text-sm text-muted-foreground">
-                {isLoggedIn
-                  ? "Complete your profile to see coaches matched to your goals."
-                  : "Create a free profile to get personalized coach matches."}
-              </p>
-              <button
-                onClick={() => navigate(isLoggedIn ? "/onboarding" : "/signup")}
-                className="ml-auto text-xs font-bold text-primary hover:underline whitespace-nowrap"
+      {/* ══ BODY ══ */}
+      <section className="bg-background min-h-screen">
+        <div className="container-wide py-8 pb-28">
+          <div className="flex gap-8 items-start">
+
+            {/* ── SIDEBAR (desktop) ── */}
+            <aside className="hidden lg:flex flex-col gap-5 w-52 shrink-0 sticky top-20 self-start">
+
+              {/* Profile / onboarding nudge */}
+              {!hasProfile && (
+                <div className="p-3.5 rounded-xl bg-primary/5 border border-primary/20">
+                  <div className="flex items-start gap-2 mb-2">
+                    <UserCircle2 className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                    <p className="text-xs text-zinc-400 leading-snug">
+                      {isLoggedIn
+                        ? "Complete your profile to see coaches matched to your goals."
+                        : "Create a free profile to get personalized coach matches."}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => navigate(isLoggedIn ? "/onboarding" : "/signup")}
+                    className="text-xs font-bold text-primary hover:underline"
+                  >
+                    {isLoggedIn ? "Complete profile →" : "Get started →"}
+                  </button>
+                </div>
+              )}
+
+              {/* Compass link */}
+              <Link
+                to="/compass"
+                className="flex items-center gap-2 px-3 py-2.5 rounded-xl border border-dashed border-zinc-800 text-xs text-zinc-500 hover:border-primary/40 hover:text-primary transition-colors group"
               >
-                {isLoggedIn ? "Complete profile →" : "Get started →"}
-              </button>
-            </div>
-          )}
+                <Sparkles className="h-3.5 w-3.5 shrink-0" />
+                <span>Not sure? Let Compass find your coach</span>
+                <ArrowRight className="h-3 w-3 ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
+              </Link>
 
-          {/* Filter pills — single row, scrollable */}
-          <div className="flex items-center gap-3 overflow-x-auto pb-1">
-            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider shrink-0">Filter:</span>
+              {/* Divider */}
+              <div className="border-t border-zinc-800" />
 
-            {/* Pillar pills */}
-            {dbPillars.map(p => (
-              <button key={p} onClick={() => setSelPillars(prev => toggle(prev, p))}
-                className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
-                  selPillars.includes(p)
-                    ? "bg-primary/15 border-primary/40 text-primary"
-                    : "bg-card border-border text-muted-foreground hover:border-primary/30 hover:text-white"
-                }`}>
-                {p}
-              </button>
-            ))}
+              {/* ── Filter sections ── */}
+              <div className="space-y-5">
 
-            {/* Divider */}
-            {dbPillars.length > 0 && dbTiers.length > 0 && (
-              <div className="w-px h-5 bg-border shrink-0" />
-            )}
+                {/* Pillar */}
+                {dbPillars.length > 0 && (
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-600 mb-1 px-1">
+                      Coaching Pillar
+                    </p>
+                    <div className="space-y-0.5">
+                      {dbPillars.map(p => (
+                        <SidebarFilterBtn
+                          key={p}
+                          label={p}
+                          active={selPillars.includes(p)}
+                          color="primary"
+                          onClick={() => setSelPillars(prev => toggle(prev, p))}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
 
-            {/* Tier pills */}
-            {dbTiers.map(t => (
-              <button key={t} onClick={() => setSelTiers(prev => toggle(prev, t))}
-                className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors capitalize ${
-                  selTiers.includes(t)
-                    ? "bg-accent/15 border-accent/40 text-accent"
-                    : "bg-card border-border text-muted-foreground hover:border-accent/30 hover:text-white"
-                }`}>
-                {t}
-              </button>
-            ))}
+                {/* Tier */}
+                {dbTiers.length > 0 && (
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-600 mb-1 px-1">
+                      Coach Tier
+                    </p>
+                    <div className="space-y-0.5">
+                      {dbTiers.map(t => (
+                        <SidebarFilterBtn
+                          key={t}
+                          label={t.charAt(0).toUpperCase() + t.slice(1)}
+                          active={selTiers.includes(t)}
+                          color="accent"
+                          onClick={() => setSelTiers(prev => toggle(prev, t))}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
 
-            {/* Divider */}
-            {dbTiers.length > 0 && dbEngagementFormats.length > 0 && (
-              <div className="w-px h-5 bg-border shrink-0" />
-            )}
+                {/* Engagement Format */}
+                {dbEngagementFormats.length > 0 && (
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-600 mb-1 px-1">
+                      Format
+                    </p>
+                    <div className="space-y-0.5">
+                      {dbEngagementFormats.map(f => (
+                        <SidebarFilterBtn
+                          key={f}
+                          label={f === "in_person" ? "In-Person" : f.charAt(0).toUpperCase() + f.slice(1)}
+                          active={selEngagementFormats.includes(f)}
+                          color="emerald"
+                          onClick={() => setSelEngagementFormats(prev => toggle(prev, f))}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
 
-            {/* Engagement format pills */}
-            {dbEngagementFormats.map(f => (
-              <button key={f} onClick={() => setSelEngagementFormats(prev => toggle(prev, f))}
-                className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors capitalize ${
-                  selEngagementFormats.includes(f)
-                    ? "bg-emerald-500/15 border-emerald-500/40 text-emerald-400"
-                    : "bg-card border-border text-muted-foreground hover:border-emerald-500/30 hover:text-white"
-                }`}>
-                {f === "in_person" ? "In-Person" : f}
-              </button>
-            ))}
+              </div>
 
-            {/* Clear */}
-            {activeFilterCount > 0 && (
-              <>
-                <div className="w-px h-5 bg-border shrink-0" />
-                <button onClick={clearAllFilters} className="shrink-0 text-xs text-red-400 hover:text-red-300 font-medium">
-                  Clear all ({activeFilterCount})
+              {/* Clear all */}
+              {activeFilterCount > 0 && (
+                <button
+                  onClick={clearAllFilters}
+                  className="text-xs text-zinc-600 hover:text-red-400 transition-colors text-left px-1"
+                >
+                  Clear all filters ({activeFilterCount})
                 </button>
-              </>
-            )}
+              )}
+            </aside>
+
+            {/* ── MAIN ── */}
+            <div className="flex-1 min-w-0">
+
+              {/* Mobile filter pills */}
+              <div className="lg:hidden overflow-x-auto mb-6 -mx-4 px-4">
+                <div className="flex items-center gap-2 pb-1 min-w-max">
+                  {dbPillars.map(p => (
+                    <button key={p} onClick={() => setSelPillars(prev => toggle(prev, p))}
+                      className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-medium border whitespace-nowrap transition-colors ${
+                        selPillars.includes(p)
+                          ? "bg-primary/15 border-primary/40 text-primary"
+                          : "border-border text-muted-foreground hover:border-primary/30 hover:text-white"
+                      }`}>
+                      {p}
+                    </button>
+                  ))}
+                  {dbPillars.length > 0 && <div className="w-px h-4 bg-border shrink-0" />}
+                  {dbTiers.map(t => (
+                    <button key={t} onClick={() => setSelTiers(prev => toggle(prev, t))}
+                      className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-medium border whitespace-nowrap capitalize transition-colors ${
+                        selTiers.includes(t)
+                          ? "bg-accent/15 border-accent/40 text-accent"
+                          : "border-border text-muted-foreground hover:border-accent/30 hover:text-white"
+                      }`}>
+                      {t}
+                    </button>
+                  ))}
+                  {dbTiers.length > 0 && <div className="w-px h-4 bg-border shrink-0" />}
+                  {dbEngagementFormats.map(f => (
+                    <button key={f} onClick={() => setSelEngagementFormats(prev => toggle(prev, f))}
+                      className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-medium border whitespace-nowrap capitalize transition-colors ${
+                        selEngagementFormats.includes(f)
+                          ? "bg-emerald-500/15 border-emerald-500/40 text-emerald-400"
+                          : "border-border text-muted-foreground hover:border-emerald-500/30 hover:text-white"
+                      }`}>
+                      {f === "in_person" ? "In-Person" : f}
+                    </button>
+                  ))}
+                  {activeFilterCount > 0 && (
+                    <>
+                      <div className="w-px h-4 bg-border shrink-0" />
+                      <button onClick={clearAllFilters} className="shrink-0 text-xs text-red-400 whitespace-nowrap font-medium">
+                        Clear ({activeFilterCount})
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Matched banner */}
+              {matchedParam && (
+                <div className="flex items-center gap-3 mb-6 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+                  <Sparkles className="h-4 w-4 text-emerald-400 shrink-0" />
+                  <p className="text-sm text-emerald-300">Showing coaches matched to your context.</p>
+                  <button
+                    onClick={() => { clearAllFilters(); navigate("/coaching", { replace: true }); }}
+                    className="ml-auto text-xs text-zinc-500 hover:text-zinc-300 whitespace-nowrap"
+                  >
+                    Clear match
+                  </button>
+                </div>
+              )}
+
+              {/* Results bar */}
+              {!isLoading && !error && (
+                <div className="flex items-center justify-between mb-6 pb-5 border-b border-zinc-900">
+                  <div>
+                    <p className="text-sm text-zinc-300">
+                      <span className="font-bold text-white">{filtered.length}</span>
+                      {" "}coach{filtered.length !== 1 ? "es" : ""}
+                      {activeLabel && (
+                        <span className="text-zinc-500"> · {activeLabel}</span>
+                      )}
+                    </p>
+                  </div>
+                  {activeFilterCount > 0 && (
+                    <button
+                      onClick={clearAllFilters}
+                      className="text-xs text-zinc-600 hover:text-zinc-300 transition-colors lg:hidden"
+                    >
+                      Clear filters
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {/* Grid */}
+              {isLoading ? (
+                <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-5">
+                  {[1, 2, 3].map(i => (
+                    <div key={i} className="h-[440px] rounded-2xl bg-zinc-900 animate-pulse" />
+                  ))}
+                </div>
+              ) : error ? (
+                <div className="text-center py-20 text-red-400 text-sm">Failed to load coaches.</div>
+              ) : filtered.length === 0 ? (
+                <div className="text-center py-20">
+                  <p className="text-zinc-500 text-sm mb-4">No coaches match your current filters.</p>
+                  <button onClick={clearAllFilters} className="text-primary text-sm hover:underline">
+                    Clear all filters
+                  </button>
+                </div>
+              ) : (
+                <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-5">
+                  {filtered.map((coach) => (
+                    <DirectoryCoachCard
+                      key={coach.id}
+                      coach={coach}
+                      profilePath={coachProfilePath(coach)}
+                      matchScore={matchScore(coach)}
+                      hasMatches={!!hasMatches}
+                      isLoggedIn={!!isLoggedIn}
+                      coachTags={coachTagLookup[coach.id] || []}
+                      compareList={compareList}
+                      getConfig={getConfig}
+                      onToggleCompare={toggleCompare}
+                      onContact={(id, name) => setContactCoach({ id, name })}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+
           </div>
-        </div>
-      </div>
-
-      {/* ── Directory ── */}
-      <section className="min-h-screen bg-background py-10 pb-24">
-        <div className="container-wide">
-
-          {/* Matched banner */}
-          {matchedParam && (
-            <div className="flex items-center gap-3 mb-6 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 max-w-2xl">
-              <Sparkles className="h-4 w-4 text-emerald-400 shrink-0" />
-              <p className="text-sm text-emerald-300">
-                Coaches matched to your context.
-              </p>
-              <button
-                onClick={() => { clearAllFilters(); navigate("/coaching", { replace: true }); }}
-                className="ml-auto text-xs text-zinc-500 hover:text-zinc-300 whitespace-nowrap"
-              >
-                Clear match
-              </button>
-            </div>
-          )}
-
-          {/* Results count */}
-          {!isLoading && !error && (
-            <p className="text-xs text-zinc-600 mb-6">
-              {filtered.length} coach{filtered.length !== 1 ? "es" : ""} available
-            </p>
-          )}
-
-          {/* Grid */}
-          {isLoading ? (
-            <div className="text-center py-20 text-zinc-500 text-sm">Loading coaches...</div>
-          ) : error ? (
-            <div className="text-center py-20 text-red-400 text-sm">Failed to load coaches.</div>
-          ) : filtered.length === 0 ? (
-            <div className="text-center py-20">
-              <p className="text-zinc-500 text-sm mb-4">No coaches match your filters.</p>
-              <button
-                onClick={clearAllFilters}
-                className="text-primary text-sm hover:underline"
-              >
-                Clear all filters
-              </button>
-            </div>
-          ) : (
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-              {filtered.map((coach) => (
-                <DirectoryCoachCard
-                  key={coach.id}
-                  coach={coach}
-                  profilePath={coachProfilePath(coach)}
-                  matchScore={matchScore(coach)}
-                  hasMatches={!!hasMatches}
-                  isLoggedIn={!!isLoggedIn}
-                  coachTags={coachTagLookup[coach.id] || []}
-                  compareList={compareList}
-                  getConfig={getConfig}
-                  onToggleCompare={toggleCompare}
-                  onContact={(id, name) => setContactCoach({ id, name })}
-                />
-              ))}
-            </div>
-          )}
         </div>
       </section>
 
@@ -376,7 +485,6 @@ export default function CoachingDirectory() {
                 <span className="text-slate-500 ml-1">(select at least 2)</span>
               )}
             </span>
-
             <button
               onClick={() => navigate(`/coaching/compare?ids=${compareList.join(",")}`)}
               disabled={compareList.length < 2}
@@ -384,7 +492,6 @@ export default function CoachingDirectory() {
             >
               Compare
             </button>
-
             <button
               onClick={() => setCompareList([])}
               className="p-1 text-slate-500 hover:text-slate-300 transition-colors"
