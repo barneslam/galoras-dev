@@ -85,7 +85,6 @@ export default function ProductManager() {
   const [saving, setSaving] = useState(false);
   const [audienceInput, setAudienceInput] = useState("");
   const [galarasProducts, setGalarasProducts] = useState<Product[]>([]);
-  const [isReadOnly, setIsReadOnly] = useState(false);
 
   // Product type manager
   const { types: productTypes, loading: typesLoading, refetch: refetchTypes } = useProductTypes();
@@ -156,7 +155,6 @@ export default function ProductManager() {
   const fetchProducts = async (coachId: string, tier?: string | null) => {
     setLoadingProducts(true);
     setEditing(null);
-    setIsReadOnly(false);
     setGalarasProducts([]);
     const { data } = await supabase
       .from("coach_products")
@@ -200,14 +198,13 @@ export default function ProductManager() {
 
   const selectProduct = (p: Product) => {
     setIsNew(false);
-    setIsReadOnly(false);
     setEditing({ ...p });
     setAudienceInput((p.target_audience ?? []).join(", "));
   };
 
+  // Admins can edit Galoras products directly
   const selectGalarasProduct = (p: Product) => {
     setIsNew(false);
-    setIsReadOnly(true);
     setEditing({ ...p });
     setAudienceInput((p.target_audience ?? []).join(", "));
   };
@@ -453,7 +450,7 @@ export default function ProductManager() {
                   key={p.id}
                   onClick={() => selectProduct(p)}
                   className={`px-4 py-3 border-b border-zinc-800/50 cursor-pointer transition-colors ${
-                    (editing as Product)?.id === p.id && !isReadOnly
+                    (editing as Product)?.id === p.id
                       ? "bg-amber-600/10 border-l-2 border-l-amber-500"
                       : "hover:bg-zinc-800/40"
                   }`}
@@ -486,8 +483,8 @@ export default function ProductManager() {
                       key={p.id}
                       onClick={() => selectGalarasProduct(p)}
                       className={`px-4 py-3 border-b border-zinc-800/50 cursor-pointer transition-colors ${
-                        (editing as Product)?.id === p.id && isReadOnly
-                          ? "bg-amber-900/20 border-l-2 border-l-amber-700"
+                        (editing as Product)?.id === p.id
+                          ? "bg-amber-600/10 border-l-2 border-l-amber-500"
                           : "hover:bg-zinc-800/30"
                       }`}
                     >
@@ -512,23 +509,23 @@ export default function ProductManager() {
             </div>
           ) : (
             <div className="max-w-2xl space-y-5">
-              {/* Read-only banner for Galoras products */}
-              {isReadOnly && (
-                <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-amber-950/40 border border-amber-700/40">
-                  <Lock className="h-4 w-4 text-amber-400 shrink-0" />
-                  <p className="text-sm text-amber-300">
-                    <span className="font-semibold">Galoras platform program.</span>{" "}
-                    This product is shared across all Master coaches and can only be edited under the Galoras entity.
+              {/* Info banner when editing a Galoras platform product */}
+              {galarasProducts.some(g => g.id === (editing as Product)?.id) && (
+                <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-amber-950/30 border border-amber-700/30">
+                  <Lock className="h-4 w-4 text-amber-500 shrink-0" />
+                  <p className="text-sm text-amber-400">
+                    <span className="font-semibold">Galoras platform program</span>{" "}
+                    — shared across all Master coaches. Changes here affect all Master coach profiles.
                   </p>
                 </div>
               )}
 
               <div className="flex items-center justify-between mb-2">
                 <h2 className="text-base font-bold text-white">
-                  {isNew ? "New Product" : isReadOnly ? "Platform Program" : "Edit Product"}
+                  {isNew ? "New Product" : "Edit Product"}
                 </h2>
                 <div className="flex items-center gap-2">
-                  {!isNew && !isReadOnly && (
+                  {!isNew && (
                     <Button
                       variant="ghost"
                       size="sm"
@@ -538,21 +535,18 @@ export default function ProductManager() {
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   )}
-                  {!isReadOnly && (
-                    <Button
-                      size="sm"
-                      onClick={save}
-                      disabled={saving || !editing.title}
-                      className="bg-amber-600 hover:bg-amber-500 text-white font-bold"
-                    >
-                      {saving ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Save className="h-4 w-4 mr-1" />}
-                      {isNew ? "Create" : "Save"}
-                    </Button>
-                  )}
+                  <Button
+                    size="sm"
+                    onClick={save}
+                    disabled={saving || !editing.title}
+                    className="bg-amber-600 hover:bg-amber-500 text-white font-bold"
+                  >
+                    {saving ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Save className="h-4 w-4 mr-1" />}
+                    {isNew ? "Create" : "Save"}
+                  </Button>
                 </div>
               </div>
 
-              <fieldset disabled={isReadOnly} className={isReadOnly ? "opacity-60 pointer-events-none" : ""}>
               <div className="grid grid-cols-2 gap-4">
                 <Field label="Product Type">
                   <select
@@ -729,7 +723,6 @@ export default function ProductManager() {
                   <span className="text-slate-500 ml-1">— suitable for corporate / team engagements</span>
                 </label>
               </div>
-              </fieldset>
             </div>
           )}
         </div>
