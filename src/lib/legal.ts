@@ -10,7 +10,8 @@ export type AgreementType =
   | "cookie_policy"
   | "marketing_opt_in"
   | "cooling_off_waiver"
-  | "coach_standards";
+  | "coach_standards"
+  | "nda";
 
 export type AgreementContext =
   | "user_signup"

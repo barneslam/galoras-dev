@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { 
@@ -58,6 +59,7 @@ const benefits = [
 export default function Apply() {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [ndaAccepted, setNdaAccepted] = useState(false);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -181,6 +183,8 @@ export default function Apply() {
         coaching_experience_level: formData.coaching_experience_level,
         coaching_philosophy: formData.coaching_philosophy || null,
         booking_url: normalizedBooking,
+        nda_accepted: ndaAccepted,
+        nda_accepted_at: ndaAccepted ? new Date().toISOString() : null,
       };
 
       const { data: inserted, error } = await supabase
@@ -451,10 +455,36 @@ export default function Apply() {
                     </div>
                   </div>
 
-                  <Button 
-                    type="submit" 
+                  {/* NDA Consent */}
+                  <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-3">
+                    <h3 className="text-sm font-display font-semibold">Confidentiality Agreement</h3>
+                    <p className="text-xs text-muted-foreground">
+                      By applying you agree to keep all information shared during the Galoras application
+                      and onboarding process confidential. Galoras operates under a mutual non-disclosure
+                      agreement with all coach applicants.
+                    </p>
+                    <div className="flex items-start gap-3">
+                      <Checkbox
+                        id="nda-consent"
+                        checked={ndaAccepted}
+                        onCheckedChange={(v) => setNdaAccepted(!!v)}
+                        className="mt-0.5 shrink-0"
+                      />
+                      <Label htmlFor="nda-consent" className="text-sm leading-relaxed cursor-pointer text-muted-foreground">
+                        I agree to the{" "}
+                        <a href="/legal/coach-agreement" target="_blank" className="underline underline-offset-2 hover:text-primary transition-colors">
+                          Galoras Mutual Non-Disclosure Agreement
+                        </a>{" "}
+                        and confirm that all information I share is accurate and will be treated as confidential.{" "}
+                        <span className="text-red-400">*</span>
+                      </Label>
+                    </div>
+                  </div>
+
+                  <Button
+                    type="submit"
                     className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || !ndaAccepted}
                   >
                     {isSubmitting ? "Submitting..." : "Submit Application"}
                     <Send className="ml-2 h-4 w-4" />

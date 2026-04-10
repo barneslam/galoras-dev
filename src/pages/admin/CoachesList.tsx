@@ -24,9 +24,9 @@ const LIFECYCLE_BADGE: Record<string, { label: string; color: string }> = {
 };
 
 const TIER_BADGE: Record<string, string> = {
-  elite:    "bg-amber-500/20 text-amber-300 border-amber-500/40",
-  premium:  "bg-sky-500/20 text-sky-300 border-sky-500/40",
-  standard: "bg-emerald-500/20 text-emerald-300 border-emerald-500/40",
+  master: "bg-amber-500/20 text-amber-300 border-amber-500/40",
+  elite:  "bg-sky-500/20 text-sky-300 border-sky-500/40",
+  pro:    "bg-emerald-500/20 text-emerald-300 border-emerald-500/40",
 };
 
 const FILTER_OPTIONS = [
@@ -183,9 +183,9 @@ export default function CoachesList() {
                           className={`text-xs font-semibold rounded-lg border px-2 py-1 bg-[#0d1f35] cursor-pointer focus:outline-none focus:ring-1 focus:ring-amber-500/50 disabled:opacity-40 ${tierColor}`}
                         >
                           <option value="" className="bg-[#0d1f35] text-slate-400">— unset —</option>
-                          <option value="standard" className="bg-[#0d1f35] text-emerald-300">Standard</option>
-                          <option value="premium" className="bg-[#0d1f35] text-sky-300">Premium</option>
-                          <option value="elite" className="bg-[#0d1f35] text-amber-300">Elite</option>
+                          <option value="pro" className="bg-[#0d1f35] text-emerald-300">Pro</option>
+                          <option value="elite" className="bg-[#0d1f35] text-sky-300">Elite</option>
+                          <option value="master" className="bg-[#0d1f35] text-amber-300">Master</option>
                         </select>
                       </td>
                       <td className="px-4 py-3">
