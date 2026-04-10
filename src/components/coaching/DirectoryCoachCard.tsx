@@ -65,7 +65,7 @@ export function DirectoryCoachCard({
 
   return (
     <div
-      className="relative h-[340px]"
+      className="relative h-[420px]"
       style={{ perspective: "1200px" }}
     >
       <div
@@ -83,7 +83,7 @@ export function DirectoryCoachCard({
         >
           {/* Photo — double-click to flip */}
           <div
-            className="relative h-[160px] bg-background overflow-hidden cursor-pointer"
+            className="relative h-[240px] bg-background overflow-hidden cursor-pointer"
             onDoubleClick={() => setFlipped(true)}
           >
             {coach.avatar_url ? (
@@ -112,33 +112,33 @@ export function DirectoryCoachCard({
           </div>
 
           {/* Info */}
-          <div className="p-5 flex flex-col flex-1">
-            <h3 className="text-lg font-display font-bold text-white leading-tight mb-1">
+          <div className="p-4 flex flex-col flex-1">
+            <h3 className="text-base font-display font-bold text-white leading-tight mb-0.5">
               {coach.display_name || "Coach"}
             </h3>
 
             {coach.headline && (
-              <p className="text-muted-foreground text-xs mb-3 line-clamp-2 leading-relaxed">
+              <p className="text-muted-foreground text-xs mb-2 line-clamp-2 leading-snug">
                 {coach.headline}
               </p>
             )}
 
             {/* Pillar + Format badges */}
-            <div className="flex flex-wrap gap-1.5 mb-auto">
+            <div className="flex flex-wrap gap-1 mb-auto">
               {coach.primary_pillar && (
-                <span className="px-2.5 py-0.5 text-[10px] font-semibold rounded-full bg-primary/10 border border-primary/30 text-primary">
+                <span className="px-2 py-0.5 text-[10px] font-semibold rounded-full bg-primary/10 border border-primary/30 text-primary">
                   {coach.primary_pillar}
                 </span>
               )}
               {coach.engagement_format && (
-                <span className="px-2.5 py-0.5 text-[10px] rounded-full bg-card border border-border text-muted-foreground capitalize">
+                <span className="px-2 py-0.5 text-[10px] rounded-full bg-card border border-border text-muted-foreground capitalize">
                   {coach.engagement_format === "in_person" ? "In-Person" : coach.engagement_format}
                 </span>
               )}
             </div>
 
             {/* CTAs */}
-            <div className="flex gap-2 pt-3 border-t border-border mt-3">
+            <div className="flex gap-2 pt-2 border-t border-border mt-2">
               <Link to={profilePath} className="flex-1">
                 <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold h-9 rounded-lg gap-1.5">
                   <CalendarCheck className="h-3.5 w-3.5" />
