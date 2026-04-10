@@ -65,7 +65,7 @@ export function DirectoryCoachCard({
 
   return (
     <div
-      className="relative h-[440px]"
+      className="relative h-[400px]"
       style={{ perspective: "1200px" }}
     >
       <div
@@ -83,7 +83,7 @@ export function DirectoryCoachCard({
         >
           {/* Photo — double-click to flip */}
           <div
-            className="relative h-[260px] bg-background overflow-hidden cursor-pointer"
+            className="relative h-[210px] bg-background overflow-hidden cursor-pointer"
             onDoubleClick={() => setFlipped(true)}
           >
             {coach.avatar_url ? (
