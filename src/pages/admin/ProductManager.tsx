@@ -3,11 +3,11 @@ import { AdminLayout } from "@/components/AdminLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Save, Loader2, Trash2, ToggleLeft, ToggleRight, Settings } from "lucide-react";
+import { Plus, Save, Loader2, Trash2, ToggleLeft, ToggleRight, Settings, Lock } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useProductTypes, ProductTypeDefinition, PRODUCT_TYPE_COLOR_PRESETS } from "@/hooks/useProductTypes";
 
-type Coach = { id: string; display_name: string | null; slug: string | null };
+type Coach = { id: string; display_name: string | null; slug: string | null; tier: string | null };
 
 type Product = {
   id: string;
@@ -84,6 +84,8 @@ export default function ProductManager() {
   const [loadingProducts, setLoadingProducts] = useState(false);
   const [saving, setSaving] = useState(false);
   const [audienceInput, setAudienceInput] = useState("");
+  const [galarasProducts, setGalarasProducts] = useState<Product[]>([]);
+  const [isReadOnly, setIsReadOnly] = useState(false);
 
   // Product type manager
   const { types: productTypes, loading: typesLoading, refetch: refetchTypes } = useProductTypes();
@@ -145,27 +147,47 @@ export default function ProductManager() {
     setLoadingCoaches(true);
     const { data } = await supabase
       .from("coaches")
-      .select("id, display_name, slug")
+      .select("id, display_name, slug, tier")
       .order("display_name");
     setCoaches((data || []) as Coach[]);
     setLoadingCoaches(false);
   };
 
-  const fetchProducts = async (coachId: string) => {
+  const fetchProducts = async (coachId: string, tier?: string | null) => {
     setLoadingProducts(true);
     setEditing(null);
+    setIsReadOnly(false);
+    setGalarasProducts([]);
     const { data } = await supabase
       .from("coach_products")
       .select("*")
       .eq("coach_id", coachId)
       .order("sort_order");
     setProducts((data || []) as Product[]);
+
+    // Master coaches: also load Galoras platform products (read-only)
+    if (tier === "master") {
+      const { data: galCoach } = await supabase
+        .from("coaches")
+        .select("id")
+        .eq("slug", "galoras")
+        .maybeSingle();
+      if (galCoach?.id && galCoach.id !== coachId) {
+        const { data: gData } = await supabase
+          .from("coach_products")
+          .select("*")
+          .eq("coach_id", galCoach.id)
+          .order("sort_order");
+        setGalarasProducts((gData || []) as Product[]);
+      }
+    }
+
     setLoadingProducts(false);
   };
 
   const selectCoach = (coach: Coach) => {
     setSelectedCoach(coach);
-    fetchProducts(coach.id);
+    fetchProducts(coach.id, coach.tier);
   };
 
   const startNew = () => {
@@ -178,6 +200,14 @@ export default function ProductManager() {
 
   const selectProduct = (p: Product) => {
     setIsNew(false);
+    setIsReadOnly(false);
+    setEditing({ ...p });
+    setAudienceInput((p.target_audience ?? []).join(", "));
+  };
+
+  const selectGalarasProduct = (p: Product) => {
+    setIsNew(false);
+    setIsReadOnly(true);
     setEditing({ ...p });
     setAudienceInput((p.target_audience ?? []).join(", "));
   };
@@ -414,7 +444,7 @@ export default function ProductManager() {
             <div className="p-4 text-slate-500 text-sm flex items-center gap-2">
               <Loader2 className="h-4 w-4 animate-spin" /> Loading…
             </div>
-          ) : products.length === 0 ? (
+          ) : products.length === 0 && galarasProducts.length === 0 ? (
             <p className="p-4 text-slate-600 text-sm">No products yet</p>
           ) : (
             <div className="overflow-y-auto flex-1">
@@ -423,7 +453,7 @@ export default function ProductManager() {
                   key={p.id}
                   onClick={() => selectProduct(p)}
                   className={`px-4 py-3 border-b border-zinc-800/50 cursor-pointer transition-colors ${
-                    (editing as Product)?.id === p.id
+                    (editing as Product)?.id === p.id && !isReadOnly
                       ? "bg-amber-600/10 border-l-2 border-l-amber-500"
                       : "hover:bg-zinc-800/40"
                   }`}
@@ -443,6 +473,33 @@ export default function ProductManager() {
                   <p className="text-xs text-slate-500 mt-0.5">{priceDisplay(p)}</p>
                 </div>
               ))}
+
+              {/* Galoras platform programs — read-only */}
+              {galarasProducts.length > 0 && (
+                <>
+                  <div className="px-4 py-2 bg-amber-950/30 border-y border-amber-800/30 flex items-center gap-1.5">
+                    <Lock className="h-3 w-3 text-amber-500" />
+                    <span className="text-xs font-semibold text-amber-500 uppercase tracking-wider">Galoras Platform</span>
+                  </div>
+                  {galarasProducts.map(p => (
+                    <div
+                      key={p.id}
+                      onClick={() => selectGalarasProduct(p)}
+                      className={`px-4 py-3 border-b border-zinc-800/50 cursor-pointer transition-colors ${
+                        (editing as Product)?.id === p.id && isReadOnly
+                          ? "bg-amber-900/20 border-l-2 border-l-amber-700"
+                          : "hover:bg-zinc-800/30"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <Lock className="h-3 w-3 text-amber-600 shrink-0" />
+                        <p className="text-sm text-slate-400 font-medium line-clamp-1">{p.title}</p>
+                      </div>
+                      <p className="text-xs text-slate-600 mt-0.5 pl-5">{priceDisplay(p)}</p>
+                    </div>
+                  ))}
+                </>
+              )}
             </div>
           )}
         </div>
@@ -455,12 +512,23 @@ export default function ProductManager() {
             </div>
           ) : (
             <div className="max-w-2xl space-y-5">
+              {/* Read-only banner for Galoras products */}
+              {isReadOnly && (
+                <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-amber-950/40 border border-amber-700/40">
+                  <Lock className="h-4 w-4 text-amber-400 shrink-0" />
+                  <p className="text-sm text-amber-300">
+                    <span className="font-semibold">Galoras platform program.</span>{" "}
+                    This product is shared across all Master coaches and can only be edited under the Galoras entity.
+                  </p>
+                </div>
+              )}
+
               <div className="flex items-center justify-between mb-2">
                 <h2 className="text-base font-bold text-white">
-                  {isNew ? "New Product" : "Edit Product"}
+                  {isNew ? "New Product" : isReadOnly ? "Platform Program" : "Edit Product"}
                 </h2>
                 <div className="flex items-center gap-2">
-                  {!isNew && (
+                  {!isNew && !isReadOnly && (
                     <Button
                       variant="ghost"
                       size="sm"
@@ -470,18 +538,21 @@ export default function ProductManager() {
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   )}
-                  <Button
-                    size="sm"
-                    onClick={save}
-                    disabled={saving || !editing.title}
-                    className="bg-amber-600 hover:bg-amber-500 text-white font-bold"
-                  >
-                    {saving ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Save className="h-4 w-4 mr-1" />}
-                    {isNew ? "Create" : "Save"}
-                  </Button>
+                  {!isReadOnly && (
+                    <Button
+                      size="sm"
+                      onClick={save}
+                      disabled={saving || !editing.title}
+                      className="bg-amber-600 hover:bg-amber-500 text-white font-bold"
+                    >
+                      {saving ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Save className="h-4 w-4 mr-1" />}
+                      {isNew ? "Create" : "Save"}
+                    </Button>
+                  )}
                 </div>
               </div>
 
+              <fieldset disabled={isReadOnly} className={isReadOnly ? "opacity-60 pointer-events-none" : ""}>
               <div className="grid grid-cols-2 gap-4">
                 <Field label="Product Type">
                   <select
@@ -658,6 +729,7 @@ export default function ProductManager() {
                   <span className="text-slate-500 ml-1">— suitable for corporate / team engagements</span>
                 </label>
               </div>
+              </fieldset>
             </div>
           )}
         </div>
