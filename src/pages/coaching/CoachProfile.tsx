@@ -64,6 +64,7 @@ export default function CoachProfile() {
   const { getConfig: getTypeConfig } = useProductTypes();
   const { toast } = useToast();
   const [products, setProducts] = useState<CoachProduct[]>([]);
+  const [galarasDbProducts, setGalarasDbProducts] = useState<CoachProduct[]>([]);
 
   // Stripe checkout for platform products and coach products with booking_mode=stripe
   const [checkoutProduct, setCheckoutProduct] = useState<CoachProduct | null>(null);
@@ -117,18 +118,40 @@ export default function CoachProfile() {
   }, [resolvedSlug, fallbackId]);
 
   useEffect(() => {
-    if (coach?.id) fetchProducts(coach.id);
+    if (coach?.id) fetchProducts(coach.id, coach.tier);
   }, [coach?.id]);
 
-  const fetchProducts = async (coachId: string) => {
+  const PRODUCT_SELECT = "id, product_type, title, outcome_statement, target_audience, delivery_format, session_count, duration_minutes, duration_weeks, price_type, price_amount, price_range_min, price_range_max, enterprise_ready, booking_mode, visibility_scope, is_active, sort_order";
+
+  const fetchProducts = async (coachId: string, tier?: string | null) => {
     const { data } = await supabase
       .from("coach_products")
-      .select("id, product_type, title, outcome_statement, target_audience, delivery_format, session_count, duration_minutes, duration_weeks, price_type, price_amount, price_range_min, price_range_max, enterprise_ready, booking_mode, visibility_scope, is_active, sort_order")
+      .select(PRODUCT_SELECT)
       .eq("coach_id", coachId)
       .eq("is_active", true)
       .eq("visibility_scope", "public")
       .order("sort_order", { ascending: true });
     setProducts((data as CoachProduct[]) || []);
+
+    // Master coaches also inherit Galoras platform programs
+    if (tier === "master") {
+      const { data: galCoach } = await supabase
+        .from("coaches")
+        .select("id")
+        .eq("slug", "galoras")
+        .maybeSingle();
+      if (galCoach?.id) {
+        const { data: gData } = await supabase
+          .from("coach_products")
+          .select(PRODUCT_SELECT)
+          .eq("coach_id", galCoach.id)
+          .eq("is_active", true)
+          .order("sort_order", { ascending: true });
+        setGalarasDbProducts((gData as CoachProduct[]) || []);
+      }
+    } else {
+      setGalarasDbProducts([]);
+    }
   };
 
   const fetchCoach = async () => {
@@ -388,6 +411,31 @@ export default function CoachProfile() {
                       </p>
                     )}
                   </section>
+
+                  {/* 6a-ii. Galoras Master Programs (master coaches only) */}
+                  {galarasDbProducts.length > 0 && (
+                    <section className="rounded-2xl border border-amber-500/20 bg-card p-8">
+                      <div className="flex items-center gap-3 mb-2">
+                        <Sparkles className="h-5 w-5 text-amber-400" />
+                        <h2 className="text-2xl font-semibold">Galoras Master Programs</h2>
+                      </div>
+                      <p className="text-sm text-muted-foreground mb-6">
+                        Signature Galoras programs delivered by certified Master Coaches.
+                      </p>
+                      <div className="grid sm:grid-cols-2 gap-4">
+                        {galarasDbProducts.map((product) => (
+                          <ProductCard
+                            key={product.id}
+                            product={product}
+                            coachName={coach.display_name || ""}
+                            getTypeConfig={getTypeConfig}
+                            onRequest={() => setRequestProduct(product)}
+                            onEnterprise={() => setEnterpriseProduct(product)}
+                          />
+                        ))}
+                      </div>
+                    </section>
+                  )}
 
                   {/* 6b. Coach's Own Products */}
                   {products.length > 0 && (

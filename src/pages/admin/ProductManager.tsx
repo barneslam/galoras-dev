@@ -3,11 +3,11 @@ import { AdminLayout } from "@/components/AdminLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Save, Loader2, Trash2, ToggleLeft, ToggleRight, Settings, Pencil } from "lucide-react";
+import { Plus, Save, Loader2, Trash2, ToggleLeft, ToggleRight, Settings, Lock } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useProductTypes, ProductTypeDefinition, PRODUCT_TYPE_COLOR_PRESETS } from "@/hooks/useProductTypes";
 
-type Coach = { id: string; display_name: string | null; slug: string | null };
+type Coach = { id: string; display_name: string | null; slug: string | null; tier: string | null };
 
 type Product = {
   id: string;
@@ -84,7 +84,7 @@ export default function ProductManager() {
   const [loadingProducts, setLoadingProducts] = useState(false);
   const [saving, setSaving] = useState(false);
   const [audienceInput, setAudienceInput] = useState("");
-  const [editMode, setEditMode] = useState(false); // false = view, true = edit
+  const [galarasProducts, setGalarasProducts] = useState<Product[]>([]);
 
   // Product type manager
   const { types: productTypes, loading: typesLoading, refetch: refetchTypes } = useProductTypes();
@@ -146,53 +146,51 @@ export default function ProductManager() {
     setLoadingCoaches(true);
     const { data } = await supabase
       .from("coaches")
-      .select("id, display_name, slug")
+      .select("id, display_name, slug, tier")
       .order("display_name");
     setCoaches((data || []) as Coach[]);
     setLoadingCoaches(false);
   };
 
-  const fetchProducts = async (coachId: string) => {
+  const fetchProducts = async (coachId: string, tier?: string | null) => {
     setLoadingProducts(true);
     setEditing(null);
+    setGalarasProducts([]);
     const { data } = await supabase
       .from("coach_products")
       .select("*")
       .eq("coach_id", coachId)
       .order("sort_order");
     setProducts((data || []) as Product[]);
-    setLoadingProducts(false);
-  };
 
-  const logChange = async (
-    changeType: "create" | "update" | "delete",
-    productId: string | null,
-    productTitle: string,
-    coachId: string,
-    changes: Record<string, unknown>,
-  ) => {
-    const { data: { user } } = await supabase.auth.getUser();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabase as any).from("product_change_log").insert({
-      product_id: productId,
-      product_title: productTitle,
-      coach_id: coachId,
-      changed_by_id: user?.id ?? null,
-      changed_by_email: user?.email ?? null,
-      change_type: changeType,
-      changes,
-    });
+    // Master coaches: also load Galoras platform products (read-only)
+    if (tier === "master") {
+      const { data: galCoach } = await supabase
+        .from("coaches")
+        .select("id")
+        .eq("slug", "galoras")
+        .maybeSingle();
+      if (galCoach?.id && galCoach.id !== coachId) {
+        const { data: gData } = await supabase
+          .from("coach_products")
+          .select("*")
+          .eq("coach_id", galCoach.id)
+          .order("sort_order");
+        setGalarasProducts((gData || []) as Product[]);
+      }
+    }
+
+    setLoadingProducts(false);
   };
 
   const selectCoach = (coach: Coach) => {
     setSelectedCoach(coach);
-    fetchProducts(coach.id);
+    fetchProducts(coach.id, coach.tier);
   };
 
   const startNew = () => {
     if (!selectedCoach) return;
     setIsNew(true);
-    setEditMode(true);
     const blank = BLANK_PRODUCT(selectedCoach.id);
     setEditing(blank);
     setAudienceInput("");
@@ -200,7 +198,13 @@ export default function ProductManager() {
 
   const selectProduct = (p: Product) => {
     setIsNew(false);
-    setEditMode(false);
+    setEditing({ ...p });
+    setAudienceInput((p.target_audience ?? []).join(", "));
+  };
+
+  // Admins can edit Galoras products directly
+  const selectGalarasProduct = (p: Product) => {
+    setIsNew(false);
     setEditing({ ...p });
     setAudienceInput((p.target_audience ?? []).join(", "));
   };
@@ -229,39 +233,21 @@ export default function ProductManager() {
     };
 
     if (isNew) {
-      const { data: created, error } = await supabase.from("coach_products").insert(payload).select("id").single();
+      const { error } = await supabase.from("coach_products").insert(payload);
       if (error) {
         toast({ title: "Failed to create", description: error.message, variant: "destructive" });
       } else {
-        await logChange("create", created?.id ?? null, payload.title, selectedCoach.id, payload);
         toast({ title: "Product created" });
         fetchProducts(selectedCoach.id);
         setEditing(null);
-        setEditMode(false);
       }
     } else {
       const { id, ...patch } = payload as Product & { target_audience: string[] | null };
-      // Build diff of changed fields
-      const original = products.find(p => p.id === id);
-      const diff: Record<string, { from: unknown; to: unknown }> = {};
-      if (original) {
-        for (const key of Object.keys(patch) as (keyof typeof patch)[]) {
-          const oldVal = original[key as keyof Product];
-          const newVal = patch[key];
-          if (JSON.stringify(oldVal) !== JSON.stringify(newVal)) {
-            diff[key] = { from: oldVal, to: newVal };
-          }
-        }
-      }
       const { error } = await supabase.from("coach_products").update(patch).eq("id", id);
       if (error) {
         toast({ title: "Failed to save", description: error.message, variant: "destructive" });
       } else {
-        if (Object.keys(diff).length > 0) {
-          await logChange("update", id, patch.title, selectedCoach.id, diff);
-        }
         toast({ title: "Saved" });
-        setEditMode(false);
         fetchProducts(selectedCoach.id);
       }
     }
@@ -310,12 +296,8 @@ export default function ProductManager() {
     if (!confirm(`Delete "${p.title}"? This cannot be undone.`)) return;
     const { error } = await supabase.from("coach_products").delete().eq("id", p.id);
     if (!error && selectedCoach) {
-      await logChange("delete", p.id, p.title, p.coach_id, { deleted_product: p });
       fetchProducts(selectedCoach.id);
-      if ((editing as Product)?.id === p.id) {
-        setEditing(null);
-        setEditMode(false);
-      }
+      if ((editing as Product)?.id === p.id) setEditing(null);
     }
   };
 
@@ -459,7 +441,7 @@ export default function ProductManager() {
             <div className="p-4 text-slate-500 text-sm flex items-center gap-2">
               <Loader2 className="h-4 w-4 animate-spin" /> Loading…
             </div>
-          ) : products.length === 0 ? (
+          ) : products.length === 0 && galarasProducts.length === 0 ? (
             <p className="p-4 text-slate-600 text-sm">No products yet</p>
           ) : (
             <div className="overflow-y-auto flex-1">
@@ -488,6 +470,33 @@ export default function ProductManager() {
                   <p className="text-xs text-slate-500 mt-0.5">{priceDisplay(p)}</p>
                 </div>
               ))}
+
+              {/* Galoras platform programs — read-only */}
+              {galarasProducts.length > 0 && (
+                <>
+                  <div className="px-4 py-2 bg-amber-950/30 border-y border-amber-800/30 flex items-center gap-1.5">
+                    <Lock className="h-3 w-3 text-amber-500" />
+                    <span className="text-xs font-semibold text-amber-500 uppercase tracking-wider">Galoras Platform</span>
+                  </div>
+                  {galarasProducts.map(p => (
+                    <div
+                      key={p.id}
+                      onClick={() => selectGalarasProduct(p)}
+                      className={`px-4 py-3 border-b border-zinc-800/50 cursor-pointer transition-colors ${
+                        (editing as Product)?.id === p.id
+                          ? "bg-amber-600/10 border-l-2 border-l-amber-500"
+                          : "hover:bg-zinc-800/30"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <Lock className="h-3 w-3 text-amber-600 shrink-0" />
+                        <p className="text-sm text-slate-400 font-medium line-clamp-1">{p.title}</p>
+                      </div>
+                      <p className="text-xs text-slate-600 mt-0.5 pl-5">{priceDisplay(p)}</p>
+                    </div>
+                  ))}
+                </>
+              )}
             </div>
           )}
         </div>
@@ -500,39 +509,22 @@ export default function ProductManager() {
             </div>
           ) : (
             <div className="max-w-2xl space-y-5">
+              {/* Info banner when editing a Galoras platform product */}
+              {galarasProducts.some(g => g.id === (editing as Product)?.id) && (
+                <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-amber-950/30 border border-amber-700/30">
+                  <Lock className="h-4 w-4 text-amber-500 shrink-0" />
+                  <p className="text-sm text-amber-400">
+                    <span className="font-semibold">Galoras platform program</span>{" "}
+                    — shared across all Master coaches. Changes here affect all Master coach profiles.
+                  </p>
+                </div>
+              )}
+
               <div className="flex items-center justify-between mb-2">
-                <h2 className="text-base font-bold text-white flex items-center gap-2">
-                  {isNew ? "New Product" : editMode ? "Edit Product" : "View Product"}
-                  {!isNew && !editMode && (
-                    <span className="text-xs text-slate-500 font-normal">(read-only)</span>
-                  )}
+                <h2 className="text-base font-bold text-white">
+                  {isNew ? "New Product" : "Edit Product"}
                 </h2>
                 <div className="flex items-center gap-2">
-                  {!isNew && (
-                    <Button
-                      size="sm"
-                      onClick={() => {
-                        if (editMode) {
-                          // Toggle off — reset to original
-                          setEditMode(false);
-                          const original = products.find(p => p.id === (editing as Product).id);
-                          if (original) {
-                            setEditing({ ...original });
-                            setAudienceInput((original.target_audience ?? []).join(", "));
-                          }
-                        } else {
-                          setEditMode(true);
-                        }
-                      }}
-                      className={editMode
-                        ? "bg-amber-600 hover:bg-amber-500 text-white font-bold"
-                        : "bg-slate-700 hover:bg-slate-600 text-slate-300 font-bold"
-                      }
-                    >
-                      <Pencil className="h-4 w-4 mr-1" />
-                      {editMode ? "Editing" : "Edit"}
-                    </Button>
-                  )}
                   {!isNew && (
                     <Button
                       variant="ghost"
@@ -543,17 +535,15 @@ export default function ProductManager() {
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   )}
-                  {(isNew || editMode) && (
-                    <Button
-                      size="sm"
-                      onClick={save}
-                      disabled={saving || !editing.title}
-                      className="bg-amber-600 hover:bg-amber-500 text-white font-bold"
-                    >
-                      {saving ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Save className="h-4 w-4 mr-1" />}
-                      {isNew ? "Create" : "Save"}
-                    </Button>
-                  )}
+                  <Button
+                    size="sm"
+                    onClick={save}
+                    disabled={saving || !editing.title}
+                    className="bg-amber-600 hover:bg-amber-500 text-white font-bold"
+                  >
+                    {saving ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Save className="h-4 w-4 mr-1" />}
+                    {isNew ? "Create" : "Save"}
+                  </Button>
                 </div>
               </div>
 
@@ -563,7 +553,6 @@ export default function ProductManager() {
                     className={inputClass()}
                     value={editing.product_type}
                     onChange={e => set("product_type", e.target.value)}
-                    disabled={!editMode && !isNew}
                   >
                     {typesLoading
                       ? <option value={editing.product_type}>{editing.product_type}</option>
@@ -578,7 +567,6 @@ export default function ProductManager() {
                     className={inputClass()}
                     value={editing.delivery_format || "online"}
                     onChange={e => set("delivery_format", e.target.value)}
-                    disabled={!editMode && !isNew}
                   >
                     {FORMATS.map(f => (
                       <option key={f} value={f} className="bg-[#1a2f4a] capitalize">{f.replace("_", " ")}</option>
@@ -593,7 +581,6 @@ export default function ProductManager() {
                   value={editing.title}
                   onChange={e => set("title", e.target.value)}
                   placeholder="Product title"
-                  readOnly={!editMode && !isNew}
                 />
               </Field>
 
@@ -603,7 +590,6 @@ export default function ProductManager() {
                   value={editing.outcome_statement || ""}
                   onChange={e => set("outcome_statement", e.target.value || null)}
                   placeholder="What will the client achieve?"
-                  readOnly={!editMode && !isNew}
                 />
               </Field>
 
@@ -613,7 +599,6 @@ export default function ProductManager() {
                   value={audienceInput}
                   onChange={e => setAudienceInput(e.target.value)}
                   placeholder="e.g. Mid-level managers, Team leads"
-                  readOnly={!editMode && !isNew}
                 />
               </Field>
 
@@ -625,7 +610,6 @@ export default function ProductManager() {
                     min={1}
                     value={editing.session_count ?? ""}
                     onChange={e => set("session_count", e.target.value ? parseInt(e.target.value) : null)}
-                    readOnly={!editMode && !isNew}
                   />
                 </Field>
                 <Field label="Duration (mins)">
@@ -635,7 +619,6 @@ export default function ProductManager() {
                     min={1}
                     value={editing.duration_minutes ?? ""}
                     onChange={e => set("duration_minutes", e.target.value ? parseInt(e.target.value) : null)}
-                    readOnly={!editMode && !isNew}
                   />
                 </Field>
                 <Field label="Weeks">
@@ -645,7 +628,6 @@ export default function ProductManager() {
                     min={1}
                     value={editing.duration_weeks ?? ""}
                     onChange={e => set("duration_weeks", e.target.value ? parseInt(e.target.value) : null)}
-                    readOnly={!editMode && !isNew}
                   />
                 </Field>
               </div>
@@ -656,7 +638,6 @@ export default function ProductManager() {
                     className={inputClass()}
                     value={editing.price_type}
                     onChange={e => set("price_type", e.target.value)}
-                    disabled={!editMode && !isNew}
                   >
                     {PRICE_TYPES.map(pt => (
                       <option key={pt} value={pt} className="bg-[#1a2f4a] capitalize">{pt}</option>
@@ -664,35 +645,32 @@ export default function ProductManager() {
                   </select>
                 </Field>
                 {editing.price_type === "fixed" && (
-                  <Field label="Price (cents)">
+                  <Field label="Price ($)">
                     <input
                       className={inputClass()}
                       type="number"
-                      value={editing.price_amount ?? ""}
-                      onChange={e => set("price_amount", e.target.value ? parseInt(e.target.value) : null)}
-                      placeholder="e.g. 50000 = $500"
-                      readOnly={!editMode && !isNew}
+                      value={editing.price_amount != null ? editing.price_amount / 100 : ""}
+                      onChange={e => set("price_amount", e.target.value ? Math.round(parseFloat(e.target.value) * 100) : null)}
+                      placeholder="e.g. 500"
                     />
                   </Field>
                 )}
                 {editing.price_type === "range" && (
                   <>
-                    <Field label="Min (cents)">
+                    <Field label="Min price ($)">
                       <input
                         className={inputClass()}
                         type="number"
-                        value={editing.price_range_min ?? ""}
-                        onChange={e => set("price_range_min", e.target.value ? parseInt(e.target.value) : null)}
-                        readOnly={!editMode && !isNew}
+                        value={editing.price_range_min != null ? editing.price_range_min / 100 : ""}
+                        onChange={e => set("price_range_min", e.target.value ? Math.round(parseFloat(e.target.value) * 100) : null)}
                       />
                     </Field>
-                    <Field label="Max (cents)">
+                    <Field label="Max price ($)">
                       <input
                         className={inputClass()}
                         type="number"
-                        value={editing.price_range_max ?? ""}
-                        onChange={e => set("price_range_max", e.target.value ? parseInt(e.target.value) : null)}
-                        readOnly={!editMode && !isNew}
+                        value={editing.price_range_max != null ? editing.price_range_max / 100 : ""}
+                        onChange={e => set("price_range_max", e.target.value ? Math.round(parseFloat(e.target.value) * 100) : null)}
                       />
                     </Field>
                   </>
@@ -705,7 +683,6 @@ export default function ProductManager() {
                     className={inputClass()}
                     value={editing.booking_mode}
                     onChange={e => set("booking_mode", e.target.value)}
-                    disabled={!editMode && !isNew}
                   >
                     {BOOKING_MODES.map(bm => (
                       <option key={bm.value} value={bm.value} className="bg-[#1a2f4a]">{bm.label}</option>
@@ -717,7 +694,6 @@ export default function ProductManager() {
                     className={inputClass()}
                     value={editing.visibility_scope}
                     onChange={e => set("visibility_scope", e.target.value)}
-                    disabled={!editMode && !isNew}
                   >
                     {VISIBILITY.map(v => (
                       <option key={v} value={v} className="bg-[#1a2f4a] capitalize">{v}</option>
@@ -730,7 +706,6 @@ export default function ProductManager() {
                     type="number"
                     value={editing.sort_order}
                     onChange={e => set("sort_order", parseInt(e.target.value) || 0)}
-                    readOnly={!editMode && !isNew}
                   />
                 </Field>
               </div>
@@ -742,7 +717,6 @@ export default function ProductManager() {
                   checked={editing.enterprise_ready ?? false}
                   onChange={e => set("enterprise_ready", e.target.checked)}
                   className="w-4 h-4 accent-amber-500"
-                  disabled={!editMode && !isNew}
                 />
                 <label htmlFor="enterprise_ready" className="text-sm text-slate-300 cursor-pointer">
                   <span className="font-semibold text-amber-400">Enterprise ready</span>
