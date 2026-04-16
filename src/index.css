@@ -112,7 +112,8 @@
 
   /* Gradient text */
   .text-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent;
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(105deg, hsl(var(--primary)) 0%, white 45%, hsl(var(--accent)) 100%);
   }
 
   /* Glow effects */
@@ -265,30 +266,25 @@
     filter: blur(10px);
   }
 
-  /* Crisp jagged bolt shard */
+  /* Crisp lightning bolt shard — wide parallelogram slash */
   .lightning-bolt {
     position: absolute;
-    top: -20%; bottom: -20%;
-    width: 18%;
+    top: -55%; bottom: -55%;
+    width: 28%;
     animation: boltSweep 0.9s cubic-bezier(0.2, 0, 0.55, 1) forwards;
     background: linear-gradient(
       90deg,
       transparent 0%,
-      hsl(var(--primary) / 0.4) 18%,
-      hsl(var(--primary)) 40%,
-      white 50%,
-      hsl(var(--primary)) 60%,
-      hsl(var(--primary) / 0.4) 82%,
+      hsl(var(--primary) / 0.5) 15%,
+      hsl(var(--primary)) 32%,
+      white 48%,
+      hsl(var(--accent)) 62%,
+      hsl(var(--accent) / 0.5) 80%,
       transparent 100%
     );
-    /* Jagged zigzag bolt silhouette */
-    clip-path: polygon(
-      0% 40%, 42% 40%, 28% 2%,  72% 2%,
-      58% 48%, 100% 48%, 100% 58%,
-      58% 58%, 72% 98%, 28% 98%,
-      42% 52%, 0% 52%
-    );
-    filter: blur(0.5px);
+    /* Parallelogram slash — clean bolt silhouette */
+    clip-path: polygon(18% 0%, 100% 0%, 82% 100%, 0% 100%);
+    filter: blur(0.8px);
   }
 
   /* Text charges in with blue electric glow that fades to normal */
