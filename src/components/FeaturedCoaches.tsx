@@ -2,9 +2,6 @@ import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-const BARNES_PHOTO =
-  "https://qbjuomsmnrclsjhdsjcz.supabase.co/storage/v1/object/public/coach-images/Barnes_Lam_-Removebg_BusinessPortraits.ca__1_-removebg-preview.png";
-
 export function FeaturedCoaches() {
   return (
     <section
@@ -26,47 +23,46 @@ export function FeaturedCoaches() {
               Every Galoras coach has operated at the level they coach. Not studied it. Not observed it. Lived it — and taken responsibility for outcomes.
             </p>
             <p className="text-zinc-500 text-base leading-relaxed mb-10">
-              Barnes Lam has led $100M+ revenue businesses across four continents. He built the Sport of Business framework from the inside — and he deploys it with the same rigour he used when the stakes were real.
+              Executives, founders, and operators who have led at the highest level — and now deploy that experience to help others perform under real conditions.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
-              <Link to="/coach/barnes-lam">
-                <Button size="lg" className="bg-primary text-zinc-950 hover:bg-primary/90 font-bold">
-                  Meet Barnes
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-              </Link>
               <Link to="/coaching">
-                <Button size="lg" variant="outline" className="border-zinc-700 text-zinc-300 hover:bg-zinc-800">
-                  All Coaches
+                <Button size="lg" className="bg-primary text-zinc-950 hover:bg-primary/90 font-bold">
+                  Meet the Coaches
+                  <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
             </div>
           </div>
 
-          {/* Right — B&W photo */}
-          <div className="relative flex items-end justify-center order-1 lg:order-2 pt-16 lg:pt-0">
-            {/* Subtle vertical gradient fade at bottom */}
+          {/* Right — group B&W photo */}
+          <div className="relative flex items-end order-1 lg:order-2 overflow-hidden">
+            {/* Left-side fade so photo blends into the copy column */}
+            <div
+              className="absolute inset-y-0 left-0 z-10 pointer-events-none w-24"
+              style={{
+                background: "linear-gradient(to right, #0d0f12 0%, transparent 100%)",
+              }}
+            />
+            {/* Bottom fade */}
             <div
               className="absolute inset-x-0 bottom-0 z-10 pointer-events-none"
               style={{
-                height: "40%",
+                height: "35%",
                 background:
-                  "linear-gradient(to top, #0d0f12 0%, rgba(13,15,18,0.5) 60%, transparent 100%)",
+                  "linear-gradient(to top, #0d0f12 0%, rgba(13,15,18,0.4) 60%, transparent 100%)",
               }}
             />
             <img
-              src={BARNES_PHOTO}
-              alt="Barnes Lam — Galoras Coach"
-              className="relative z-0 max-h-[580px] w-auto object-contain object-bottom"
-              style={{ filter: "grayscale(100%) contrast(1.05)" }}
+              src="/group-bw-coaches.jpg"
+              alt="Galoras coaches"
+              className="relative z-0 w-full h-full object-cover object-center"
+              style={{
+                filter: "grayscale(100%) contrast(1.08) brightness(0.92)",
+                minHeight: 480,
+                maxHeight: 620,
+              }}
             />
-            {/* Name plate */}
-            <div className="absolute bottom-8 left-0 right-0 z-20 text-center">
-              <p className="text-white font-display font-bold text-base">Barnes Lam</p>
-              <p className="text-zinc-400 text-xs mt-0.5">
-                Executive Coach · Sport of Business
-              </p>
-            </div>
           </div>
 
         </div>
