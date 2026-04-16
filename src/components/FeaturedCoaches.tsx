@@ -87,14 +87,14 @@ export function FeaturedCoaches() {
           </div>
 
           {/* Right — rotating B&W portrait */}
-          <div className="relative flex items-end justify-center order-1 lg:order-2 pt-16 lg:pt-0">
+          <div className="relative flex items-center justify-center order-1 lg:order-2" style={{ minHeight: 560 }}>
             {/* Bottom fade */}
             <div
               className="absolute inset-x-0 bottom-0 z-10 pointer-events-none"
               style={{
-                height: "40%",
+                height: "30%",
                 background:
-                  "linear-gradient(to top, #0d0f12 0%, rgba(13,15,18,0.5) 60%, transparent 100%)",
+                  "linear-gradient(to top, #0d0f12 0%, rgba(13,15,18,0.4) 60%, transparent 100%)",
               }}
             />
 
@@ -102,18 +102,22 @@ export function FeaturedCoaches() {
               key={coach.slug}
               src={coach.photo}
               alt={coach.name}
-              className="relative z-0 w-auto object-contain object-bottom"
+              className="relative z-0 mx-auto"
               style={{
-                maxHeight: 560,
+                maxHeight: 500,
+                maxWidth: "100%",
+                width: "auto",
+                objectFit: "contain",
                 filter: "grayscale(100%) contrast(1.05)",
                 opacity: fading ? 0 : 1,
                 transition: "opacity 0.5s ease",
+                display: "block",
               }}
             />
 
             {/* Name plate */}
             <div
-              className="absolute bottom-8 left-0 right-0 z-20 text-center"
+              className="absolute bottom-6 left-0 right-0 z-20 text-center"
               style={{ opacity: fading ? 0 : 1, transition: "opacity 0.5s ease" }}
             >
               <p className="text-white font-display font-bold text-base">{coach.name}</p>
