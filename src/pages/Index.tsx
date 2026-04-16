@@ -196,7 +196,7 @@ export default function Index() {
         <div className="container-wide">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-display font-bold mb-4">Performance <span className="text-gradient">Domains</span></h2>
-            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">Areas where execution capability has been demonstrated — not just discussed.</p>
+            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">Areas where execution capability has been demonstrated. Not just discussed.</p>
           </div>
           
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">

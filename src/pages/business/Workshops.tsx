@@ -23,7 +23,7 @@ const labs = [
     highlight: undefined,
     sample: true,
     description:
-      "Teams that are misaligned on priorities execute slowly and disagree at the wrong moments. This Lab surfaces and resolves alignment gaps — fast.",
+      "Teams that are misaligned on priorities execute slowly and disagree at the wrong moments. This Lab surfaces and resolves alignment gaps, fast.",
     outcomes: [
       "Shared priority clarity",
       "Decision rights mapped",
@@ -79,7 +79,7 @@ const labs = [
     highlight: "private",
     sample: false,
     description:
-      "Most executives are making AI decisions without truly understanding the technology. This private session gives you the clarity to lead AI conversations, evaluate tools, and ask the right questions of your teams — no technical background required.",
+      "Most executives are making AI decisions without truly understanding the technology. This private session gives you the clarity to lead AI conversations, evaluate tools, and ask the right questions of your teams. No technical background required.",
     outcomes: [
       "AI fundamentals for non-technical leaders",
       "How to evaluate AI tools and vendors",
@@ -93,7 +93,7 @@ const labs = [
     highlight: "free",
     sample: false,
     description:
-      "Exclusively for Galoras coaches at Elite tier and above. A complimentary private session covering LinkedIn positioning, personal website strategy, and social media — so you attract the right clients and build your coaching practice with confidence.",
+      "Exclusively for Galoras coaches at Elite tier and above. A complimentary private session covering LinkedIn positioning, personal website strategy, and social media, so you attract the right clients and build your coaching practice with confidence.",
     outcomes: [
       "LinkedIn profile and content strategy",
       "Personal website and brand positioning",

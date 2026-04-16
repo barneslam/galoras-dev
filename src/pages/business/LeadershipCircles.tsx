@@ -17,7 +17,7 @@ const benefits = [
     icon: Users,
     title: "Operators Learning from Operators",
     description:
-      "Every member has been at the level you're operating at. Conversations go deeper because context is shared — not explained.",
+      "Every member has been at the level you're operating at. Conversations go deeper because context is shared, not explained.",
   },
   {
     icon: Shield,
@@ -29,7 +29,7 @@ const benefits = [
     icon: Brain,
     title: "Pressure-Tested Perspectives",
     description:
-      "Cross-industry, cross-context insight from leaders who have navigated similar constraints. Not theory — experience.",
+      "Cross-industry, cross-context insight from leaders who have navigated similar constraints. Not theory. Experience.",
   },
   {
     icon: MessageCircle,
@@ -57,7 +57,7 @@ const circleTypes = [
     level: "C-Suite & Senior Leaders",
     size: "8–12 members",
     description:
-      "For senior executives operating at the top of complex organisations — navigating board relationships, strategic transformation, and the weight of decisions that affect hundreds of people.",
+      "For senior executives operating at the top of complex organisations, navigating board relationships, strategic transformation, and the weight of decisions that affect hundreds of people.",
     topics: [
       "Execution under pressure",
       "Organisational alignment",
@@ -70,7 +70,7 @@ const circleTypes = [
     level: "Directors & VPs",
     size: "10–14 members",
     description:
-      "For high-potential leaders stepping into expanded accountability — developing the executive presence, cross-functional authority, and decision discipline their next role demands.",
+      "For high-potential leaders stepping into expanded accountability, developing the executive presence, cross-functional authority, and decision discipline their next role demands.",
     topics: [
       "Executive presence",
       "Influence without authority",
@@ -83,7 +83,7 @@ const circleTypes = [
     level: "Founders & CEOs",
     size: "8–10 members",
     description:
-      "For founders who have moved past early stage and are navigating the harder problems — scaling teams, commercial pressure, and the personal cost of building something significant.",
+      "For founders who have moved past early stage and are navigating the harder problems: scaling teams, commercial pressure, and the personal cost of building something significant.",
     topics: [
       "Scaling without losing culture",
       "Commercial execution",

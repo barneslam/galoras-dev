@@ -24,7 +24,7 @@ const steps = [
     icon: Target,
     title: "Diagnostic",
     description:
-      "We map exactly where alignment breaks down, where decisions slow, and where execution slips. Not theory — your team's actual patterns under real conditions.",
+      "We map exactly where alignment breaks down, where decisions slow, and where execution slips. Not theory. Your team's actual patterns under real conditions.",
     cta: null,
   },
   {
@@ -32,7 +32,7 @@ const steps = [
     icon: Brain,
     title: "Programme",
     description:
-      "We install the disciplines. Facilitated sessions grounded in The Sport of Business framework — practical, applied, and designed for teams already under pressure.",
+      "We install the disciplines. Facilitated sessions grounded in The Sport of Business framework: practical, applied, and designed for teams already under pressure.",
     cta: null,
   },
   {

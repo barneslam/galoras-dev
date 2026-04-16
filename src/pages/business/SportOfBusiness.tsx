@@ -38,19 +38,19 @@ const differentiators = [
     icon: Users,
     title: "Teams as Performance Units",
     description:
-      "We don't coach individuals in isolation. The Sport of Business measures and improves how your leadership team functions as a unit — because that's where performance is won or lost.",
+      "We don't coach individuals in isolation. The Sport of Business measures and improves how your leadership team functions as a unit. That is where performance is won or lost.",
   },
   {
     icon: Shield,
     title: "Built for Real Conditions",
     description:
-      "Not classroom theory. Every intervention is designed to be applied under the actual pressure, pace, and constraints your team faces — not in a controlled environment.",
+      "Not classroom theory. Every intervention is designed to be applied under the actual pressure, pace, and constraints your team faces. Not in a controlled environment.",
   },
   {
     icon: BarChart3,
     title: "Grounded in Data",
     description:
-      "We diagnose before we intervene. Sequenced improvements are based on your team's actual execution patterns — not a generic programme applied to every organisation.",
+      "We diagnose before we intervene. Sequenced improvements are based on your team's actual execution patterns. Not a generic programme applied to every organisation.",
   },
 ];
 
@@ -83,7 +83,7 @@ const formats = [
     title: "Enterprise Deployment",
     duration: "Custom Scope",
     description:
-      "For organisations deploying The Sport of Business across multiple teams or divisions — scaled without losing the rigour.",
+      "For organisations deploying The Sport of Business across multiple teams or divisions, scaled without losing the rigour.",
     features: [
       "Multi-team facilitation",
       "Internal champion development",

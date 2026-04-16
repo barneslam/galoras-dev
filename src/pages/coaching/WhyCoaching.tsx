@@ -165,7 +165,7 @@ export default function WhyCoaching() {
                   <ul className="space-y-3">
                     {[
                       "A performance partnership grounded in real operating environments",
-                      "Focused on decisions, tradeoffs, and execution — not advice",
+                      "Focused on decisions, tradeoffs, and execution. Not advice.",
                       "Structured around accountability and outcome ownership",
                       "Context-aware, not one-size-fits-all",
                       "Designed to perform under pressure",

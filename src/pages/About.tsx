@@ -17,7 +17,7 @@ const values = [
   {
     icon: TrendingUp,
     title: "Growth",
-    description: "We believe growth is a discipline, not a destination. Everyone on the platform — coach and client — is committed to getting better.",
+    description: "We believe growth is a discipline, not a destination. Everyone on the platform, coach and client alike, is committed to getting better.",
   },
   {
     icon: Zap,
@@ -37,12 +37,12 @@ const values = [
   {
     icon: Lightbulb,
     title: "Innovation",
-    description: "We use technology to enhance the coaching experience — not replace the human at the centre of it.",
+    description: "We use technology to enhance the coaching experience, not replace the human at the centre of it.",
   },
   {
     icon: Users,
     title: "Ambition",
-    description: "We back people who want more — more clarity, more capability, more impact. Ambition is not optional here.",
+    description: "We back people who want more: more clarity, more capability, more impact. Ambition is not optional here.",
   },
 ];
 
@@ -55,7 +55,7 @@ const team = [
   {
     name: "Barnes Lam",
     role: "Execution Advisor for Founders & CEOs",
-    bio: "30+ years across telecom, SaaS, and AI — including APAC Business Development at BlackBerry. Works with founders and CEOs when growth has stalled and the reasons are not obvious.",
+    bio: "30+ years across telecom, SaaS, and AI, including APAC Business Development at BlackBerry. Works with founders and CEOs when growth has stalled and the reasons are not obvious.",
   },
 ];
 
@@ -91,7 +91,7 @@ export default function About() {
                 Why We <span className="text-gradient">Exist</span>
               </h2>
               <p className="text-zinc-400 text-lg leading-relaxed">
-                The most successful people in the world — athletes, executives, founders — all have coaches. Access to that level of support has always been limited to the few. Galoras changes that.
+                The most successful people in the world, athletes, executives and founders, all have coaches. Access to that level of support has always been limited to the few. Galoras changes that.
               </p>
               <p className="text-zinc-400 mt-4 leading-relaxed">
                 We are building a performance-led coaching exchange where real coaches with proven track records are identified, vetted, and deployed to the people and organisations that need them most.
@@ -204,7 +204,7 @@ export default function About() {
             Join the Galoras <span className="text-gradient">Ecosystem</span>
           </h2>
           <p className="text-zinc-400 text-lg mb-8 max-w-xl mx-auto">
-            Whether you're seeking a coach or ready to become one — the standard is the same.
+            Whether you're seeking a coach or ready to become one, the standard is the same.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link to="/coaching">

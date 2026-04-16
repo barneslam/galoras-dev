@@ -34,13 +34,13 @@ const matchingFactors = [
     icon: UserCircle2,
     title: "Your Profile & Goals",
     description:
-      "When you create a Galoras profile, you tell us what you're navigating — your career stage, coaching areas, and the outcomes you're working toward. That context is the foundation of every match.",
+      "When you create a Galoras profile, you tell us what you're navigating: your career stage, coaching areas, and the outcomes you're working toward. That context is the foundation of every match.",
   },
   {
     icon: BarChart3,
     title: "Coach Execution Experience",
     description:
-      "Every coach on Galoras is assessed on where they have actually performed — not just where they hold credentials. We map your situation against their real operating history, industry context, and demonstrated capability.",
+      "Every coach on Galoras is assessed on where they have actually performed, not just where they hold credentials. We map your situation against their real operating history, industry context, and demonstrated capability.",
   },
   {
     icon: Sparkles,
@@ -50,9 +50,9 @@ const matchingFactors = [
   },
   {
     icon: Target,
-    title: "Contextual Fit — Not Just Compatibility",
+    title: "Contextual Fit, Not Just Compatibility",
     description:
-      "We don't match on personality or style alone. Galoras prioritises coaches who have been in situations similar to yours — so you get someone who understands the real constraints, not just the theory.",
+      "We don't match on personality or style alone. Galoras prioritises coaches who have been in situations similar to yours, so you get someone who understands the real constraints, not just the theory.",
   },
 ];
 

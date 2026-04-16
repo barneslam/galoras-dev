@@ -5,7 +5,7 @@ const pillars = [
   {
     number: 1,
     title: "One Performance\nPhilosophy",
-    body: "A shared view of clarity, fundamentals, and execution under pressure — applied consistently across every coach and programme.",
+    body: "A shared view of clarity, fundamentals, and execution under pressure, applied consistently across every coach and programme.",
     accent: false,
     bg: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?q=80&w=800&auto=format&fit=crop",
     href: "/coaching/why",
@@ -13,7 +13,7 @@ const pillars = [
   {
     number: 2,
     title: "Curated Human\nCapital",
-    body: "A selective network of coaches, operators and leaders aligned to one standard — not just credentialled, but proven.",
+    body: "A selective network of coaches, operators and leaders aligned to one standard. Not just credentialled, but proven.",
     accent: true,
     bg: "https://images.unsplash.com/photo-1600880292203-757bb62b4baf?q=80&w=800&auto=format&fit=crop",
     href: "/coaching",
@@ -21,7 +21,7 @@ const pillars = [
   {
     number: 3,
     title: "Structured\nExperiences",
-    body: "A clear pathway from individual coaching to team and enterprise engagement — designed for real conditions, not classroom theory.",
+    body: "A clear pathway from individual coaching to team and enterprise engagement, designed for real conditions. Not classroom theory.",
     accent: false,
     bg: "https://images.unsplash.com/photo-1551836022-deb4988cc6c0?q=80&w=800&auto=format&fit=crop",
     href: "/labs",
@@ -29,7 +29,7 @@ const pillars = [
   {
     number: 4,
     title: "Technology as\nan Enabler",
-    body: "Supporting scale, quality and insight without replacing human judgment — intelligence that surfaces the right coach at the right moment.",
+    body: "Supporting scale, quality and insight without replacing human judgment. Intelligence that surfaces the right coach at the right moment.",
     accent: false,
     bg: "https://images.unsplash.com/photo-1504868584819-f8e8b4b6d7e3?q=80&w=800&auto=format&fit=crop",
     href: "/compass",

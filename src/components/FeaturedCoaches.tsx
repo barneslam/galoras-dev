@@ -6,14 +6,14 @@ import { Button } from "@/components/ui/button";
 const COACHES = [
   {
     name: "Barnes Lam",
-    title: "Executive Coach · Sport of Business",
+    title: "Master Coach",
     slug: "barnes-lam",
     photo:
       "https://qbjuomsmnrclsjhdsjcz.supabase.co/storage/v1/object/public/coach-images/Barnes_Lam_-Removebg_BusinessPortraits.ca__1_-removebg-preview.png",
   },
   {
     name: "Mitesh Kapadia",
-    title: "Performance Coach · Fitness",
+    title: "Master Coach",
     slug: "mitesh-kapadia",
     photo:
       "https://qbjuomsmnrclsjhdsjcz.supabase.co/storage/v1/object/public/coach-images/Outside_Blue_Mitesh-removebg-preview.png",
