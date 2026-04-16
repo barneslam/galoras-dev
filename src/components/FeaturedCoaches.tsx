@@ -44,7 +44,7 @@ export function FeaturedCoaches() {
     setColorizing(true);
     // After color transition completes, navigate
     setTimeout(() => {
-      navigate(`/coaching/${coach.slug}`);
+      navigate(`/coach/${coach.slug}`);
       setColorizing(false);
     }, 600);
   };
