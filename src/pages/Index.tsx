@@ -17,25 +17,43 @@ const categories = [
   { icon: Compass, name: "Transitions", slug: "transitions" },
 ];
 
-const HEADLINES = [
+const HEADLINES: { parts: { text: string; highlight?: boolean }[]; href: string | null }[] = [
   {
-    text: "Business is a team sport. Most teams never practice.",
+    parts: [
+      { text: "Business is a " },
+      { text: "team sport.", highlight: true },
+      { text: " Most teams never practice." },
+    ],
     href: null,
   },
   {
-    text: "Losers have plans. Winners have coaches.",
+    parts: [
+      { text: "Losers have plans. " },
+      { text: "Winners", highlight: true },
+      { text: " have coaches." },
+    ],
     href: "/business/sport-of-business",
   },
   {
-    text: "Your leadership team has never been coached. It shows.",
+    parts: [
+      { text: "Your leadership team has never been " },
+      { text: "coached.", highlight: true },
+      { text: " It shows." },
+    ],
     href: "/business/sport-of-business",
   },
   {
-    text: "You're not stuck. You're uncoached.",
+    parts: [
+      { text: "You're not stuck. You're " },
+      { text: "uncoached.", highlight: true },
+    ],
     href: "/signup",
   },
   {
-    text: "The gap between you and your potential has a name.",
+    parts: [
+      { text: "The gap between you and your potential has a " },
+      { text: "name.", highlight: true },
+    ],
     href: "/coaching",
   },
 ];
@@ -115,14 +133,18 @@ function RotatingHero() {
       <span
         onClick={handleClick}
         className={[
-          "relative z-20 block text-4xl md:text-5xl lg:text-6xl font-display font-bold text-foreground leading-tight",
-          headline.href ? "cursor-pointer hover:text-accent transition-colors" : "",
+          "relative z-20 block text-4xl md:text-5xl lg:text-6xl font-display font-bold leading-tight",
+          headline.href ? "cursor-pointer" : "",
           phase === "visible" ? "headline-reveal" : "",
           phase === "exiting" ? "headline-exit" : "",
           phase === "brush" ? "opacity-0" : "",
         ].join(" ")}
       >
-        {headline.text}
+        {headline.parts.map((part, i) =>
+          part.highlight
+            ? <span key={i} className="text-gradient">{part.text}</span>
+            : <span key={i} className="text-foreground">{part.text}</span>
+        )}
         {headline.href && (
           <ArrowRight className="inline-block ml-3 h-8 w-8 text-accent opacity-70" />
         )}
