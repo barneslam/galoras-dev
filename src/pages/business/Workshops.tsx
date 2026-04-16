@@ -142,7 +142,7 @@ export default function Workshops() {
             </div>
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-display font-black tracking-tight text-white uppercase mb-6">
               Workshops &{" "}
-              <span className="text-primary">Offsites</span>
+              <span className="text-gradient">Offsites</span>
             </h1>
             <p className="text-zinc-300 text-lg md:text-xl max-w-2xl mx-auto mb-4">
               Leadership Labs are immersive, facilitated working sessions where teams practise The Sport of Business in real time.

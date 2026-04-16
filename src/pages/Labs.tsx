@@ -267,7 +267,7 @@ export default function Labs() {
             
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-display font-bold mb-4">
               <span className="text-gradient">LEADERSHIP</span>{" "}
-              <span className="text-primary">LABS</span>
+              <span className="text-gradient">LABS</span>
             </h1>
             <p className="text-lg text-foreground font-medium mb-4 max-w-xl">
               Leadership Labs are immersive, facilitated experiences where teams practice The Sport of Business in real time.

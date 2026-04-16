@@ -140,7 +140,7 @@ export default function Diagnostics() {
             </div>
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-display font-black tracking-tight text-white uppercase mb-6">
               Organisational{" "}
-              <span className="text-primary">Diagnostics</span>
+              <span className="text-gradient">Diagnostics</span>
             </h1>
             <p className="text-zinc-300 text-lg md:text-xl max-w-2xl mx-auto mb-4">
               You can't fix what you haven't properly diagnosed. Galoras diagnostics reveal the specific execution gaps — alignment, decision-making, and accountability — that are limiting your organisation's performance.

@@ -19,7 +19,7 @@ export default function Pricing() {
               </p>
               <h1 className="text-4xl md:text-5xl font-display font-black tracking-tight text-white uppercase mb-4">
                 Three tiers.{" "}
-                <span className="text-primary">One ecosystem.</span>{" "}
+                <span className="text-gradient">One ecosystem.</span>{" "}
                 Real results.
               </h1>
               <p className="text-zinc-400 text-lg max-w-2xl mx-auto">

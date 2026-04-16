@@ -111,7 +111,7 @@ export default function LeadershipCircles() {
             </p>
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-display font-black tracking-tight text-white uppercase mb-6">
               Leadership{" "}
-              <span className="text-primary">Circles</span>
+              <span className="text-gradient">Circles</span>
             </h1>
             <p className="text-zinc-300 text-lg md:text-xl max-w-2xl mx-auto mb-4">
               The best operators learn from each other. Leadership Circles bring together executives who have operated at similar levels — for honest conversation, shared accountability, and cross-pollination of real experience.
