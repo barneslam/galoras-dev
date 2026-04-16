@@ -1,4 +1,5 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useState, useEffect, useRef } from "react";
 import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { OptimizedImage } from "@/components/ui/optimized-image";
@@ -16,6 +17,120 @@ const categories = [
   { icon: Compass, name: "Transitions", slug: "transitions" },
 ];
 
+const HEADLINES = [
+  {
+    text: "Business is a team sport. Most teams never practice.",
+    href: null,
+  },
+  {
+    text: "Losers have plans. Winners have coaches.",
+    href: "/business/sport-of-business",
+  },
+  {
+    text: "Your leadership team has never been coached. It shows.",
+    href: "/business/sport-of-business",
+  },
+  {
+    text: "You're not stuck. You're uncoached.",
+    href: "/signup",
+  },
+  {
+    text: "The gap between you and your potential has a name.",
+    href: "/coaching",
+  },
+];
+
+// Timing constants (ms)
+const BRUSH_DURATION = 750;
+const TEXT_REVEAL_DELAY = 420; // text appears as brush clears midpoint
+const HOLD_DURATION = 3000;
+const EXIT_DURATION = 350;
+
+type Phase = "brush" | "visible" | "exiting";
+
+function RotatingHero() {
+  const navigate = useNavigate();
+  const [index, setIndex] = useState(0);
+  const [phase, setPhase] = useState<Phase>("brush");
+  const [paused, setPaused] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const clear = () => { if (timerRef.current) clearTimeout(timerRef.current); };
+
+  const runCycle = (idx: number) => {
+    setIndex(idx);
+    setPhase("brush");
+
+    timerRef.current = setTimeout(() => {
+      setPhase("visible");
+
+      timerRef.current = setTimeout(() => {
+        setPhase("exiting");
+
+        timerRef.current = setTimeout(() => {
+          runCycle((idx + 1) % HEADLINES.length);
+        }, EXIT_DURATION);
+      }, HOLD_DURATION);
+    }, TEXT_REVEAL_DELAY);
+  };
+
+  useEffect(() => {
+    if (!paused) {
+      runCycle(0);
+    }
+    return clear;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [paused]);
+
+  const headline = HEADLINES[index];
+
+  const handleClick = () => {
+    if (headline.href) {
+      clear();
+      navigate(headline.href);
+    }
+  };
+
+  return (
+    <div
+      className="relative overflow-hidden cursor-default"
+      onMouseEnter={() => { clear(); setPaused(true); }}
+      onMouseLeave={() => { setPaused(false); }}
+      style={{ minHeight: "3.5rem" }}
+    >
+      {/* Yellow brush sweep */}
+      {phase === "brush" && (
+        <span
+          className="brush-sweep pointer-events-none absolute inset-y-0 left-0 z-10"
+          style={{
+            width: "55%",
+            background: "linear-gradient(105deg, transparent 0%, hsl(var(--accent)/0.85) 30%, hsl(var(--accent)) 50%, hsl(var(--accent)/0.85) 70%, transparent 100%)",
+            borderRadius: "2px",
+            filter: "blur(1px)",
+          }}
+        />
+      )}
+
+      {/* Headline text */}
+      <span
+        onClick={handleClick}
+        className={[
+          "relative z-20 block text-4xl md:text-5xl lg:text-6xl font-display font-bold text-foreground leading-tight",
+          headline.href ? "cursor-pointer hover:text-accent transition-colors" : "",
+          phase === "visible" ? "headline-reveal" : "",
+          phase === "exiting" ? "headline-exit" : "",
+          phase === "brush" ? "opacity-0" : "",
+        ].join(" ")}
+      >
+        {headline.text}
+        {headline.href && (
+          <ArrowRight className="inline-block ml-3 h-8 w-8 text-accent opacity-70" />
+        )}
+      </span>
+    </div>
+  );
+}
+
 export default function Index() {
   return (
     <Layout>
@@ -32,31 +147,28 @@ export default function Index() {
           />
           <div className="absolute inset-0 bg-background/70" />
         </div>
-        
+
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,hsl(var(--primary)/0.15),transparent_50%)]" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,hsl(var(--accent)/0.1),transparent_50%)]" />
-        
+
         <div className="container-wide relative z-10 py-20">
-          <div className="max-w-4xl mx-auto text-center stagger-children">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-display font-bold text-foreground leading-tight mb-6">
-              Remove the Shackles. Unlock{" "}
-              <span className="text-gradient">Performance</span>
-            </h1>
-            
-            <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto mb-10">
-              Galoras connects individuals and organizations with proven performance expertise, quickly, intelligently and at scale.
+          <div className="max-w-4xl mx-auto text-center">
+            <RotatingHero />
+
+            <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto mt-8 mb-10">
+              Galoras connects individuals and organizations with proven performance expertise — through the Sport of Business framework.
             </p>
-            
+
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link to="/signup">
+              <Link to="/business/sport-of-business">
                 <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 glow-primary text-lg px-8 h-14">
-                  Join the Galoras Community
+                  Explore Sport of Business
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
-              <Link to="/business">
+              <Link to="/coaching">
                 <Button size="lg" variant="outline" className="border-primary/50 text-foreground hover:bg-primary/10 text-lg px-8 h-14">
-                  Galoras for Business
+                  Find Your Coach
                 </Button>
               </Link>
             </div>

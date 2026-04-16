@@ -234,4 +234,33 @@
   .stagger-children > *:nth-child(4) { animation-delay: 0.4s; }
   .stagger-children > *:nth-child(5) { animation-delay: 0.5s; }
   .stagger-children > *:nth-child(6) { animation-delay: 0.6s; }
+
+  /* Brush sweep animation */
+  @keyframes brushSweep {
+    0%   { transform: translateX(-110%) skewX(-8deg); }
+    100% { transform: translateX(110%) skewX(-8deg); }
+  }
+
+  /* Text reveal — appears as brush passes midpoint */
+  @keyframes headlineReveal {
+    0%   { opacity: 0; transform: translateY(10px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes headlineExit {
+    0%   { opacity: 1; transform: translateY(0); }
+    100% { opacity: 0; transform: translateY(-10px); }
+  }
+
+  .brush-sweep {
+    animation: brushSweep 0.75s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+
+  .headline-reveal {
+    animation: headlineReveal 0.4s ease-out forwards;
+  }
+
+  .headline-exit {
+    animation: headlineExit 0.35s ease-in forwards;
+  }
 }
