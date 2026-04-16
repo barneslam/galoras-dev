@@ -106,7 +106,7 @@ export default function SportOfBusiness() {
             </p>
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-display font-black tracking-tight text-white uppercase mb-6">
               The Sport of{" "}
-              <span className="text-primary">Business</span>
+              <span className="text-gradient">Business</span>
             </h1>
             <p className="text-zinc-300 text-lg md:text-xl max-w-2xl mx-auto mb-4">
               Business is a team sport. It demands alignment, fast decision-making, and execution under pressure — the same disciplines that separate elite sports teams from the rest.

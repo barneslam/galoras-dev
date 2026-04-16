@@ -137,7 +137,7 @@ function RotatingHero() {
       >
         {headline.parts.map((part, i) =>
           part.highlight
-            ? <span key={i} className="text-electric">{part.text}</span>
+            ? <span key={i} className="text-gradient">{part.text}</span>
             : <span key={i} className="text-foreground">{part.text}</span>
         )}
         {headline.href && (

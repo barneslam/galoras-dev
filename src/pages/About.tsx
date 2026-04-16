@@ -72,7 +72,7 @@ export default function About() {
             </p>
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-display font-black tracking-tight text-white uppercase mb-6">
               One Ecosystem.{" "}
-              <span className="text-primary">One Standard.</span>
+              <span className="text-gradient">One Standard.</span>
             </h1>
             <p className="text-lg md:text-xl text-zinc-400 mb-8 max-w-2xl mx-auto leading-relaxed">
               To make connection a daily habit, not an afterthought, in the modern workplace.
