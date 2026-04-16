@@ -115,11 +115,6 @@ function RotatingHero() {
       onMouseLeave={() => { setPaused(false); }}
       style={{ minHeight: "3.5rem" }}
     >
-      {/* Soft burn-sweep light — fires once as text appears */}
-      {phase === "sweep" && (
-        <span className="burn-sweep pointer-events-none" />
-      )}
-
       {/* Headline text */}
       <span
         onClick={handleClick}
