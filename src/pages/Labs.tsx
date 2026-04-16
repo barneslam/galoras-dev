@@ -259,20 +259,20 @@ export default function Labs() {
       {/* Hero Section */}
       <section className="relative pt-32 pb-20 overflow-hidden bg-gradient-to-b from-muted/50 to-background">
         <div className="container-wide relative z-10">
-          <div className="max-w-3xl">
+          <div className="max-w-3xl mx-auto text-center">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-medium mb-6">
               <FlaskConical className="h-4 w-4" />
               OUR COURSES
             </div>
-            
+
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-display font-bold mb-4">
               <span className="text-gradient">LEADERSHIP</span>{" "}
               <span className="text-gradient">LABS</span>
             </h1>
-            <p className="text-lg text-foreground font-medium mb-4 max-w-xl">
+            <p className="text-lg text-foreground font-medium mb-4 max-w-xl mx-auto">
               Leadership Labs are immersive, facilitated experiences where teams practice The Sport of Business in real time.
             </p>
-            <p className="text-lg text-muted-foreground mb-8 max-w-xl">
+            <p className="text-lg text-muted-foreground mb-8 max-w-xl mx-auto">
               Multiple events and workshops are organized throughout the year. Find the experience that fits your team.
             </p>
             <Link to="#courses">
@@ -290,7 +290,7 @@ export default function Labs() {
         <div className="container-wide">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-display font-bold mb-4">
-              Upcoming Workshops & Events
+              Upcoming Workshops & <span className="text-gradient">Events</span>
             </h2>
             <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
               Join our intensive programs designed to accelerate your growth and deliver measurable transformation.
@@ -323,7 +323,7 @@ export default function Labs() {
               PERFORMANCE LABS
             </div>
             <h2 className="text-3xl md:text-4xl font-display font-bold mb-4">
-              Peak Performance Training
+              Peak Performance <span className="text-gradient">Training</span>
             </h2>
             <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
               Unlock your full potential with programs designed to build mental resilience, focus, and sustainable high performance.
@@ -347,7 +347,7 @@ export default function Labs() {
               EXECUTIVE LABS
             </div>
             <h2 className="text-3xl md:text-4xl font-display font-bold mb-4">
-              Executive Leadership Programs
+              Executive Leadership <span className="text-gradient">Programs</span>
             </h2>
             <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
               Accelerate your leadership journey with programs tailored for senior executives and C-suite leaders.
@@ -371,7 +371,7 @@ export default function Labs() {
               TEAM LABS
             </div>
             <h2 className="text-3xl md:text-4xl font-display font-bold mb-4">
-              Team Development Programs
+              Team Development <span className="text-gradient">Programs</span>
             </h2>
             <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
               Build cohesive, high-performing teams with our collaborative workshops and team coaching programs.
@@ -390,7 +390,7 @@ export default function Labs() {
       <section className="section-padding hero-gradient">
         <div className="container-wide text-center">
           <h2 className="text-3xl md:text-4xl font-display font-bold mb-4">
-            Ready for Transformation?
+            Ready for <span className="text-gradient">Transformation?</span>
           </h2>
           <p className="text-muted-foreground text-lg mb-8 max-w-xl mx-auto">
             Create a free account and start your journey toward peak performance.

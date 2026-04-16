@@ -113,7 +113,7 @@ export default function CoachMatching() {
         <div className="container-wide">
           <div className="max-w-3xl mx-auto text-center mb-12">
             <h2 className="text-2xl md:text-3xl font-display font-bold text-white mb-3">
-              Using the Galoras Platform to Find Your Best Match
+              Using the Galoras Platform to Find Your Best <span className="text-gradient">Match</span>
             </h2>
             <p className="text-zinc-400 text-base">
               Every match starts with you. The Galoras platform combines your profile, stated preferences, and current situation to identify coaches whose real-world experience aligns with what you're actually facing — not a generalised version of it.
@@ -159,7 +159,7 @@ export default function CoachMatching() {
 
             <div className="text-center mb-10">
               <h2 className="text-2xl font-display font-bold text-white mb-2">
-                Map Your Context
+                Map Your <span className="text-gradient">Context</span>
               </h2>
               <p className="text-zinc-400 text-sm">
                 Answer four quick questions and we'll surface the coaches best matched to your situation.

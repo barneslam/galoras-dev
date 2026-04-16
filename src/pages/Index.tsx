@@ -200,7 +200,7 @@ export default function Index() {
       <section className="section-padding bg-muted/30">
         <div className="container-wide">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-display font-bold mb-4">Performance Domains</h2>
+            <h2 className="text-3xl md:text-4xl font-display font-bold mb-4">Performance <span className="text-gradient">Domains</span></h2>
             <p className="text-muted-foreground text-lg max-w-2xl mx-auto">Areas where execution capability has been demonstrated — not just discussed.</p>
           </div>
           
@@ -224,7 +224,7 @@ export default function Index() {
       {/* CTA Section */}
       <section className="section-padding hero-gradient">
         <div className="container-wide text-center">
-          <h2 className="text-3xl md:text-4xl font-display font-bold mb-4">Stop Navigating It Alone</h2>
+          <h2 className="text-3xl md:text-4xl font-display font-bold mb-4">Stop Navigating It <span className="text-gradient">Alone</span></h2>
           <p className="text-muted-foreground text-lg mb-8 max-w-2xl mx-auto">
             Every high-performer has blind spots. Galoras connects you with a coach who's been in the room and help you lead with more clarity, confidence, and impact.
           </p>

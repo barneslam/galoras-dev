@@ -124,7 +124,7 @@ export default function WhyCoaching() {
         <div className="container-wide">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-display font-bold mb-4">
-              The Galoras Coaching Advantage
+              The Galoras Coaching <span className="text-gradient">Advantage</span>
             </h2>
             <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
               Coaching at Galoras is designed to improve execution and not just insight. The advantage comes from selecting coaches who have already performed in environments similar to yours.
@@ -152,7 +152,7 @@ export default function WhyCoaching() {
         <div className="container-wide">
           <div className="max-w-4xl mx-auto">
             <h2 className="text-3xl md:text-4xl font-display font-bold text-center mb-12">
-              What Coaching Is & Isn't
+              What Coaching <span className="text-gradient">Is</span> & Isn't
             </h2>
             
             <div className="grid md:grid-cols-2 gap-8">
@@ -211,7 +211,7 @@ export default function WhyCoaching() {
         <div className="container-wide">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-display font-bold mb-4">
-              Real Results, Real People
+              Real Results, Real <span className="text-gradient">People</span>
             </h2>
             <p className="text-muted-foreground text-lg">
               Examples of outcomes achieved when coaching is deployed in the right context.
@@ -249,7 +249,7 @@ export default function WhyCoaching() {
         <div className="container-wide">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-display font-bold mb-4">
-              How Galoras Works
+              How Galoras <span className="text-gradient">Works</span>
             </h2>
             <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
               Galoras is designed to improve signal quality so that real coaching capability becomes visible and deployable.
@@ -305,7 +305,7 @@ export default function WhyCoaching() {
         <div className="absolute inset-0 bg-gradient-to-r from-background/95 via-background/90 to-background/95" />
         <div className="container-wide text-center relative z-10">
           <h2 className="text-3xl md:text-4xl font-display font-bold mb-4">
-            Ready for Proven Execution Support?
+            Ready for Proven Execution <span className="text-gradient">Support?</span>
           </h2>
           <p className="text-muted-foreground text-lg mb-8 max-w-xl mx-auto">
             Galoras is a performance-led coaching exchange where coaches are surfaced based on demonstrated execution capability.
