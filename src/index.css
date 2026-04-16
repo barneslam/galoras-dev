@@ -255,7 +255,7 @@
     position: absolute;
     top: -60%; bottom: -60%;
     width: 36%;
-    animation: glowSweep 0.38s cubic-bezier(0.15, 0, 0.5, 1) forwards;
+    animation: glowSweep 0.9s cubic-bezier(0.2, 0, 0.55, 1) forwards;
     background: radial-gradient(
       ellipse at center,
       hsl(var(--primary) / 0.45) 0%,
@@ -270,7 +270,7 @@
     position: absolute;
     top: -20%; bottom: -20%;
     width: 18%;
-    animation: boltSweep 0.38s cubic-bezier(0.15, 0, 0.5, 1) forwards;
+    animation: boltSweep 0.9s cubic-bezier(0.2, 0, 0.55, 1) forwards;
     background: linear-gradient(
       90deg,
       transparent 0%,

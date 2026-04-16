@@ -60,7 +60,7 @@ const HEADLINES: { parts: { text: string; highlight?: boolean }[]; href: string 
 
 // Timing constants (ms)
 const BRUSH_DURATION = 750;
-const TEXT_REVEAL_DELAY = 220; // text appears as bolt clears midpoint
+const TEXT_REVEAL_DELAY = 500; // text appears as bolt clears midpoint
 const HOLD_DURATION = 3000;
 const EXIT_DURATION = 350;
 
