@@ -2,61 +2,27 @@ import { Link } from "react-router-dom";
 import { Layout } from "@/components/layout";
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import {
-  ArrowRight,
-  Target,
-  Heart,
-  Users,
-  Zap,
-  Shield,
-  Lightbulb,
-  TrendingUp,
-} from "lucide-react";
+import { ArrowRight } from "lucide-react";
 
-const values = [
-  {
-    icon: TrendingUp,
-    title: "Growth",
-    description: "We believe growth is a discipline, not a destination. Everyone on the platform, coach and client alike, is committed to getting better.",
-  },
-  {
-    icon: Zap,
-    title: "Performance",
-    description: "We are built for people operating under real pressure. Results matter. We measure what actually moves.",
-  },
-  {
-    icon: Shield,
-    title: "Trust",
-    description: "Every coach on Galoras is vetted. Every engagement is confidential. Trust is the foundation everything else is built on.",
-  },
-  {
-    icon: Heart,
-    title: "Connection",
-    description: "We make connection a daily habit, not an afterthought. The right relationship between coach and client changes everything.",
-  },
-  {
-    icon: Lightbulb,
-    title: "Innovation",
-    description: "We use technology to enhance the coaching experience, not replace the human at the centre of it.",
-  },
-  {
-    icon: Users,
-    title: "Ambition",
-    description: "We back people who want more: more clarity, more capability, more impact. Ambition is not optional here.",
-  },
+const BARNES_PHOTO = "https://qbjuomsmnrclsjhdsjcz.supabase.co/storage/v1/object/public/coach-images/Barnes_Lam_-Removebg_BusinessPortraits.ca__1_-removebg-preview.png";
+const MITESH_PHOTO = "https://qbjuomsmnrclsjhdsjcz.supabase.co/storage/v1/object/public/coach-images/Outside_Blue_Mitesh-removebg-preview.png";
+
+const advisors = [
+  { initials: "TBA", name: "Advisory Board", note: "Being established. Senior, credible, strategic." },
 ];
 
-const team = [
+const coaches = [
   {
     name: "Mitesh Kapadia",
-    role: "Executive Performance Coach",
-    bio: "Coached 1,000+ Directors and VPs at Apple, Google, Cisco, and Fortune 500 companies. Focused on making leadership capability visible, deployable, and career-defining.",
-  },
-  {
-    name: "Barnes Lam",
-    role: "Execution Advisor for Founders & CEOs",
-    bio: "30+ years across telecom, SaaS, and AI, including APAC Business Development at BlackBerry. Works with founders and CEOs when growth has stalled and the reasons are not obvious.",
+    title: "Master Coach",
+    slug: "mitesh-kapadia",
+    photo: MITESH_PHOTO,
+    positioning: "Coached 1,000+ Directors and VPs at Apple, Google, Cisco, and Fortune 500 companies.",
+    outcomes: [
+      "Leadership capability made visible and deployable",
+      "Executive presence built for high-stakes environments",
+      "Career-defining performance at Director and VP level",
+    ],
   },
 ];
 
@@ -65,140 +31,182 @@ export default function About() {
     <Layout>
       <SEO
         title="About Galoras"
-        description="Galoras is a performance-led coaching exchange built on one standard: coaches who have operated at the level they coach. Meet the team and the philosophy."
+        description="Galoras is a performance organisation built around one standard. Meet the architect, the advisors, and the master coaches who deliver the Sport of Business."
         canonical="/about"
       />
+
       {/* Hero */}
       <section className="relative pt-32 pb-20 overflow-hidden bg-zinc-950">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,hsl(var(--primary)/0.12),transparent_55%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,hsl(var(--primary)/0.10),transparent_55%)]" />
         <div className="container-wide relative z-10">
           <div className="max-w-3xl mx-auto text-center">
             <p className="text-xs font-semibold text-primary uppercase tracking-widest mb-4">
-              About Galoras
+              The Organisation
             </p>
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-display font-black tracking-tight text-white uppercase mb-6">
-              One Ecosystem.{" "}
-              <span className="text-gradient">One Standard.</span>
+              Built for <span className="text-gradient">Performance.</span>
             </h1>
-            <p className="text-lg md:text-xl text-zinc-400 mb-8 max-w-2xl mx-auto leading-relaxed">
-              To make connection a daily habit, not an afterthought, in the modern workplace.
+            <p className="text-zinc-300 text-lg md:text-xl max-w-2xl mx-auto leading-relaxed">
+              Galoras is not a marketplace. It is a performance organisation with one framework, one standard, and coaches who have operated at the level they coach.
             </p>
           </div>
         </div>
       </section>
 
-      {/* Vision & Mission */}
-      <section className="py-20 bg-zinc-900">
+      {/* ── FOUNDER & CHAIRMAN ── */}
+      <section className="py-24 bg-zinc-900 border-y border-zinc-800">
         <div className="container-wide">
-          <div className="max-w-4xl mx-auto grid md:grid-cols-2 gap-12 items-start">
-            <div>
-              <p className="text-xs font-semibold text-primary uppercase tracking-widest mb-3">Vision</p>
-              <h2 className="text-3xl font-display font-black text-white uppercase tracking-tight mb-4">
-                Why We <span className="text-gradient">Exist</span>
-              </h2>
-              <p className="text-zinc-400 text-lg leading-relaxed">
-                The most successful people in the world, athletes, executives and founders, all have coaches. Access to that level of support has always been limited to the few. Galoras changes that.
-              </p>
-              <p className="text-zinc-400 mt-4 leading-relaxed">
-                We are building a performance-led coaching exchange where real coaches with proven track records are identified, vetted, and deployed to the people and organisations that need them most.
-              </p>
-            </div>
-            <div>
-              <p className="text-xs font-semibold text-primary uppercase tracking-widest mb-3">Mission</p>
-              <h2 className="text-3xl font-display font-black text-white uppercase tracking-tight mb-6">
-                How We Get <span className="text-gradient">There</span>
-              </h2>
-              <div className="space-y-4">
-                <div className="flex gap-4">
-                  <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center shrink-0 mt-0.5">
-                    <span className="text-primary text-xs font-bold">25</span>
-                  </div>
-                  <div>
-                    <p className="text-white font-semibold text-sm mb-1">Establish</p>
-                    <p className="text-zinc-400 text-sm">Create the foundation, brand, and core community platform.</p>
-                  </div>
-                </div>
-                <div className="flex gap-4">
-                  <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center shrink-0 mt-0.5">
-                    <span className="text-primary text-xs font-bold">26</span>
-                  </div>
-                  <div>
-                    <p className="text-white font-semibold text-sm mb-1">Launch</p>
-                    <p className="text-zinc-400 text-sm">Bring the platform live with coaching enablement and community features.</p>
-                  </div>
-                </div>
-                <div className="flex gap-4">
-                  <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center shrink-0 mt-0.5">
-                    <span className="text-primary text-xs font-bold">27</span>
-                  </div>
-                  <div>
-                    <p className="text-white font-semibold text-sm mb-1">Scale</p>
-                    <p className="text-zinc-400 text-sm">Expand reach, grow the user base, and deepen engagement.</p>
-                  </div>
-                </div>
+          <div className="text-center mb-4">
+            <p className="text-xs font-semibold text-primary uppercase tracking-widest">
+              Architect
+            </p>
+          </div>
+
+          <div className="max-w-4xl mx-auto grid lg:grid-cols-2 gap-16 items-center mt-12">
+
+            {/* Photo */}
+            <div className="flex justify-center">
+              <div className="relative">
+                <div className="absolute -inset-3 rounded-2xl border border-primary/20 pointer-events-none" />
+                <img
+                  src={BARNES_PHOTO}
+                  alt="Barnes Lam"
+                  className="w-72 object-contain grayscale contrast-110"
+                  style={{ maxHeight: 400 }}
+                />
               </div>
             </div>
+
+            {/* Copy */}
+            <div>
+              <p className="text-xs font-semibold text-primary uppercase tracking-widest mb-3">
+                Founder & Chairman
+              </p>
+              <h2 className="text-3xl md:text-4xl font-display font-black text-white uppercase tracking-tight mb-2">
+                Barnes <span className="text-gradient">Lam</span>
+              </h2>
+              <p className="text-zinc-500 text-sm font-semibold uppercase tracking-widest mb-6">
+                Creator of The Sport of Business
+              </p>
+              <p className="text-zinc-300 text-base leading-relaxed mb-4">
+                Barnes built Galoras from 30+ years of operating experience across telecom, SaaS, and AI — including APAC Business Development at BlackBerry and leading $100M+ revenue organisations across Europe, the Caribbean, Latin America, and the United States.
+              </p>
+              <p className="text-zinc-400 text-base leading-relaxed mb-6">
+                The Sport of Business framework, and the standard Galoras holds every coach to, came directly from that experience. Barnes is the architect of the methodology, not an operational or bookable resource.
+              </p>
+              <div className="border-l-2 border-primary/40 pl-4">
+                <p className="text-zinc-400 text-sm italic leading-relaxed">
+                  "The disciplines that move organisations forward under pressure are the same ones that separate elite sports teams from the rest. Galoras exists to make that capability accessible."
+                </p>
+              </div>
+            </div>
+
           </div>
         </div>
       </section>
 
-      {/* Values */}
+      {/* ── ADVISORY BOARD ── */}
       <section className="py-20 bg-zinc-950">
         <div className="container-wide">
-          <div className="text-center mb-14">
-            <p className="text-xs font-semibold text-primary uppercase tracking-widest mb-3">What We Stand For</p>
+          <div className="text-center mb-12">
+            <p className="text-xs font-semibold text-primary uppercase tracking-widest mb-3">
+              Strategic Direction
+            </p>
             <h2 className="text-3xl md:text-4xl font-display font-black text-white uppercase tracking-tight mb-4">
-              Our <span className="text-gradient">Values</span>
+              Advisory <span className="text-gradient">Board</span>
             </h2>
-            <p className="text-zinc-400 text-lg max-w-2xl mx-auto">
-              Growth. Performance. Trust. Connection. Innovation. Ambition.
+            <p className="text-zinc-400 text-base max-w-xl mx-auto">
+              A small group of senior advisors who provide strategic counsel. Not operational. Not bookable. Credibility without noise.
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {values.map((value) => (
-              <Card key={value.title} className="bg-zinc-900 border-zinc-700 hover:border-primary/50 transition-all">
-                <CardContent className="p-6">
-                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
-                    <value.icon className="h-5 w-5 text-primary" />
-                  </div>
-                  <h3 className="text-lg font-display font-bold text-white mb-2">{value.title}</h3>
-                  <p className="text-zinc-400 text-sm leading-relaxed">{value.description}</p>
-                </CardContent>
-              </Card>
-            ))}
+          <div className="max-w-sm mx-auto">
+            <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-8 text-center">
+              <div className="w-16 h-16 mx-auto rounded-full border border-zinc-700 bg-zinc-800 flex items-center justify-center mb-4">
+                <span className="text-zinc-500 text-xs font-semibold uppercase tracking-widest">TBA</span>
+              </div>
+              <p className="text-zinc-500 text-sm">
+                Advisory board being established. Announcements coming.
+              </p>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Team */}
-      <section className="py-20 bg-zinc-900">
+      {/* ── MASTER COACHES ── */}
+      <section className="py-24 bg-zinc-900 border-t border-zinc-800">
         <div className="container-wide">
           <div className="text-center mb-14">
-            <p className="text-xs font-semibold text-primary uppercase tracking-widest mb-3">The People Behind It</p>
+            <p className="text-xs font-semibold text-primary uppercase tracking-widest mb-3">
+              The Delivery Engine
+            </p>
             <h2 className="text-3xl md:text-4xl font-display font-black text-white uppercase tracking-tight mb-4">
-              <span className="text-gradient">Leadership</span>
+              Master <span className="text-gradient">Coaches</span>
             </h2>
             <p className="text-zinc-400 text-lg max-w-2xl mx-auto">
-              Experienced operators who have been in the room where it happens.
+              Every Galoras Master Coach has operated at the level they coach. Selected to deliver the Sport of Business framework. Not just accredited — proven.
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-            {team.map((member) => (
-              <Card key={member.name} className="bg-zinc-950 border-zinc-700 text-center">
-                <CardContent className="p-6">
-                  <div className="w-16 h-16 mx-auto rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center mb-4">
-                    <span className="text-xl font-display font-bold text-primary">
-                      {member.name.split(' ').map(n => n[0]).join('')}
-                    </span>
-                  </div>
-                  <h3 className="text-base font-display font-bold text-white mb-1">{member.name}</h3>
-                  <p className="text-xs text-primary mb-3 font-semibold uppercase tracking-wide">{member.role}</p>
-                  <p className="text-sm text-zinc-400 leading-relaxed">{member.bio}</p>
-                </CardContent>
-              </Card>
+          <div className="max-w-3xl mx-auto">
+            {coaches.map((coach) => (
+              <div key={coach.slug} className="grid md:grid-cols-2 gap-12 items-center mb-16 last:mb-0">
+
+                {/* Photo */}
+                <div className="flex justify-center">
+                  <Link to={`/coach/${coach.slug}`} className="group relative block">
+                    <div className="absolute -inset-3 rounded-2xl border border-primary/15 group-hover:border-primary/40 transition-colors pointer-events-none" />
+                    <img
+                      src={coach.photo}
+                      alt={coach.name}
+                      className="w-64 object-contain grayscale contrast-110 group-hover:grayscale-0 transition-all duration-500"
+                      style={{ maxHeight: 360 }}
+                    />
+                    <div className="absolute bottom-2 left-0 right-0 text-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <span className="text-xs font-semibold text-primary bg-zinc-950/80 px-3 py-1.5 rounded-full">
+                        View Profile
+                      </span>
+                    </div>
+                  </Link>
+                </div>
+
+                {/* Copy */}
+                <div>
+                  <p className="text-xs font-semibold text-primary uppercase tracking-widest mb-2">
+                    {coach.title}
+                  </p>
+                  <h3 className="text-2xl md:text-3xl font-display font-black text-white uppercase tracking-tight mb-4">
+                    {coach.name}
+                  </h3>
+                  <p className="text-zinc-400 text-base leading-relaxed mb-5">
+                    {coach.positioning}
+                  </p>
+                  <ul className="space-y-2 mb-6">
+                    {coach.outcomes.map((outcome, i) => (
+                      <li key={i} className="flex items-start gap-2 text-sm text-zinc-400">
+                        <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0 mt-1.5" />
+                        {outcome}
+                      </li>
+                    ))}
+                  </ul>
+                  <Link to={`/coach/${coach.slug}`}>
+                    <Button size="sm" variant="outline" className="border-zinc-700 text-zinc-300 hover:bg-zinc-800">
+                      View Full Profile
+                      <ArrowRight className="ml-2 h-3.5 w-3.5" />
+                    </Button>
+                  </Link>
+                </div>
+
+              </div>
             ))}
+
+            {/* Placeholder for future coaches */}
+            <div className="rounded-2xl border border-dashed border-zinc-700 p-8 text-center mt-8">
+              <p className="text-zinc-600 text-sm font-semibold uppercase tracking-widest mb-2">More Coaches</p>
+              <p className="text-zinc-500 text-sm">
+                Additional Master Coaches being onboarded. Each selected against the same standard.
+              </p>
+            </div>
           </div>
         </div>
       </section>
@@ -207,21 +215,21 @@ export default function About() {
       <section className="py-20 bg-zinc-950 border-t border-zinc-800">
         <div className="container-wide text-center">
           <h2 className="text-3xl md:text-4xl font-display font-black text-white uppercase tracking-tight mb-4">
-            Join the Galoras <span className="text-gradient">Ecosystem</span>
+            One Standard. No <span className="text-gradient">Exceptions.</span>
           </h2>
           <p className="text-zinc-400 text-lg mb-8 max-w-xl mx-auto">
-            Whether you're seeking a coach or ready to become one, the standard is the same.
+            If you want to work with a Galoras coach or bring the Sport of Business framework to your organisation, start here.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link to="/coaching">
-              <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90">
+              <Button size="lg" className="bg-primary text-zinc-950 hover:bg-primary/90 font-bold">
                 Find a Coach
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
-            <Link to="/apply">
+            <Link to="/contact">
               <Button size="lg" variant="outline" className="border-zinc-600 text-white hover:bg-zinc-800">
-                Apply as a Coach
+                Talk to Us About Your Organisation
               </Button>
             </Link>
           </div>
