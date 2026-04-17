@@ -77,13 +77,16 @@ export default function About() {
 
           <div className="max-w-4xl mx-auto grid lg:grid-cols-2 gap-16 items-center mt-12">
 
-            {/* Photo placeholder */}
+            {/* Photo */}
             <div className="flex justify-center">
               <div className="relative">
                 <div className="absolute -inset-3 rounded-2xl border border-primary/20 pointer-events-none" />
-                <div className="w-72 h-80 rounded-2xl bg-zinc-800 border border-zinc-700 flex items-center justify-center">
-                  <span className="text-5xl font-display font-black text-zinc-600">C</span>
-                </div>
+                <img
+                  src="/conor-mcgowan-smyth.jpg"
+                  alt="Conor McGowan Smyth"
+                  className="w-72 rounded-2xl object-cover object-top grayscale contrast-105"
+                  style={{ maxHeight: 400 }}
+                />
               </div>
             </div>
 
