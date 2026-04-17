@@ -84,7 +84,7 @@ export default function About() {
                 <img
                   src="/conor-mcgowan-smyth.jpg"
                   alt="Conor McGowan Smyth"
-                  className="w-72 rounded-2xl object-cover object-top grayscale contrast-105"
+                  className="w-72 rounded-2xl object-cover object-top"
                   style={{ maxHeight: 400 }}
                 />
               </div>
@@ -172,7 +172,7 @@ export default function About() {
                     <img
                       src={coach.photo}
                       alt={coach.name}
-                      className="w-64 object-contain grayscale contrast-110 group-hover:grayscale-0 transition-all duration-500"
+                      className="w-64 object-contain"
                       style={{ maxHeight: 360 }}
                     />
                     <div className="absolute bottom-2 left-0 right-0 text-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
