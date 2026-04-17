@@ -7,11 +7,24 @@ import { ArrowRight } from "lucide-react";
 const BARNES_PHOTO = "https://qbjuomsmnrclsjhdsjcz.supabase.co/storage/v1/object/public/coach-images/Barnes_Lam_-Removebg_BusinessPortraits.ca__1_-removebg-preview.png";
 const MITESH_PHOTO = "https://qbjuomsmnrclsjhdsjcz.supabase.co/storage/v1/object/public/coach-images/Outside_Blue_Mitesh-removebg-preview.png";
 
+
 const advisors = [
   { initials: "TBA", name: "Advisory Board", note: "Being established. Senior, credible, strategic." },
 ];
 
 const coaches = [
+  {
+    name: "Barnes Lam",
+    title: "Master Coach",
+    slug: "barnes-lam",
+    photo: BARNES_PHOTO,
+    positioning: "30+ years across telecom, SaaS, and AI. Works with founders and CEOs when growth has stalled and the reasons are not obvious.",
+    outcomes: [
+      "Execution clarity for founders navigating commercial pressure",
+      "Leadership teams aligned and operating under real conditions",
+      "Revenue and growth bottlenecks identified and resolved",
+    ],
+  },
   {
     name: "Mitesh Kapadia",
     title: "Master Coach",
@@ -64,16 +77,13 @@ export default function About() {
 
           <div className="max-w-4xl mx-auto grid lg:grid-cols-2 gap-16 items-center mt-12">
 
-            {/* Photo */}
+            {/* Photo placeholder */}
             <div className="flex justify-center">
               <div className="relative">
                 <div className="absolute -inset-3 rounded-2xl border border-primary/20 pointer-events-none" />
-                <img
-                  src={BARNES_PHOTO}
-                  alt="Barnes Lam"
-                  className="w-72 object-contain grayscale contrast-110"
-                  style={{ maxHeight: 400 }}
-                />
+                <div className="w-72 h-80 rounded-2xl bg-zinc-800 border border-zinc-700 flex items-center justify-center">
+                  <span className="text-5xl font-display font-black text-zinc-600">C</span>
+                </div>
               </div>
             </div>
 
@@ -83,16 +93,16 @@ export default function About() {
                 Founder & Chairman
               </p>
               <h2 className="text-3xl md:text-4xl font-display font-black text-white uppercase tracking-tight mb-2">
-                Barnes <span className="text-gradient">Lam</span>
+                Conor <span className="text-gradient">McGowan Smyth</span>
               </h2>
               <p className="text-zinc-500 text-sm font-semibold uppercase tracking-widest mb-6">
-                Creator of The Sport of Business
+                Author · The Sport of Business
               </p>
               <p className="text-zinc-300 text-base leading-relaxed mb-4">
-                Barnes built Galoras from 30+ years of operating experience across telecom, SaaS, and AI — including APAC Business Development at BlackBerry and leading $100M+ revenue organisations across Europe, the Caribbean, Latin America, and the United States.
+                Conor built Galoras from decades of operating experience leading $100M+ revenue organisations across Europe, the Caribbean, Latin America, and the United States — through growth, transformation, and disruption.
               </p>
               <p className="text-zinc-400 text-base leading-relaxed mb-6">
-                The Sport of Business framework, and the standard Galoras holds every coach to, came directly from that experience. Barnes is the architect of the methodology, not an operational or bookable resource.
+                The Sport of Business framework emerged from that experience. Conor is its architect — responsible for strategic direction, methodology, and the standard every Galoras coach is held to. He is not an operational or bookable resource.
               </p>
               <div className="border-l-2 border-primary/40 pl-4">
                 <p className="text-zinc-400 text-sm italic leading-relaxed">
