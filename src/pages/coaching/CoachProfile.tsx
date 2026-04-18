@@ -34,6 +34,7 @@ type CoachProfileData = {
   lifecycle_status: string | null;
   booking_url: string | null;
   avatar_url: string | null;
+  video_url: string | null;
 };
 
 function normalizeProofPoints(value: unknown): string[] {
@@ -161,7 +162,7 @@ export default function CoachProfile() {
       let query = supabase
         .from("coaches")
         .select(
-          "id, slug, display_name, headline, positioning_statement, methodology, coaching_style, engagement_format, primary_pillar, proof_points, audience, tier, lifecycle_status, booking_url, avatar_url"
+          "id, slug, display_name, headline, positioning_statement, methodology, coaching_style, engagement_format, primary_pillar, proof_points, audience, tier, lifecycle_status, booking_url, avatar_url, video_url"
         )
         .eq("lifecycle_status", "published");
 
@@ -338,7 +339,22 @@ export default function CoachProfile() {
                     </p>
                   </section>
 
-                  {/* 4. Coaching Style + Engagement Format + Primary Pillar */}
+                  {/* 4. Intro Video */}
+                  {coach.video_url && (
+                    <section className="rounded-2xl border border-border bg-card p-8">
+                      <h2 className="text-2xl font-semibold mb-4">Meet {coach.display_name?.split(" ")[0]}</h2>
+                      <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-black">
+                        <video
+                          src={coach.video_url}
+                          controls
+                          className="absolute inset-0 w-full h-full"
+                          playsInline
+                        />
+                      </div>
+                    </section>
+                  )}
+
+                  {/* 5. Coaching Style + Engagement Format + Primary Pillar */}
                   {(coach.coaching_style || coach.engagement_format || coach.primary_pillar) && (
                     <section className="rounded-2xl border border-border bg-card p-8">
                       <h2 className="text-2xl font-semibold mb-4">Coaching Style</h2>

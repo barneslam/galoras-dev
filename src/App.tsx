@@ -95,9 +95,17 @@ function CoachOnboardingRedirect() {
   return <Navigate to={`/coaching/onboarding${location.search}`} replace />;
 }
 
+function ScrollToTop() {
+  const { pathname } = useLocation();
+  useEffect(() => { window.scrollTo(0, 0); }, [pathname]);
+  return null;
+}
+
 function AppRoutes() {
   usePageTracker();
   return (
+    <>
+    <ScrollToTop />
     <Routes>
           {/* Home */}
           <Route path="/" element={<Index />} />
@@ -254,6 +262,7 @@ function AppRoutes() {
           {/* Always last */}
           <Route path="*" element={<NotFound />} />
         </Routes>
+    </>
   );
 }
 
