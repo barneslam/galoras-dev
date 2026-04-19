@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Zap, Linkedin, Twitter, Instagram, Mail } from "lucide-react";
-import galorasLogo from "@/assets/galoras-logo.png";
+const galorasLogo = "/galoras-logo.jpg";
 
 const footerLinks = {
   platform: [
