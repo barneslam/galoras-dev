@@ -28,7 +28,7 @@ const navItems = [
     href: "/coaching",
     children: [
       { name: "Find a Coach", href: "/coaching", description: "Browse our vetted coaches" },
-      { name: "How Matching Works", href: "/coaching/matching", description: "AI-powered coach matching" },
+      // { name: "How Matching Works", href: "/coaching/matching", description: "AI-powered coach matching" }, // hidden — Phase 3, pending sign-off
       { name: "Why Coaching", href: "/coaching/why", description: "The power of coaching" },
     ],
   },
