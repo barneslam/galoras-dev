@@ -57,7 +57,7 @@ function SetupForm({
     // Confirm the SetupIntent — saves card, no charge
     const { error: stripeError } = await stripe.confirmSetup({
       elements,
-      confirmParams: { return_url: `${window.location.origin}/pricing` },
+      confirmParams: { return_url: `${window.location.origin}/coaching/onboarding` },
       redirect: "if_required",
     });
 
