@@ -42,17 +42,12 @@ export default function CoachSignup() {
   // Step 3
   const [password, setPassword] = useState("");
 
-  // Redirect if already logged in
+  // Redirect if already logged in — go straight to onboarding
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        const dest = new URLSearchParams();
-        if (tierParam) dest.set("tier", tierParam);
-        if (applicationId) dest.set("applicationId", applicationId);
-        navigate(`/pricing${dest.toString() ? `?${dest}` : ""}`);
-      }
+      if (session?.user) navigate("/coaching/onboarding");
     });
-  }, [navigate, tierParam, applicationId]);
+  }, [navigate]);
 
   const FUNCTIONS_URL = "https://qbjuomsmnrclsjhdsjcz.supabase.co/functions/v1";
 
