@@ -19,7 +19,6 @@ import { Loader2, CheckCircle, AlertCircle } from "lucide-react";
 import { useTags } from "@/hooks/useTags";
 import { useProductTypes } from "@/hooks/useProductTypes";
 import { CoachTierPayment } from "@/components/coaching/CoachTierPayment";
-import { useIsMobile } from "@/hooks/use-mobile";
 
 const storageKey = (uid: string) => `galoras_coach_onboarding_${uid}`;
 
@@ -72,7 +71,17 @@ export default function CoachOnboarding() {
   const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const isMobile = useIsMobile();
+
+  // Desktop layout at 900px+ (wider than useIsMobile's 768px to account for split-screen)
+  const [isDesktop, setIsDesktop] = useState(() => window.innerWidth >= 900);
+  useEffect(() => {
+    const mql = window.matchMedia("(min-width: 900px)");
+    const handler = (e: MediaQueryListEvent) => setIsDesktop(e.matches);
+    mql.addEventListener("change", handler);
+    return () => mql.removeEventListener("change", handler);
+  }, []);
+  const isMobile = !isDesktop;
+
   const token = (location.state as { token?: string } | null)?.token ?? null;
 
   const [state, setState] = useState<"loading" | "invalid" | "form" | "submitting" | "success">("loading");
