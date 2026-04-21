@@ -16,3 +16,14 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     autoRefreshToken: true,
   }
 });
+
+export async function signOutAndClear(): Promise<void> {
+  await supabase.auth.signOut();
+  // Force-clear all Supabase auth keys from localStorage
+  Object.keys(localStorage)
+    .filter(k => k.startsWith("sb-"))
+    .forEach(k => localStorage.removeItem(k));
+  sessionStorage.clear();
+  // Full reload resets all in-memory auth state
+  window.location.href = "/";
+}

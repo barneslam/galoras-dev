@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, signOutAndClear } from "@/integrations/supabase/client";
 import { LayoutGrid, Users, BookOpen, Package, LogOut, ChevronRight, Gauge, Bot, MessageSquare } from "lucide-react";
 
 const NAV = [
@@ -31,10 +31,7 @@ export function AdminLayout({ children, title }: AdminLayoutProps) {
     });
   }, [navigate]);
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    navigate("/login");
-  };
+  const handleLogout = () => signOutAndClear();
 
   return (
     <div className="min-h-screen bg-zinc-950 flex">

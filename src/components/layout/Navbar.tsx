@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/navigation-menu";
 import { cn } from "@/lib/utils";
 
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, signOutAndClear } from "@/integrations/supabase/client";
 
 const navItems = [
   { name: "Home", href: "/" },
@@ -32,8 +32,8 @@ const navItems = [
       { name: "Why Coaching", href: "/coaching/why", description: "The power of coaching" },
     ],
   },
-  // { name: "For Organizations", href: "/business" }, // hidden — SOW #4 pending sign-off
-  // { name: "Leadership Lab", href: "/labs" }, // hidden — SOW #4 pending sign-off
+  { name: "For Enterprise", href: "/business" },
+  { name: "Leadership Circle", href: "/labs" },
   // { name: "Compass", href: "/compass" }, // hidden — SOW #4 pending sign-off
   { name: "About", href: "/about" },
 ];
@@ -78,10 +78,7 @@ export function Navbar() {
     setIsCoach(roles.includes("coach"));
   };
 
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    navigate("/");
-  };
+  const handleSignOut = () => signOutAndClear();
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 glass border-b border-border/50">
