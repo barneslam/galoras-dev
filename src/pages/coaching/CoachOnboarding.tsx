@@ -18,6 +18,13 @@ import {
 import { Loader2, CheckCircle, AlertCircle } from "lucide-react";
 import { useTags } from "@/hooks/useTags";
 import { useProductTypes } from "@/hooks/useProductTypes";
+import { CoachTierPayment } from "@/components/coaching/CoachTierPayment";
+
+const TIER_OPTIONS = [
+  { key: "pro",    name: "Pro",    price: "$49/month",  desc: "Entry-level visibility. Get listed and start booking." },
+  { key: "elite",  name: "Elite",  price: "$99/month",  desc: "Priority exposure, Leadership Labs, Sport of Business™ Foundations.", badge: "Most Popular" },
+  { key: "master", name: "Master", price: "$197/month", desc: "Featured placement. Enterprise delivery. We back you." },
+] as const;
 
 // ── Tag pill component ────────────────────────────────────────────────────────
 function TagPills({ family, selected, onChange, single = false }: {
@@ -66,6 +73,8 @@ export default function CoachOnboarding() {
 
   const [state, setState] = useState<"loading" | "invalid" | "form" | "submitting" | "success">("loading");
   const [step, setStep] = useState(1);
+  const [activeTier, setActiveTier] = useState<string | null>(null);
+  const TOTAL_STEPS = token ? 5 : 6;
 
   // Step 1
   const [fullName, setFullName] = useState("");
@@ -101,8 +110,23 @@ export default function CoachOnboarding() {
   const { types: productTypes } = useProductTypes();
 
   useEffect(() => {
-    if (!token) { setState("invalid"); return; }
-    validateToken();
+    if (token) { validateToken(); return; }
+    // No token — auth-based flow (new coach signup)
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) { setState("invalid"); return; }
+      supabase.from("profiles")
+        .select("full_name, user_role, linkedin_url")
+        .eq("id", session.user.id)
+        .single()
+        .then(({ data }) => {
+          if (data) {
+            setFullName(data.full_name || "");
+            setCurrentRole(data.user_role || "");
+            setLinkedinUrl(data.linkedin_url || "");
+          }
+          setState("form");
+        });
+    });
   }, [token]);
 
   const validateToken = async () => {
@@ -163,31 +187,70 @@ export default function CoachOnboarding() {
   const handleSubmit = async () => {
     setState("submitting");
     try {
-      const { data, error } = await supabase.functions.invoke("complete-onboarding", {
-        body: {
-          token,
-          fullName: fullName.trim(),
-          bio: bio.trim(),
-          linkedinUrl: linkedinUrl.trim() || null,
-          currentRole: currentRole.trim() || null,
-          bookingUrl: bookingUrl.trim() || null,
-          specialtyTags,
-          audienceTags,
-          styleTags,
-          industryTags,
-          availabilityTag: availabilityTag[0] || null,
-          enterpriseTags,
-          credentialTags,
-          pendingProduct,
-        },
-      });
-      if (error || data?.error) throw new Error(data?.error || "Failed to complete onboarding");
-      setState("success");
-      toast({ title: "Profile completed!", description: "Your coach profile has been saved successfully." });
-    } catch (error) {
-      console.error("Submit error:", error);
+      if (token) {
+        // Legacy token-based flow (came via email link post-payment)
+        const { data, error } = await supabase.functions.invoke("complete-onboarding", {
+          body: {
+            token,
+            fullName: fullName.trim(), bio: bio.trim(),
+            linkedinUrl: linkedinUrl.trim() || null,
+            currentRole: currentRole.trim() || null,
+            bookingUrl: bookingUrl.trim() || null,
+            specialtyTags, audienceTags, styleTags, industryTags,
+            availabilityTag: availabilityTag[0] || null,
+            enterpriseTags, credentialTags, pendingProduct,
+          },
+        });
+        if (error || data?.error) throw new Error(data?.error || "Failed to complete onboarding");
+        setState("success");
+        toast({ title: "Profile completed!", description: "Your coach profile has been saved successfully." });
+      } else {
+        // Auth-based flow — save directly, then advance to tier selection (Step 6)
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) throw new Error("Not authenticated");
+
+        await supabase.from("profiles").update({
+          full_name: fullName.trim() || null,
+          user_role: currentRole.trim() || null,
+          linkedin_url: linkedinUrl.trim() || null,
+        }).eq("id", session.user.id);
+
+        // Upsert coach application with tag + product data
+        const { data: existing } = await supabase
+          .from("coach_applications").select("id").eq("user_id", session.user.id).maybeSingle();
+        const appData = {
+          user_id: session.user.id,
+          email: session.user.email!,
+          full_name: fullName.trim() || null,
+          bio: bio.trim() || null,
+          current_role: currentRole.trim() || null,
+          linkedin_url: linkedinUrl.trim() || null,
+          booking_url: bookingUrl.trim() || null,
+          specialty_tags: specialtyTags,
+          audience_tags: audienceTags,
+          style_tags: styleTags,
+          industry_tags: industryTags,
+          availability_tag: availabilityTag[0] || null,
+          enterprise_tags: enterpriseTags,
+          credential_tags: credentialTags,
+          pending_product: pendingProduct,
+          onboarding_status: "pending",
+          status: "pending",
+        };
+        if (existing) {
+          await supabase.from("coach_applications").update(appData).eq("id", existing.id);
+        } else {
+          await supabase.from("coach_applications").insert(appData);
+        }
+
+        toast({ title: "Profile saved!", description: "Now choose your coach tier." });
+        setState("form");
+        setStep(6);
+      }
+    } catch (err: any) {
+      console.error("Submit error:", err);
       setState("form");
-      toast({ title: "Submission failed", description: "Please try again or contact support.", variant: "destructive" });
+      toast({ title: "Submission failed", description: err.message || "Please try again.", variant: "destructive" });
     }
   };
 
@@ -259,13 +322,9 @@ export default function CoachOnboarding() {
   const pp = pendingProduct;
   const setPP = (patch: Partial<PendingProduct>) => setPendingProduct(prev => ({ ...prev, ...patch }));
 
-  const stepTitles = [
-    "Coach Identity",
-    "Positioning",
-    "Commercial Readiness",
-    "Your First Product",
-    "Review & Submit",
-  ];
+  const stepTitles = token
+    ? ["Coach Identity", "Positioning", "Commercial Readiness", "Your First Product", "Review & Submit"]
+    : ["Coach Identity", "Positioning", "Commercial Readiness", "Your First Product", "Review & Save", "Choose Your Tier"];
 
   return (
     <Layout>
@@ -274,10 +333,10 @@ export default function CoachOnboarding() {
           {/* Header & progress */}
           <div className="mb-8 text-center">
             <h1 className="text-3xl font-bold">Complete Your Coach Profile</h1>
-            <p className="text-muted-foreground mt-2">Step {step} of 5 — {stepTitles[step - 1]}</p>
+            <p className="text-muted-foreground mt-2">Step {step} of {TOTAL_STEPS} — {stepTitles[step - 1]}</p>
           </div>
           <div className="flex gap-1 mb-8">
-            {[1, 2, 3, 4, 5].map(n => (
+            {Array.from({ length: TOTAL_STEPS }, (_, i) => i + 1).map(n => (
               <div key={n} className={`h-1.5 flex-1 rounded-full transition-colors ${n <= step ? "bg-primary" : "bg-muted"}`} />
             ))}
           </div>
@@ -465,9 +524,48 @@ export default function CoachOnboarding() {
                 </div>
               )}
 
+              {/* ── Step 6 — Tier Selection ── */}
+              {step === 6 && (
+                <>
+                  {activeTier && (
+                    <CoachTierPayment
+                      tier={activeTier}
+                      onClose={() => setActiveTier(null)}
+                      onSuccess={() => setState("success")}
+                    />
+                  )}
+                  <div className="space-y-3">
+                    {TIER_OPTIONS.map(tier => (
+                      <div key={tier.key}
+                        className={`relative rounded-xl border p-4 cursor-pointer transition-all ${
+                          activeTier === tier.key ? "border-primary bg-primary/5" : "border-zinc-200 dark:border-zinc-700 hover:border-primary/50"
+                        }`}
+                        onClick={() => setActiveTier(tier.key)}
+                      >
+                        {tier.badge && (
+                          <span className="absolute top-3 right-3 text-xs font-bold bg-primary text-primary-foreground px-2 py-0.5 rounded-full">
+                            {tier.badge}
+                          </span>
+                        )}
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="font-semibold text-sm">{tier.name}</p>
+                            <p className="text-xs text-muted-foreground mt-0.5">{tier.desc}</p>
+                          </div>
+                          <p className="font-bold text-sm ml-4 shrink-0">{tier.price}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-xs text-muted-foreground text-center pt-1">
+                    Your card is saved now — you won't be charged until Galoras approves your application.
+                  </p>
+                </>
+              )}
+
               {/* ── Navigation ── */}
               <div className="flex gap-3 pt-2">
-                {step > 1 && (
+                {step > 1 && step < 6 && (
                   <Button type="button" variant="outline" onClick={() => setStep(s => s - 1)} className="flex-1">
                     Back
                   </Button>
@@ -476,11 +574,13 @@ export default function CoachOnboarding() {
                   <Button type="button" onClick={handleNext} className="flex-1">
                     Next
                   </Button>
-                ) : (
+                ) : step === 5 ? (
                   <Button type="button" onClick={handleSubmit} className="flex-1" disabled={state === "submitting"}>
-                    {state === "submitting" ? (<><Loader2 className="h-4 w-4 mr-2 animate-spin" />Saving...</>) : "Submit"}
+                    {state === "submitting"
+                      ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Saving...</>
+                      : token ? "Submit" : "Save & Choose Tier →"}
                   </Button>
-                )}
+                ) : null}
               </div>
 
             </CardContent>

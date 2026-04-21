@@ -145,10 +145,7 @@ export default function CoachSignup() {
         title: "Account created!",
         description: "Now choose your coach tier and secure your spot.",
       });
-      const dest = new URLSearchParams();
-      if (tierParam) dest.set("tier", tierParam);
-      if (applicationId) dest.set("applicationId", applicationId);
-      navigate(`/pricing${dest.toString() ? `?${dest}` : ""}`);
+      navigate("/coaching/onboarding");
     } catch (err: any) {
       toast({ title: "Error", description: err.message, variant: "destructive" });
     } finally {

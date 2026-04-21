@@ -187,15 +187,21 @@ function SuccessState({ registrationLink }: { registrationLink: string }) {
 export function CoachTierPayment({
   tier,
   onClose,
+  onSuccess,
 }: {
   tier: string;
   onClose: () => void;
+  onSuccess?: () => void;
 }) {
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [setupIntentId, setSetupIntentId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [registrationLink, setRegistrationLink] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (registrationLink) onSuccess?.();
+  }, [registrationLink]);
 
   // Initialise SetupIntent on mount
   const initSetup = async () => {
