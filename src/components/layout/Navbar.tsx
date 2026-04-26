@@ -32,9 +32,6 @@ const navItems = [
       { name: "Why Coaching", href: "/coaching/why", description: "The power of coaching" },
     ],
   },
-  { name: "For Enterprise", href: "/business" },
-  { name: "Leadership Circle", href: "/labs" },
-  // { name: "Compass", href: "/compass" }, // hidden — SOW #4 pending sign-off
   { name: "About", href: "/about" },
 ];
 
@@ -86,7 +83,7 @@ export function Navbar() {
         <div className="flex items-center justify-between h-16 md:h-20">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2">
-            <img src="/galoras-logo.jpg" alt="Galoras" style={{ height: "62px", width: "auto" }} />
+            <img src="/galoras-logo.jpg" alt="Galoras" style={{ height: "40px", width: "auto" }} />
           </Link>
 
           {/* Desktop Navigation */}

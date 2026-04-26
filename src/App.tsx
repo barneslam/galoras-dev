@@ -20,12 +20,7 @@ import CoachOnboarding from "./pages/coaching/CoachOnboarding";
 import OnboardRedirect from "./pages/coaching/OnboardRedirect";
 import CoachesAdmin from "./pages/admin/Coaches";
 
-// Business
-import { Business, SportOfBusiness, LeadershipCircles, Workshops, Diagnostics } from "./pages/business";
-
 // Core pages
-import Compass from "./pages/Compass";
-import Labs from "./pages/Labs";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
 import Apply from "./pages/Apply";
@@ -46,7 +41,6 @@ import CoachEditorDetail from "./pages/admin/CoachEditorDetail";
 import Bookings from "@/pages/admin/Bookings";
 import ProductManager from "@/pages/admin/ProductManager";
 import Portal from "./pages/admin/Portal";
-import AgentEvaluation from "./pages/admin/AgentEvaluation";
 import Leads from "./pages/admin/Leads";
 import CompleteRegistration from "./pages/CompleteRegistration";
 
@@ -128,16 +122,7 @@ function AppRoutes() {
           <Route path="/coach/onboarding" element={<CoachOnboardingRedirect />} />
           <Route path="/onboard/:shortId" element={<OnboardRedirect />} />
 
-          {/* B2B Routes */}
-          <Route path="/business" element={<Business />} />
-          <Route path="/business/sport-of-business" element={<SportOfBusiness />} />
-          <Route path="/business/leadership-circles" element={<LeadershipCircles />} />
-          <Route path="/business/workshops" element={<Workshops />} />
-          <Route path="/business/diagnostics" element={<Diagnostics />} />
-
           {/* Core Routes */}
-          <Route path="/compass" element={<Compass />} />
-          <Route path="/labs" element={<Labs />} />
           <Route path="/apply" element={<Apply />} />
           <Route path="/about" element={<About />} />
           <Route path="/contact" element={<Contact />} />
@@ -272,17 +257,6 @@ function AppRoutes() {
               </PaymentGate>
             }
           />
-          <Route
-            path="/admin/agent-evaluation"
-            element={
-              <PaymentGate>
-                <ProtectedRoute requireAdmin>
-                  <AgentEvaluation />
-                </ProtectedRoute>
-              </PaymentGate>
-            }
-          />
-
           {/* Legal Routes */}
           <Route path="/terms" element={<Terms />} />
           <Route path="/privacy" element={<Privacy />} />
