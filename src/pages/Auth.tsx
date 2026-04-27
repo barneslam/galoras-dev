@@ -70,17 +70,27 @@ export default function Auth() {
     });
   }, [navigate]);
 
+  // Test accounts that bypass OTP — password-only login
+  const OTP_BYPASS_EMAILS = ["test-admin@galoras.com", "test-coach@galoras.com", "test-customer@galoras.com"];
+
   // ── LOGIN STEP 1 — enter email + password, send custom OTP via Resend ──
   const handleLoginCredentials = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     try {
-      // Validate password first (don't complete sign-in yet)
-      const { error: pwError } = await supabase.auth.signInWithPassword({
+      const { data, error: pwError } = await supabase.auth.signInWithPassword({
         email: loginEmail,
         password: loginPassword,
       });
       if (pwError) throw pwError;
+
+      // Test accounts: skip OTP, session is already active
+      if (OTP_BYPASS_EMAILS.includes(loginEmail.toLowerCase())) {
+        const name = data.user?.user_metadata?.full_name || loginEmail.split("@")[0];
+        toast({ title: `Welcome back, ${name}!` });
+        navigate(redirectParam || "/");
+        return;
+      }
 
       // Password valid — sign out (we'll sign back in after OTP)
       await supabase.auth.signOut();
