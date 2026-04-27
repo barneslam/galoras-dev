@@ -66,7 +66,7 @@ export function DirectoryCoachCard({
 
   return (
     <div
-      className="relative h-[420px]"
+      className="relative h-[460px]"
       style={{ perspective: "1200px" }}
     >
       <div
@@ -114,8 +114,11 @@ export function DirectoryCoachCard({
 
           {/* Info */}
           <div className="p-4 flex flex-col flex-1">
-            <div className="mb-0.5">
-              <img src="/galoras-logo.jpg" alt="Galoras" className="h-5 w-auto" />
+            <div className="flex items-center justify-between mb-1">
+              <p className="text-sm font-semibold text-foreground leading-tight">
+                {coach.display_name}
+              </p>
+              <img src="/galoras-logo.jpg" alt="Galoras" className="h-4 w-auto opacity-70 shrink-0 ml-2" />
             </div>
 
             {coach.headline && (
