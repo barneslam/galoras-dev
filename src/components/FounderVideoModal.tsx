@@ -4,8 +4,8 @@ import { Play, X, Maximize2, Minimize2 } from "lucide-react";
 
 const STORAGE_KEY = "galoras_founder_video_seen";
 
-// TODO: Replace this placeholder with your actual founder video URL
-const FOUNDER_VIDEO_URL = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
+// Set this to the actual founder video URL when ready
+const FOUNDER_VIDEO_URL = "";
 
 export function FounderVideoModal() {
   const [isOpen, setIsOpen] = useState(false);
@@ -85,7 +85,7 @@ export function FounderVideoModal() {
     }
   };
 
-  if (!isOpen && !hasSeenBefore) return null;
+  if (!FOUNDER_VIDEO_URL || (!isOpen && !hasSeenBefore)) return null;
 
   return (
     <>

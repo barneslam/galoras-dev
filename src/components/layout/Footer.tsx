@@ -5,9 +5,6 @@ const galorasLogo = "/galoras-logo.jpg";
 const footerLinks = {
   platform: [
     { name: "Coaching Exchange", href: "/coaching" },
-    { name: "For Organizations", href: "/business" },
-    // { name: "Compass AI", href: "/compass" }, // hidden — route preserved at /compass
-    { name: "Performance Labs", href: "/labs" },
   ],
   company: [
     { name: "About Us", href: "/about" },
@@ -16,9 +13,6 @@ const footerLinks = {
     { name: "Contact", href: "/contact" },
   ],
   resources: [
-    { name: "Articles", href: "/labs/articles" },
-    { name: "Podcasts", href: "/labs/podcasts" },
-    { name: "Events", href: "/labs/events" },
     { name: "FAQ", href: "/faq" },
   ],
   legal: [

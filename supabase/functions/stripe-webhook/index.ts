@@ -84,17 +84,20 @@ Deno.serve(async (req) => {
 
         // Send booking notification emails
         if (userEmail && coach) {
+          const bookingDate = new Date().toLocaleDateString("en-US", {
+            weekday: "long", year: "numeric", month: "long", day: "numeric",
+          });
           await supabase.functions.invoke("send-booking-notification", {
             body: {
-              type: "booking_confirmed",
+              type: "new_booking",
               coachId,
               coachName: coach.display_name ?? "Your Coach",
               coachEmail,
               clientEmail: userEmail,
               clientName: userName || userEmail,
               productTitle,
-              scheduledDate: "TBD",
-              scheduledTime: "TBD",
+              scheduledDate: bookingDate,
+              scheduledTime: "Your coach will contact you to arrange your session",
               duration: 60,
             },
           });

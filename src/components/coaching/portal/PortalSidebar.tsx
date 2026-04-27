@@ -4,7 +4,6 @@ import {
   Eye,
   Handshake,
   Package,
-  FlaskConical,
   MessageSquare,
   Settings,
   MoreHorizontal,
@@ -23,7 +22,6 @@ const NAV_ITEMS: NavItem[] = [
   { id: 'visibility', label: 'Visibility & Signals', icon: Eye },
   { id: 'engagement', label: 'Engagement', icon: Handshake },
   { id: 'products', label: 'Products', icon: Package },
-  { id: 'labs', label: 'Leadership Labs', icon: FlaskConical },
   { id: 'messages', label: 'Messages', icon: MessageSquare },
   { id: 'settings', label: 'Settings', icon: Settings },
 ];

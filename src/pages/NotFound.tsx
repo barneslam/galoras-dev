@@ -63,9 +63,7 @@ const NotFound = () => {
             <div className="flex flex-wrap justify-center gap-4 text-sm">
               <Link to="/about" className="text-primary hover:underline">About Us</Link>
               <span className="text-border">•</span>
-              <Link to="/business" className="text-primary hover:underline">Business Solutions</Link>
-              <span className="text-border">•</span>
-              <Link to="/compass" className="text-primary hover:underline">Compass</Link>
+              <Link to="/coaching" className="text-primary hover:underline">Coaching Exchange</Link>
               <span className="text-border">•</span>
               <Link to="/contact" className="text-primary hover:underline">Contact</Link>
             </div>

@@ -67,6 +67,24 @@ export default function CoachSignup() {
     e.preventDefault();
     setIsLoading(true);
     try {
+      // Block duplicate accounts before spending an OTP send
+      const { data: existing } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("email", email.toLowerCase().trim())
+        .maybeSingle();
+
+      if (existing) {
+        toast({
+          title: "Account already exists",
+          description: "This email is already registered. Please log in to continue your onboarding.",
+          variant: "destructive",
+        });
+        navigate("/login?redirect=/coaching/onboarding");
+        setIsLoading(false);
+        return;
+      }
+
       await callEdgeFn("send-signup-otp", { email });
       toast({
         title: "Verification code sent",

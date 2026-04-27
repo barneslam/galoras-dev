@@ -23,10 +23,10 @@ import { CoachTierPayment } from "@/components/coaching/CoachTierPayment";
 const storageKey = (uid: string) => `galoras_coach_onboarding_${uid}`;
 
 const TIER_OPTIONS = [
-  { key: "pro",    name: "Pro",    price: "$49/month",  desc: "Entry-level visibility. Get listed and start booking." },
-  { key: "elite",  name: "Elite",  price: "$99/month",  desc: "Priority exposure, Leadership Labs, Sport of Business™ Foundations.", badge: "Most Popular" },
-  { key: "master", name: "Master", price: "$197/month", desc: "Featured placement. Enterprise delivery. We back you." },
-] as const;
+  { key: "pro" as const,    name: "Pro",    price: "$49/month",  desc: "Entry-level visibility. Get listed and start booking.",                                         comingSoon: false },
+  { key: "elite" as const,  name: "Elite",  price: "$99/month",  desc: "Priority exposure, enhanced profile visibility, and exclusive platform access.", badge: "Most Popular", comingSoon: false },
+  { key: "master" as const, name: "Master", price: "$197/month", desc: "Featured placement. Enterprise delivery. We back you.",                                        comingSoon: false },
+];
 
 // ── Tag pill component ────────────────────────────────────────────────────────
 function TagPills({ family, selected, onChange, single = false }: {
@@ -712,27 +712,35 @@ export default function CoachOnboarding() {
                       <div className={`grid ${isMobile ? "grid-cols-1" : "grid-cols-3"} gap-4`}>
                         {TIER_OPTIONS.map(tier => (
                           <div key={tier.key}
-                            className={`relative rounded-2xl border p-5 cursor-pointer transition-all ${
-                              activeTier === tier.key
-                                ? "border-primary bg-primary/10 shadow-lg shadow-primary/10"
-                                : "border-zinc-700 bg-zinc-800/50 hover:border-primary/50 hover:bg-zinc-800"
+                            className={`relative rounded-2xl border p-5 transition-all ${
+                              tier.comingSoon
+                                ? "border-zinc-700/60 bg-zinc-900/40 cursor-not-allowed"
+                                : activeTier === tier.key
+                                ? "border-primary bg-primary/10 shadow-lg shadow-primary/10 cursor-pointer"
+                                : "border-zinc-700 bg-zinc-800/50 hover:border-primary/50 hover:bg-zinc-800 cursor-pointer"
                             }`}
-                            onClick={() => setActiveTier(tier.key)}
+                            onClick={() => !tier.comingSoon && setActiveTier(tier.key)}
                           >
                             {tier.badge && (
-                              <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 text-xs font-bold bg-primary text-primary-foreground px-3 py-0.5 rounded-full whitespace-nowrap">
+                              <span className={`absolute -top-2.5 left-1/2 -translate-x-1/2 text-xs font-bold px-3 py-0.5 rounded-full whitespace-nowrap ${
+                                tier.comingSoon
+                                  ? "bg-zinc-700 text-zinc-400"
+                                  : "bg-primary text-primary-foreground"
+                              }`}>
                                 {tier.badge}
                               </span>
                             )}
-                            <p className="font-bold text-white text-lg mt-1">{tier.name}</p>
-                            <p className="text-primary font-semibold text-base mt-0.5">{tier.price}</p>
-                            <p className="text-zinc-400 text-sm mt-2 leading-relaxed">{tier.desc}</p>
+                            <p className={`font-bold text-lg mt-1 ${tier.comingSoon ? "text-zinc-400" : "text-white"}`}>{tier.name}</p>
+                            <p className={`font-semibold text-base mt-0.5 ${tier.comingSoon ? "text-zinc-500" : "text-primary"}`}>{tier.price}</p>
+                            <p className={`text-sm mt-2 leading-relaxed ${tier.comingSoon ? "text-zinc-600" : "text-zinc-400"}`}>{tier.desc}</p>
                             <div className={`mt-4 w-full py-2 rounded-lg text-center text-sm font-semibold transition-colors ${
-                              activeTier === tier.key
+                              tier.comingSoon
+                                ? "bg-zinc-800/60 text-zinc-600 border border-zinc-700/50"
+                                : activeTier === tier.key
                                 ? "bg-primary text-primary-foreground"
                                 : "bg-zinc-700 text-zinc-300"
                             }`}>
-                              {activeTier === tier.key ? "Selected" : "Select"}
+                              {tier.comingSoon ? "Coming Soon" : activeTier === tier.key ? "Selected" : "Select"}
                             </div>
                           </div>
                         ))}

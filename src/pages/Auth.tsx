@@ -146,6 +146,25 @@ export default function Auth() {
     e.preventDefault();
     setIsLoading(true);
     try {
+      // Check for existing account before spending an OTP send
+      const { data: existing } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("email", signupEmail.toLowerCase().trim())
+        .maybeSingle();
+
+      if (existing) {
+        toast({
+          title: "Account already exists",
+          description: "This email is already registered. Please log in instead.",
+          variant: "destructive",
+        });
+        setTab("login");
+        setLoginEmail(signupEmail);
+        setIsLoading(false);
+        return;
+      }
+
       await callFunction("send-signup-otp", { email: signupEmail });
       toast({ title: "Code sent!", description: `Check ${signupEmail} for your 6-digit code.` });
       setSignupStep("otp");

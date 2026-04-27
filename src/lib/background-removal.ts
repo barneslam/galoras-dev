@@ -60,7 +60,6 @@ function normalizeCoachCutout(sourceCanvas: HTMLCanvasElement): HTMLCanvasElemen
 
   const bounds = findSubjectBounds(sourceCtx, sourceCanvas.width, sourceCanvas.height);
   if (!bounds) {
-    console.log('Could not find subject bounds, returning original');
     return sourceCanvas;
   }
 
@@ -127,8 +126,6 @@ function normalizeCoachCutout(sourceCanvas: HTMLCanvasElement): HTMLCanvasElemen
     drawX, drawY, drawWidth, drawHeight
   );
 
-  console.log(`Normalized cutout: cropped ${cropWidth}x${cropHeight} -> ${NORMALIZED_WIDTH}x${NORMALIZED_HEIGHT}`);
-
   return outputCanvas;
 }
 
@@ -166,8 +163,6 @@ export const initializeModel = async (
 ): Promise<void> => {
   if (segmenter) return;
 
-  console.log('Initializing background removal model...');
-  
   segmenter = await pipeline(
     'image-segmentation',
     'Xenova/segformer-b0-finetuned-ade-512-512',
@@ -182,7 +177,6 @@ export const initializeModel = async (
     }
   );
   
-  console.log('Model initialized successfully');
 };
 
 interface SegmentationResult {
@@ -196,8 +190,6 @@ export const removeBackground = async (
   imageElement: HTMLImageElement
 ): Promise<Blob> => {
   try {
-    console.log('Starting background removal process...');
-
     // Initialize model if not already done
     if (!segmenter) {
       await initializeModel();
@@ -211,19 +203,10 @@ export const removeBackground = async (
 
     // Resize image if needed and draw it to canvas
     const wasResized = resizeImageIfNeeded(canvas, ctx, imageElement);
-    console.log(
-      `Image ${wasResized ? 'was' : 'was not'} resized. Final dimensions: ${canvas.width}x${canvas.height}`
-    );
+    void wasResized;
 
-    // Get image data as base64
     const imageData = canvas.toDataURL('image/jpeg', 0.8);
-    console.log('Image converted to base64');
-
-    // Process the image with the segmentation model
-    console.log('Processing with segmentation model...');
     const result: SegmentationResult[] = await segmenter(imageData);
-
-    console.log('Segmentation result:', result);
 
     if (!result || !Array.isArray(result) || result.length === 0) {
       throw new Error('Invalid segmentation result');
@@ -278,18 +261,13 @@ export const removeBackground = async (
     }
 
     outputCtx.putImageData(outputImageData, 0, 0);
-    console.log('Mask applied successfully');
 
-    // Normalize the cutout (crop to subject + consistent padding)
     const normalizedCanvas = normalizeCoachCutout(outputCanvas);
-    console.log('Cutout normalized to standard framing');
 
-    // Convert canvas to blob
     return new Promise((resolve, reject) => {
       normalizedCanvas.toBlob(
         (blob) => {
           if (blob) {
-            console.log('Successfully created final blob');
             resolve(blob);
           } else {
             reject(new Error('Failed to create blob'));

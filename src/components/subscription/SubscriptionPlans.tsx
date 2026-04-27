@@ -6,8 +6,9 @@ import { CoachTierPayment } from "@/components/coaching/CoachTierPayment";
 import { supabase } from "@/integrations/supabase/client";
 
 type Plan = "pro" | "elite" | "master";
+type PlanDef = { key: Plan; name: string; tagline: string; price: string; period: string; badge?: string; comingSoon?: boolean; description: string; features: string[]; highlighted?: boolean };
 
-const PLANS = [
+const PLANS: PlanDef[] = [
   {
     key: "pro" as Plan,
     name: "Pro",
@@ -31,18 +32,19 @@ const PLANS = [
     tagline: "Train like a pro. Show up like one.",
     price: "$99",
     period: "/month",
-    badge: "Most Popular",
+    badge: "Coming Soon",
+    comingSoon: true,
     description: "For active coaches seeking structure, credibility, and a validated framework to deliver real results.",
     features: [
       "Everything in Pro",
       "Enhanced profile & priority exposure",
-      "Leadership Labs access",
+      "Exclusive content & resources (coming soon)",
       "Exclusive content & resources",
       "Webinar & teaching roles",
       "Priority community access",
       "Sport of Business™ Foundations",
     ],
-    highlighted: true,
+    highlighted: false,
   },
   {
     key: "master" as Plan,
@@ -50,6 +52,8 @@ const PLANS = [
     tagline: "We don't list you. We back you.",
     price: "$197",
     period: "/month",
+    badge: "Coming Soon",
+    comingSoon: true,
     description: "For established coaches and ex-executives ready for enterprise delivery and featured placement.",
     features: [
       "Everything in Elite",
@@ -69,7 +73,7 @@ const COMPARISON_ROWS = [
   { label: "Platform Tools",          pro: "Zoom + AI + action boards",  elite: "Zoom + AI + action boards",   master: "Zoom + AI + action boards" },
   { label: "Community",               pro: "Standard access",            elite: "Priority + exclusive",        master: "Direct leadership access" },
   { label: "Training",                pro: null,                         elite: "Sport of Business™ Foundations", master: "Advanced certification" },
-  { label: "Teaching Roles",          pro: null,                         elite: "Webinars & Leadership Labs",  master: "Thought leadership & publishing" },
+  { label: "Teaching Roles",          pro: null,                         elite: "Webinars & workshops",        master: "Thought leadership & publishing" },
   { label: "Enterprise Delivery",     pro: null,                         elite: null,                          master: "Deliver Sport of Business™" },
 ];
 
@@ -112,19 +116,25 @@ export function SubscriptionPlans() {
         {/* Tier cards */}
         <div className="grid gap-6 md:grid-cols-3 items-start">
           {PLANS.map((plan) => {
-            const isSelected = selectedPlan === plan.key;
+            const isSelected = selectedPlan === plan.key && !plan.comingSoon;
             return (
             <div
               key={plan.key}
-              onClick={() => setSelectedPlan(plan.key)}
-              className={`relative rounded-2xl border flex flex-col overflow-hidden cursor-pointer transition-all duration-200 ${
-                isSelected
-                  ? "border-primary shadow-lg shadow-primary/20 ring-1 ring-primary/40"
-                  : "border-zinc-700 bg-zinc-900 hover:border-zinc-500"
+              onClick={() => !plan.comingSoon && setSelectedPlan(plan.key)}
+              className={`relative rounded-2xl border flex flex-col overflow-hidden transition-all duration-200 ${
+                plan.comingSoon
+                  ? "border-zinc-700 bg-zinc-900/50 opacity-70 cursor-not-allowed"
+                  : isSelected
+                  ? "border-primary shadow-lg shadow-primary/20 ring-1 ring-primary/40 cursor-pointer"
+                  : "border-zinc-700 bg-zinc-900 hover:border-zinc-500 cursor-pointer"
               }`}
             >
               {plan.badge && (
-                <div className="bg-primary text-primary-foreground text-xs font-bold text-center py-1.5 tracking-wider uppercase">
+                <div className={`text-xs font-bold text-center py-1.5 tracking-wider uppercase ${
+                  plan.comingSoon
+                    ? "bg-zinc-700 text-zinc-400"
+                    : "bg-primary text-primary-foreground"
+                }`}>
                   {plan.badge}
                 </div>
               )}
@@ -151,14 +161,17 @@ export function SubscriptionPlans() {
 
                 <Button
                   className={`w-full font-semibold ${
-                    isSelected
+                    plan.comingSoon
+                      ? "bg-zinc-800 text-zinc-500 cursor-not-allowed"
+                      : isSelected
                       ? "bg-primary text-primary-foreground hover:bg-primary/90"
                       : "bg-zinc-700 text-white hover:bg-zinc-600"
                   }`}
                   variant="default"
-                  onClick={(e) => { e.stopPropagation(); handleJoin(plan.key); }}
+                  disabled={plan.comingSoon}
+                  onClick={(e) => { e.stopPropagation(); if (!plan.comingSoon) handleJoin(plan.key); }}
                 >
-                  Join Galoras →
+                  {plan.comingSoon ? "Coming Soon" : "Join Galoras →"}
                 </Button>
               </div>
             </div>

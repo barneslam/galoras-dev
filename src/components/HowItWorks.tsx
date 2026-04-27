@@ -24,7 +24,7 @@ const pillars = [
     body: "A clear pathway from individual coaching to team and enterprise engagement, designed for real conditions. Not classroom theory.",
     accent: false,
     bg: "https://images.unsplash.com/photo-1551836022-deb4988cc6c0?q=80&w=800&auto=format&fit=crop",
-    href: "/labs",
+    href: "/coaching",
   },
   {
     number: 4,
@@ -32,7 +32,7 @@ const pillars = [
     body: "Supporting scale, quality and insight without replacing human judgment. Intelligence that surfaces the right coach at the right moment.",
     accent: false,
     bg: "https://images.unsplash.com/photo-1504868584819-f8e8b4b6d7e3?q=80&w=800&auto=format&fit=crop",
-    href: "/compass",
+    href: "/coaching",
   },
 ];
 

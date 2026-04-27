@@ -82,6 +82,20 @@ export default function CoachDashboard() {
     enabled: !!coachProfile,
   });
 
+  const { data: stripeBookings } = useQuery({
+    queryKey: ['coach-stripe-bookings', coachProfile?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('bookings')
+        .select('id, product_id, client_id, status, amount_cents, currency, created_at')
+        .eq('coach_id', coachProfile!.id)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!coachProfile,
+  });
+
   const { data: availability } = useQuery({
     queryKey: ['my-availability', coachProfile?.id],
     queryFn: async () => {
@@ -176,7 +190,7 @@ export default function CoachDashboard() {
     if (tab === 'visibility') { setActiveTab('revenue'); return; }
     if (tab === 'engagement') { setActiveTab('pipeline'); return; }
     if (tab === 'settings') { setActiveTab('settings'); return; }
-    if (tab === 'labs' || tab === 'messages') {
+    if (tab === 'messages') {
       toast({ title: 'Coming Soon', description: `${tab.charAt(0).toUpperCase() + tab.slice(1)} is under development.` });
       return;
     }
@@ -243,6 +257,7 @@ export default function CoachDashboard() {
               coachProfile={coachProfile}
               pendingCount={pendingBookings.length}
               confirmedCount={confirmedBookings.length}
+              stripeBookingsCount={stripeBookings?.length ?? 0}
             />
           )}
 

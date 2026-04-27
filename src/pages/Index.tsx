@@ -33,7 +33,7 @@ const HEADLINES: { parts: { text: string; highlight?: boolean }[]; href: string 
       { text: "Coaching", highlight: true },
       { text: " creates it." },
     ],
-    href: "/business/sport-of-business",
+    href: "/coaching",
   },
   {
     parts: [
@@ -173,9 +173,9 @@ export default function Index() {
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link to="/business/sport-of-business">
+              <Link to="/coaching">
                 <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 glow-primary text-lg px-8 h-14">
-                  Explore Sport of Business
+                  Find Your Coach
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>

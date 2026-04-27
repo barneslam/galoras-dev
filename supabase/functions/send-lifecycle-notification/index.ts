@@ -1,7 +1,7 @@
 import { Resend } from "https://esm.sh/resend@2.0.0";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
-const SENDER_EMAIL = Deno.env.get("SENDER_EMAIL") ?? "noreply@uat-galoras.site";
+const SENDER_EMAIL = Deno.env.get("EMAIL_FROM") ?? "Galoras <noreply@galoras.com>";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",

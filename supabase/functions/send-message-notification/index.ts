@@ -102,7 +102,7 @@ const handler = async (req: Request): Promise<Response> => {
       </div>
       <p>Reply directly to <strong>${safeSenderEmail}</strong> to respond.</p>
       <div style="text-align: center; margin-top: 24px;">
-        <a href="https://uat-galoras.site/coach-dashboard" class="cta-button">View Dashboard</a>
+        <a href="https://galoras.com/coach-dashboard" class="cta-button">View Dashboard</a>
       </div>
     </div>
     <div class="footer">

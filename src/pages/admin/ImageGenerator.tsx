@@ -44,16 +44,6 @@ const IMAGE_CONFIGS = [
     prompt: "Connected nodes and network visualization forming organic patterns, representing communication, connection, and collaboration"
   },
   {
-    pageName: "compass",
-    title: "Compass Page Hero",
-    prompt: "Futuristic digital compass with orbital rings and glowing data streams, representing AI-powered guidance and intelligent navigation"
-  },
-  {
-    pageName: "labs",
-    title: "Labs Page Hero",
-    prompt: "Scientific innovation abstract with swirling blue energy patterns and crystalline structures, representing cutting-edge research and experimentation"
-  },
-  {
     pageName: "not-found",
     title: "404 Page Background",
     prompt: "Ethereal compass lost in misty void, soft blue glow emanating from the center, mysterious and contemplative atmosphere"

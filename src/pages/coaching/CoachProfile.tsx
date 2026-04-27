@@ -67,12 +67,10 @@ export default function CoachProfile() {
   const [products, setProducts] = useState<CoachProduct[]>([]);
   const [galarasDbProducts, setGalarasDbProducts] = useState<CoachProduct[]>([]);
 
-  // Stripe checkout for platform products and coach products with booking_mode=stripe
   const [checkoutProduct, setCheckoutProduct] = useState<CoachProduct | null>(null);
   const [checkoutSecret, setCheckoutSecret] = useState("");
   const [checkoutLoading, setCheckoutLoading] = useState(false);
 
-  // Request & Enterprise modals
   const [requestProduct, setRequestProduct] = useState<CoachProduct | null>(null);
   const [enterpriseProduct, setEnterpriseProduct] = useState<CoachProduct | null>(null);
 
@@ -134,7 +132,6 @@ export default function CoachProfile() {
       .order("sort_order", { ascending: true });
     setProducts((data as CoachProduct[]) || []);
 
-    // Master coaches also inherit Galoras platform programs
     if (tier === "master") {
       const { data: galCoach } = await supabase
         .from("coaches")
@@ -208,12 +205,18 @@ export default function CoachProfile() {
     [coach?.proof_points]
   );
 
+  const lowestPrice = useMemo(() => {
+    const priced = products.filter(p => p.price_amount && p.price_amount > 0);
+    if (!priced.length) return null;
+    return Math.min(...priced.map(p => p.price_amount!));
+  }, [products]);
+
   return (
     <Layout>
-      <section className="relative pt-28 pb-12 overflow-hidden">
+      <section className="relative pt-28 pb-16 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-background to-muted/30" />
         <div className="container-wide relative z-10">
-          <div className="max-w-5xl mx-auto">
+          <div className="max-w-6xl mx-auto">
             <div className="mb-6">
               <Link
                 to="/coaching"
@@ -247,68 +250,275 @@ export default function CoachProfile() {
 
             {!loading && !debugError && coach && (
               <>
-                <div className="rounded-2xl border border-border bg-card p-8 md:p-10 mb-8">
-                  <div className="flex flex-col md:flex-row gap-8">
-                    {/* Avatar */}
-                    {coach.avatar_url && (
-                      <div className="shrink-0">
-                        <img
-                          src={coach.avatar_url}
-                          alt={coach.display_name || "Coach"}
-                          className="w-32 h-32 md:w-40 md:h-40 rounded-2xl object-cover object-top"
-                        />
+                {/* Page header — name + positioning above the two-column split */}
+                <div className="mb-8">
+                  <div className="flex flex-wrap items-center gap-3 mb-4">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-medium">
+                      <Sparkles className="h-3.5 w-3.5" />
+                      Galoras Coaching Exchange
+                    </div>
+                    {coach.tier && (
+                      <div className="inline-flex items-center px-3 py-1 rounded-full border border-amber-500/30 bg-amber-500/10 text-amber-400 text-xs font-medium capitalize">
+                        {coach.tier}
                       </div>
                     )}
-
-                    <div className="flex-1 max-w-3xl">
-                      <div className="flex flex-wrap items-center gap-3 mb-5">
-                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-medium">
-                          <Sparkles className="h-3.5 w-3.5" />
-                          Galoras Coaching Exchange
-                        </div>
-                        {coach.tier && (
-                          <div className="inline-flex items-center px-3 py-1 rounded-full border border-amber-500/30 bg-amber-500/10 text-amber-400 text-xs font-medium capitalize">
-                            {coach.tier}
-                          </div>
-                        )}
-                        {coach.primary_pillar && (
-                          <div className="inline-flex items-center px-3 py-1 rounded-full border border-primary/20 bg-primary/10 text-primary text-xs font-medium">
-                            {coach.primary_pillar}
-                          </div>
-                        )}
-                        {coach.audience && coach.audience.length > 0 && (
-                          <div className="inline-flex items-center px-3 py-1 rounded-full border border-border text-xs text-muted-foreground">
-                            {coach.audience.slice(0, 2).join(", ")}
-                          </div>
-                        )}
+                    {coach.primary_pillar && (
+                      <div className="inline-flex items-center px-3 py-1 rounded-full border border-primary/20 bg-primary/10 text-primary text-xs font-medium">
+                        {coach.primary_pillar}
                       </div>
+                    )}
+                  </div>
+                  <h1 className="text-3xl md:text-4xl font-display font-bold tracking-tight mb-3">
+                    {coach.display_name || "Unnamed Coach"}
+                  </h1>
+                  {coach.headline && (
+                    <p className="text-sm text-primary font-medium mb-4">
+                      {coach.headline}
+                    </p>
+                  )}
+                  <p className="text-base md:text-lg text-muted-foreground max-w-2xl">
+                    {coach.positioning_statement || "Positioning statement not available."}
+                  </p>
+                </div>
 
-                      <h1 className="text-3xl md:text-4xl font-display font-bold tracking-tight mb-3">
+                {/* Two-column layout */}
+                <div className="grid md:grid-cols-[1fr_300px] gap-8 items-start">
+
+                  {/* Left: main content */}
+                  <div className="space-y-6">
+
+                    {/* Methodology */}
+                    <section className="rounded-2xl border border-border bg-card p-8">
+                      <h2 className="text-xl font-semibold mb-4">Methodology</h2>
+                      <p className="text-muted-foreground leading-7 whitespace-pre-wrap">
+                        {coach.methodology || "Methodology not available."}
+                      </p>
+                    </section>
+
+                    {/* Intro Video */}
+                    {coach.video_url && (
+                      <section className="rounded-2xl border border-border bg-card p-8">
+                        <h2 className="text-xl font-semibold mb-4">
+                          Meet {coach.display_name?.split(" ")[0]}
+                        </h2>
+                        <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-black">
+                          <video
+                            src={coach.video_url}
+                            controls
+                            className="absolute inset-0 w-full h-full"
+                            playsInline
+                          />
+                        </div>
+                      </section>
+                    )}
+
+                    {/* Coaching Style */}
+                    {(coach.coaching_style || coach.engagement_format || coach.primary_pillar) && (
+                      <section className="rounded-2xl border border-border bg-card p-8">
+                        <h2 className="text-xl font-semibold mb-4">Coaching Style</h2>
+                        {coach.coaching_style && (
+                          <p className="text-muted-foreground leading-7 whitespace-pre-wrap mb-6">
+                            {coach.coaching_style}
+                          </p>
+                        )}
+                        {(coach.engagement_format || coach.primary_pillar) && (
+                          <div className="flex flex-wrap gap-3">
+                            {coach.primary_pillar && (
+                              <div className="inline-flex items-center px-3 py-1.5 rounded-full border border-primary/20 bg-primary/5 text-sm">
+                                <span className="text-muted-foreground mr-1.5">Pillar:</span>
+                                <span className="font-medium">{coach.primary_pillar}</span>
+                              </div>
+                            )}
+                            {coach.engagement_format && (
+                              <div className="inline-flex items-center px-3 py-1.5 rounded-full border border-border text-sm">
+                                <span className="text-muted-foreground mr-1.5">Format:</span>
+                                <span className="font-medium capitalize">{coach.engagement_format}</span>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </section>
+                    )}
+
+                    {/* Proof Points — testimonial card style */}
+                    <section className="rounded-2xl border border-border bg-card p-8">
+                      <h2 className="text-xl font-semibold mb-6">Results & Proof</h2>
+                      {proofPoints.length > 0 ? (
+                        <div className="space-y-4">
+                          {proofPoints.map((point, index) => (
+                            <div
+                              key={index}
+                              className="rounded-xl border border-border bg-muted/20 p-5 relative"
+                            >
+                              <div className="text-5xl text-primary/20 font-serif leading-none absolute top-2 left-4 select-none">
+                                "
+                              </div>
+                              <p className="text-muted-foreground leading-7 pt-4">{point}</p>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-muted-foreground">No proof points available yet.</p>
+                      )}
+                    </section>
+
+                    {/* Coach's Own Products — shown first */}
+                    {products.length > 0 && (
+                      <section className="rounded-2xl border border-border bg-card p-8">
+                        <div className="flex items-center gap-3 mb-2">
+                          <Package className="h-5 w-5 text-primary" />
+                          <h2 className="text-xl font-semibold">
+                            {coach.display_name ? `${coach.display_name}'s` : "Coach"} Sessions & Engagements
+                          </h2>
+                        </div>
+                        <p className="text-sm text-muted-foreground mb-6">
+                          Custom offerings designed by this coach.
+                        </p>
+                        <div className="grid sm:grid-cols-2 gap-4">
+                          {products.map((product) => (
+                            <ProductCard
+                              key={product.id}
+                              product={product}
+                              coachName={coach.display_name || ""}
+                              bookingUrl={coach.booking_url}
+                              getTypeConfig={getTypeConfig}
+                              onBookNow={
+                                product.booking_mode === "stripe" && product.price_amount
+                                  ? () => handlePlatformCheckout(product)
+                                  : undefined
+                              }
+                              onRequest={() => setRequestProduct(product)}
+                              onEnterprise={() => setEnterpriseProduct(product)}
+                            />
+                          ))}
+                        </div>
+                      </section>
+                    )}
+
+                    {/* Galoras Master Programs (master coaches only) */}
+                    {galarasDbProducts.length > 0 && (
+                      <section className="rounded-2xl border border-amber-500/20 bg-card p-8">
+                        <div className="flex items-center gap-3 mb-2">
+                          <Sparkles className="h-5 w-5 text-amber-400" />
+                          <h2 className="text-xl font-semibold">Galoras Master Programs</h2>
+                        </div>
+                        <p className="text-sm text-muted-foreground mb-6">
+                          Signature Galoras programs delivered by certified Master Coaches.
+                        </p>
+                        <div className="grid sm:grid-cols-2 gap-4">
+                          {galarasDbProducts.map((product) => (
+                            <ProductCard
+                              key={product.id}
+                              product={product}
+                              coachName={coach.display_name || ""}
+                              getTypeConfig={getTypeConfig}
+                              onRequest={() => setRequestProduct(product)}
+                              onEnterprise={() => setEnterpriseProduct(product)}
+                            />
+                          ))}
+                        </div>
+                      </section>
+                    )}
+
+                    {/* Galoras Platform Sessions — master tier only */}
+                    {coach.tier === "master" && (
+                      <section className="rounded-2xl border border-primary/20 bg-card p-8">
+                        <div className="flex items-center gap-3 mb-2">
+                          <Sparkles className="h-5 w-5 text-primary" />
+                          <h2 className="text-xl font-semibold">Galoras Sessions</h2>
+                        </div>
+                        <p className="text-sm text-muted-foreground mb-6">
+                          Standard sessions available through the Galoras Coaching Exchange.
+                        </p>
+                        <div className="grid sm:grid-cols-2 gap-4">
+                          {GALORAS_PLATFORM_PRODUCTS.map((product) => (
+                            <ProductCard
+                              key={product.id}
+                              product={product}
+                              coachName={coach.display_name || ""}
+                              getTypeConfig={getTypeConfig}
+                              onCtaClick={() => handlePlatformCheckout(product)}
+                            />
+                          ))}
+                        </div>
+                        {checkoutLoading && (
+                          <p className="text-sm text-muted-foreground text-center mt-4">
+                            Preparing checkout…
+                          </p>
+                        )}
+                      </section>
+                    )}
+                  </div>
+
+                  {/* Right: sticky sidebar */}
+                  <div className="md:sticky md:top-24 space-y-4">
+                    <div className="rounded-2xl border border-border bg-card p-6">
+                      {coach.avatar_url && (
+                        <div className="mb-5">
+                          <img
+                            src={coach.avatar_url}
+                            alt={coach.display_name || "Coach"}
+                            className="w-full rounded-xl object-cover object-top aspect-square max-h-64"
+                          />
+                        </div>
+                      )}
+
+                      <h2 className="text-base font-semibold mb-1">
                         {coach.display_name || "Unnamed Coach"}
-                      </h1>
-
+                      </h2>
                       {coach.headline && (
-                        <p className="text-sm text-primary font-medium mb-4">
+                        <p className="text-xs text-primary font-medium mb-3 leading-snug">
                           {coach.headline}
                         </p>
                       )}
 
-                      <p className="text-base md:text-lg text-muted-foreground mb-6 max-w-2xl">
-                        {coach.positioning_statement || "Positioning statement not available."}
-                      </p>
+                      <div className="flex flex-wrap gap-2 mb-5">
+                        {coach.tier && (
+                          <div className="inline-flex items-center px-2 py-0.5 rounded-full border border-amber-500/30 bg-amber-500/10 text-amber-400 text-xs font-medium capitalize">
+                            {coach.tier}
+                          </div>
+                        )}
+                        {coach.primary_pillar && (
+                          <div className="inline-flex items-center px-2 py-0.5 rounded-full border border-primary/20 bg-primary/10 text-primary text-xs font-medium">
+                            {coach.primary_pillar}
+                          </div>
+                        )}
+                      </div>
 
-                      <div className="flex flex-wrap gap-3">
+                      {lowestPrice && (
+                        <p className="text-sm text-muted-foreground mb-4">
+                          Starting from{" "}
+                          <span className="text-foreground font-semibold">
+                            ${(lowestPrice / 100).toLocaleString()}
+                          </span>
+                        </p>
+                      )}
+
+                      <div className="space-y-2">
                         <AuthGate isLoggedIn={isLoggedIn} message="Sign in to book a session">
                           {coach.booking_url ? (
-                            <a href={coach.booking_url} target="_blank" rel="noopener noreferrer">
-                              <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 glow-primary">
-                                <Calendar className="mr-2 h-5 w-5" />
-                                Book a Call
+                            <a
+                              href={coach.booking_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="block"
+                            >
+                              <Button
+                                size="lg"
+                                className="w-full bg-primary text-primary-foreground hover:bg-primary/90 glow-primary"
+                                disabled={checkoutLoading}
+                              >
+                                <Calendar className="mr-2 h-4 w-4" />
+                                {checkoutLoading ? "Loading…" : "Book a Call"}
                               </Button>
                             </a>
                           ) : (
-                            <Button size="lg" className="bg-primary text-primary-foreground" disabled>
-                              <Calendar className="mr-2 h-5 w-5" />
+                            <Button
+                              size="lg"
+                              className="w-full bg-primary text-primary-foreground"
+                              disabled
+                            >
+                              <Calendar className="mr-2 h-4 w-4" />
                               Book a Call
                             </Button>
                           )}
@@ -318,192 +528,40 @@ export default function CoachProfile() {
                           <Button
                             size="lg"
                             variant="outline"
+                            className="w-full"
                             onClick={() => setShowContact(true)}
                           >
-                            <MessageCircle className="mr-2 h-5 w-5" />
+                            <MessageCircle className="mr-2 h-4 w-4" />
                             Message
                           </Button>
                         </AuthGate>
                       </div>
                     </div>
-                  </div>
-                </div>
 
-                <div className="grid gap-6">
-
-                  {/* 3. Methodology */}
-                  <section className="rounded-2xl border border-border bg-card p-8">
-                    <h2 className="text-2xl font-semibold mb-4">Methodology</h2>
-                    <p className="text-muted-foreground leading-7 whitespace-pre-wrap">
-                      {coach.methodology || "Methodology not available."}
-                    </p>
-                  </section>
-
-                  {/* 4. Intro Video */}
-                  {coach.video_url && (
-                    <section className="rounded-2xl border border-border bg-card p-8">
-                      <h2 className="text-2xl font-semibold mb-4">Meet {coach.display_name?.split(" ")[0]}</h2>
-                      <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-black">
-                        <video
-                          src={coach.video_url}
-                          controls
-                          className="absolute inset-0 w-full h-full"
-                          playsInline
-                        />
-                      </div>
-                    </section>
-                  )}
-
-                  {/* 5. Coaching Style + Engagement Format + Primary Pillar */}
-                  {(coach.coaching_style || coach.engagement_format || coach.primary_pillar) && (
-                    <section className="rounded-2xl border border-border bg-card p-8">
-                      <h2 className="text-2xl font-semibold mb-4">Coaching Style</h2>
-                      {coach.coaching_style && (
-                        <p className="text-muted-foreground leading-7 whitespace-pre-wrap mb-6">
-                          {coach.coaching_style}
+                    {coach.audience && coach.audience.length > 0 && (
+                      <div className="rounded-2xl border border-border bg-card p-5">
+                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+                          Best suited for
                         </p>
-                      )}
-                      {(coach.engagement_format || coach.primary_pillar) && (
-                        <div className="flex flex-wrap gap-3">
-                          {coach.primary_pillar && (
-                            <div className="inline-flex items-center px-3 py-1.5 rounded-full border border-primary/20 bg-primary/5 text-sm">
-                              <span className="text-muted-foreground mr-1.5">Pillar:</span>
-                              <span className="font-medium">{coach.primary_pillar}</span>
+                        <div className="flex flex-wrap gap-2">
+                          {coach.audience.map((a, i) => (
+                            <div
+                              key={i}
+                              className="text-xs px-2 py-1 rounded-md border border-border bg-muted/30"
+                            >
+                              {a}
                             </div>
-                          )}
-                          {coach.engagement_format && (
-                            <div className="inline-flex items-center px-3 py-1.5 rounded-full border border-border text-sm">
-                              <span className="text-muted-foreground mr-1.5">Format:</span>
-                              <span className="font-medium capitalize">{coach.engagement_format}</span>
-                            </div>
-                          )}
+                          ))}
                         </div>
-                      )}
-                    </section>
-                  )}
-
-                  {/* 5. Proof Points / Testimonials */}
-                  <section className="rounded-2xl border border-border bg-card p-8">
-                    <h2 className="text-2xl font-semibold mb-4">Proof Points</h2>
-                    {proofPoints.length > 0 ? (
-                      <div className="space-y-4">
-                        {proofPoints.map((point, index) => (
-                          <div
-                            key={index}
-                            className="rounded-xl border border-border bg-muted/30 p-5"
-                          >
-                            <p className="text-muted-foreground leading-7">{point}</p>
-                          </div>
-                        ))}
                       </div>
-                    ) : (
-                      <p className="text-muted-foreground">Proof points not available.</p>
                     )}
-                  </section>
 
-                  {/* 6a. Galoras Platform Sessions */}
-                  <section className="rounded-2xl border border-primary/20 bg-card p-8">
-                    <div className="flex items-center gap-3 mb-2">
-                      <Sparkles className="h-5 w-5 text-primary" />
-                      <h2 className="text-2xl font-semibold">Galoras Sessions</h2>
-                    </div>
-                    <p className="text-sm text-muted-foreground mb-6">
-                      Standard sessions available through the Galoras Coaching Exchange.
-                    </p>
-                    <div className="grid sm:grid-cols-2 gap-4">
-                      {GALORAS_PLATFORM_PRODUCTS.map((product) => (
-                        <ProductCard
-                          key={product.id}
-                          product={product}
-                          coachName={coach.display_name || ""}
-                          getTypeConfig={getTypeConfig}
-                          onCtaClick={() => handlePlatformCheckout(product)}
-                        />
-                      ))}
-                    </div>
-                    {checkoutLoading && (
-                      <p className="text-sm text-muted-foreground text-center mt-4">
-                        Preparing checkout…
-                      </p>
-                    )}
-                  </section>
-
-                  {/* 6a-ii. Galoras Master Programs (master coaches only) */}
-                  {galarasDbProducts.length > 0 && (
-                    <section className="rounded-2xl border border-amber-500/20 bg-card p-8">
-                      <div className="flex items-center gap-3 mb-2">
-                        <Sparkles className="h-5 w-5 text-amber-400" />
-                        <h2 className="text-2xl font-semibold">Galoras Master Programs</h2>
-                      </div>
-                      <p className="text-sm text-muted-foreground mb-6">
-                        Signature Galoras programs delivered by certified Master Coaches.
-                      </p>
-                      <div className="grid sm:grid-cols-2 gap-4">
-                        {galarasDbProducts.map((product) => (
-                          <ProductCard
-                            key={product.id}
-                            product={product}
-                            coachName={coach.display_name || ""}
-                            getTypeConfig={getTypeConfig}
-                            onRequest={() => setRequestProduct(product)}
-                            onEnterprise={() => setEnterpriseProduct(product)}
-                          />
-                        ))}
-                      </div>
-                    </section>
-                  )}
-
-                  {/* 6b. Coach's Own Products */}
-                  {products.length > 0 && (
-                    <section className="rounded-2xl border border-border bg-card p-8">
-                      <div className="flex items-center gap-3 mb-2">
-                        <Package className="h-5 w-5 text-primary" />
-                        <h2 className="text-2xl font-semibold">{coach.display_name ? `${coach.display_name}'s` : "Coach"} Sessions & Engagements</h2>
-                      </div>
-                      <p className="text-sm text-muted-foreground mb-6">
-                        Custom offerings designed by this coach.
-                      </p>
-                      <div className="grid sm:grid-cols-2 gap-4">
-                        {products.map((product) => (
-                          <ProductCard
-                            key={product.id}
-                            product={product}
-                            coachName={coach.display_name || ""}
-                            bookingUrl={coach.booking_url}
-                            getTypeConfig={getTypeConfig}
-                            onBookNow={
-                              product.booking_mode === "stripe" && product.price_amount
-                                ? () => handlePlatformCheckout(product)
-                                : undefined
-                            }
-                            onRequest={() => setRequestProduct(product)}
-                            onEnterprise={() => setEnterpriseProduct(product)}
-                          />
-                        ))}
-                      </div>
-                    </section>
-                  )}
-                </div>
-
-                <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
-                  <AuthGate isLoggedIn={isLoggedIn} message="Sign in to book a session">
-                    {coach.booking_url ? (
-                      <a href={coach.booking_url} target="_blank" rel="noopener noreferrer">
-                        <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90">
-                          <Calendar className="mr-2 h-5 w-5" />
-                          Book a Call
-                        </Button>
-                      </a>
-                    ) : (
-                      <Button size="lg" className="bg-primary text-primary-foreground" disabled>
-                        <Calendar className="mr-2 h-5 w-5" />
-                        Book a Call
+                    <Link to="/coaching" className="block">
+                      <Button variant="ghost" size="sm" className="w-full text-muted-foreground">
+                        ← Browse all coaches
                       </Button>
-                    )}
-                  </AuthGate>
-                  <Link to="/coaching">
-                    <Button variant="outline">Back to Coaching Exchange</Button>
-                  </Link>
+                    </Link>
+                  </div>
                 </div>
 
                 {showContact && coach && (

@@ -166,7 +166,7 @@ Weight the overall_score: pillar_alignment 25%, sport_of_business_fit 25%, profe
                 <p>Thank you again, and we wish you every success in your coaching journey.</p>
                 <p style="margin-top:24px">Warmly,<br/><strong>Barnes Lam</strong><br/>Founder, Galoras</p>
                 <hr style="border:none;border-top:1px solid #eee;margin:24px 0"/>
-                <p style="color:#999;font-size:12px">© Galoras · uat-galoras.site</p>
+                <p style="color:#999;font-size:12px">© Galoras · galoras.com</p>
               </div>
             `,
           }),

@@ -26,6 +26,7 @@ interface OverviewTabProps {
   coachProfile: CoachProfile;
   pendingCount: number;
   confirmedCount: number;
+  stripeBookingsCount?: number;
 }
 
 /* ---------- static data ---------- */
@@ -109,7 +110,7 @@ function FitScoreBadge({ score }: { score: number }) {
 
 /* ---------- main component ---------- */
 
-export function OverviewTab({ coachProfile, pendingCount, confirmedCount }: OverviewTabProps) {
+export function OverviewTab({ coachProfile, pendingCount, confirmedCount, stripeBookingsCount = 0 }: OverviewTabProps) {
   const fitScore = coachProfile.readiness_score ?? 89;
   const pillar = coachProfile.primary_pillar ?? 'Leadership';
   const tier = coachProfile.tier ?? 'Pro';
@@ -146,10 +147,10 @@ export function OverviewTab({ coachProfile, pendingCount, confirmedCount }: Over
               icon={Calendar}
             />
             <StatCard
-              label="Saves / Shortlists"
-              value={23}
-              delta={4}
-              deltaLabel="vs. last 30d"
+              label="Paid Bookings"
+              value={stripeBookingsCount}
+              delta={stripeBookingsCount > 0 ? stripeBookingsCount : 0}
+              deltaLabel="total received"
               icon={Bookmark}
             />
           </div>

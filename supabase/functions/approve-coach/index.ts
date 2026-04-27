@@ -265,7 +265,7 @@ Deno.serve(async (req) => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          from: "Galoras <noreply@uat-galoras.site>",
+          from: Deno.env.get("EMAIL_FROM") ?? "Galoras <noreply@galoras.com>",
           to: [reg.email],
           subject: "You're approved — Payment receipt & next steps",
           html: `
@@ -298,7 +298,7 @@ Deno.serve(async (req) => {
                 <p style="margin:0 0 16px;font-size:14px;color:#374151">
                   Review your coach profile, update your bio, add your products, and make any changes before your listing goes public.
                 </p>
-                <a href="https://uat-galoras.site/coach-dashboard/edit"
+                <a href="https://galoras.com/coach-dashboard/edit"
                    style="background:#16a34a;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600;display:inline-block">
                   Complete My Profile →
                 </a>
@@ -318,7 +318,7 @@ Deno.serve(async (req) => {
 
               <p style="font-size:14px;color:#6b7280">Questions? Reply to this email or reach out to <a href="mailto:barnes@thestrategypitch.com" style="color:#0ea5e9">barnes@thestrategypitch.com</a>.</p>
               <hr style="border:none;border-top:1px solid #eee;margin:24px 0"/>
-              <p style="color:#999;font-size:12px">© Galoras · uat-galoras.site</p>
+              <p style="color:#999;font-size:12px">© Galoras · galoras.com</p>
             </div>
           `,
         }),
